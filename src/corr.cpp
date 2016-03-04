@@ -11,6 +11,11 @@ extern "C" {
 	#include "../spglib/src/spglib.h"
 }
 
+using vector2i = std::vector<std::vector<int>>;
+using vector3i = std::vector<std::vector<std::vector<int>>>;
+// using vector3i = std::vector<std::vector<std::vector<int>>>;
+// using vector3i = std::vector<std::vector<std::vector<int>>>;
+
 #define MAX_BODY 6
 
 constexpr int max_symmetry_num = 48;
@@ -60,10 +65,26 @@ void outputSymmetry(int rotation[][3][3], double translation[][3], int num_sym){
 	}
 }
 
+// bool is_eq_float(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
+bool is_eq_coordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
+	for(int i=0; i<3; ++i){
+		double x = lhs[i];
+		if( std::abs(x) < 0.00001 ) x = 0;
+		else if( std::abs(1-x) < 0.00001 ) x = 1;
+
+		if( x < 0 ) x+=1;
+		else if( x >= 1 ) x-=1;
+		if( 0.00001 < std::abs(x-rhs[i]) ){
+			return false;
+		}
+	}
+	return true;
+}
+
 Eigen::Vector3d validDistance(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
 	Eigen::Vector3d d_vec = lhs - rhs;
 	for( int i=0; i<3; ++i ){ /* boundary condition */
-		if( d_vec(i) >0.5 )        {d_vec(i) = 1-d_vec(i);}
+		if( d_vec(i) > 0.5 )       {d_vec(i) = 1-d_vec(i);}
 		else if( d_vec(i) < -0.5 ) {d_vec(i) = 1+d_vec(i);}
 	}
 	return d_vec;
@@ -71,23 +92,15 @@ Eigen::Vector3d validDistance(const Eigen::Vector3d& lhs, const Eigen::Vector3d&
 
 int main(int argc, char* argv[]){
 	double d2, d3, d4 = 0;
-	// for (int i=1;i<argc;i++) {
-		// if( argv[i][1] == '2' )
-		// if (!strcmp(argv[i],"-S")) ensemble=Ensemble::SPIN;
-		// else if(!strcmp(argv[i],"-p"))  profile=true;
-		// else if(!strcmp(argv[i],"-cp")) corr_profile=true;
-		// else if(!strcmp(argv[i],"-d")) debug=true;
-		// else{
-		// 	cout << "ERROR command line option [" << argv[i] << "] does not exist." << endl;
-		// 	exit(1);
-		// }
-	// }
+	double prec = 0.00001;
 
 	#ifdef DEBUG
 	d2 = 3;
 	d3 = 5;
 	d4 = 5;
 	#endif
+
+	d2 = atof(argv[1]);
 
 	ParsePoscar poscar("poscar.in");
 	const int N = poscar.getAtoms().size();
@@ -206,17 +219,57 @@ int main(int argc, char* argv[]){
 		Eigen::Vector3d d_vec = validDistance(position_ex[i], position_ex[0]);
 		double distance = (lattice_ex * d_vec).norm();
 		if( distance <= d2 ){
-			distance_atom[distance] = d_vec;
+			bool is_found = false;
+			for( const auto& i : distance_atom ){
+				if( std::abs(i.first-distance) < prec ) {
+					is_found = true;
+					break;
+				}
+			}
 			auto itr = distance_atom.find(distance);
-			if( itr == distance_atom.end() ) {distance_atom[distance] = d_vec; }
+			if( !is_found ) {distance_atom[distance] = d_vec; }
 		}
 	}
 
-	//
-	// for(auto itr = distance_atom.begin(); itr != distance_atom.end(); ++itr) {
-	// 	std::cout << "key = " <<  distance_atom.at(itr->first) << std::endl;
-	// 	std::cout << "key = " << itr->first << ", val = " << itr->second << "\n";    // 値を表示
-	// }
+
+	// std::vector<std::unordered_map<double, std::vector<int>>> atom_distance_atom;
+	std::unordered_map<double, std::vector<std::vector<int>>> atom_distance_atom;
+	for( const auto& d_a : distance_atom ){
+		std::vector<std::vector<int>> a_d_a;
+		for(int i=0; i<position_ex.size(); ++i){
+			std::vector<int> vec_a;
+			for(int j=0; j<position_ex.size(); ++j){
+				Eigen::Vector3d d_vec = validDistance(position_ex[i], position_ex[j]);
+				double distance = (lattice_ex * d_vec).norm();
+				if( std::abs( distance - d_a.first ) < prec ) {
+					vec_a.push_back(j);
+				}
+			}
+			a_d_a.push_back(vec_a);
+		}
+		atom_distance_atom[d_a.first] = a_d_a;
+	}
+
+	for( int i=0; i<position_ex.size(); ++i){
+		std::cout << i << " ";
+	}
+	std::cout << std::endl;
+
+	for( const auto& i : atom_distance_atom ){
+		for( int j=0; j<i.second.size(); ++j) {
+		// for( const auto& j : i.second ){
+			for( const auto& k : i.second[j] ){
+				std::cout << j << " " << k << " ";
+			}
+			// std::cout << j.size() << " ";
+		}
+		std::cout << std::endl;
+	}
+
+
+
+
+	/*
 
 	std::vector<Eigen::Matrix3d> rotation_matrix;
 	std::vector<Eigen::Vector3d> translation_vector;
@@ -232,35 +285,44 @@ int main(int argc, char* argv[]){
 		rotation_matrix.push_back(Eigen::Map<Eigen::Matrix3d>(&(tmp_rot[0][0])));
 		translation_vector.push_back(Eigen::Map<Eigen::Vector3d>(&(tmp_tra[0])));
 	}
-		// exit(1);
-	// std::unordered_map<double, std::vector<std::pair<int, Eigen::Vector3d>>> clusterlist2;
-	std::vector<std::vector<int>> clusterlist2;
-	for( int i=0; i<position_ex.size(); ++i ){
-		std::vector<int> clusterlist2_tmp;
-		for( auto base_atom : distance_atom ) {
+
+	std::vector<std::vector<std::vector<int>>> clusterlist2;
+	for( const auto& base_atom : distance_atom ) {
+		std::vector<std::vector<int>> clusterlist2_tmp;
+		// for( int i=0; i<1; ++i ){
+		for( int i=0; i<position_ex.size(); ++i ){
+			std::vector<int> clusterlist2_tmp_tmp;
 			for( int num_op=0; num_op<max_size_op; ++num_op){
-				Eigen::Vector3d target = rotation_matrix[num_op] * distance_atom[base_atom.first];
+				Eigen::Vector3d target = rotation_matrix[num_op] * base_atom.second;
+				std::cout << target.transpose() << std::endl;
 				for( int j=0; j<position_ex.size(); ++j ){
-					// std::cout << (position_ex[j] - position_ex[i]) << std::endl;
-					if( target == (position_ex[j] - position_ex[i]) ){
-						clusterlist2_tmp.push_back(j);
-						// clusterlist2.push_back
-						// clusterlist2[i.first] =
+					auto it = find( clusterlist2_tmp_tmp.begin(), clusterlist2_tmp_tmp.end() , j);
+					if( it == clusterlist2_tmp_tmp.end()
+							and is_eq_coordinate(target+position_ex[i], position_ex[j])){
+						clusterlist2_tmp_tmp.push_back(j);
+						break;
 					}
 				}
 			}
+			clusterlist2_tmp.push_back(clusterlist2_tmp_tmp);
 		}
 		clusterlist2.push_back(clusterlist2_tmp);
 	}
 
 
-	std::cout << clusterlist2.size() << std::endl;
-	std::cout << clusterlist2.size() << std::endl;
-	for( int i=0; i<	clusterlist2.size(); ++i ){
+	// std::cout << clusterlist2.size() << std::endl;
+	for( int i=0; i< clusterlist2.size(); ++i ){
 		for( int j=0; j<	clusterlist2[i].size(); ++j ){
-			std::cout << clusterlist2[i][j];
+			for( int k=0; k<	clusterlist2[i][j].size(); ++k ){
+				// std::cout << clusterlist2[i][j][k] << " - ";
+				// std::cout << position_ex[ clusterlist2[i][j][k] ].transpose() << std::endl;
+			}
+			std::cout << std::endl;
+			std::cout << clusterlist2[i][j].size() << " " << std::endl;
+
 		}
 		std::cout << std::endl;
+		// }
 	}
 
 	// for(auto itr = distance_atom.begin(); itr != distance_atom.end(); ++itr) {
@@ -290,5 +352,5 @@ int main(int argc, char* argv[]){
 
 
 	// std::cout << num_sym << std::endl;
-
+	*/
 }

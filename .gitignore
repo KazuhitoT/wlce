@@ -1,6 +1,8 @@
 .DS_Store
 .clang_complete
 spglib/
+tmp/
+bin/
 
 # cmake artifacts
 MakeFile
