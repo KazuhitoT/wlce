@@ -3,6 +3,7 @@
 spglib/
 tmp/
 bin/
+cuau/
 
 # cmake artifacts
 MakeFile
