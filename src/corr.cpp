@@ -60,6 +60,15 @@ void outputSymmetry(int rotation[][3][3], double translation[][3], int num_sym){
 	}
 }
 
+Eigen::Vector3d validDistance(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
+	Eigen::Vector3d d_vec = lhs - rhs;
+	for( int i=0; i<3; ++i ){ /* boundary condition */
+		if( d_vec(i) >0.5 )        {d_vec(i) = 1-d_vec(i);}
+		else if( d_vec(i) < -0.5 ) {d_vec(i) = 1+d_vec(i);}
+	}
+	return d_vec;
+};
+
 int main(int argc, char* argv[]){
 	double d2, d3, d4 = 0;
 	// for (int i=1;i<argc;i++) {
@@ -126,26 +135,30 @@ int main(int argc, char* argv[]){
 	int N_unit = spg_standardize_cell(lattice_unit, position_unit, types, N, 0, 0, 0.00001);
 	outputPoscar(lattice_unit, position_unit, N_unit, "unit");
 
+	int expand_x = 1;
+	int expand_y = 1;
+	int expand_z = 1;
 	Eigen::Matrix3d lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice_unit[0][0]);
-	Eigen::Vector3d unit_x, unit_y, unit_z;
-	unit_x << 1, 0, 0;
-	unit_y << 0, 1, 0;
-	unit_z << 0, 0, 1;
-	double unit_length_x = (lattice_unit_matrix * unit_x).norm();
-	double unit_length_y = (lattice_unit_matrix * unit_y).norm();
-	double unit_length_z = (lattice_unit_matrix * unit_z).norm();
-	int expand_x, expand_y ,expand_z = 1;
-	while( unit_length_x <= (d2*2.) ){
-		unit_x[0] = ++expand_x;
-		unit_length_x = (lattice_unit_matrix * unit_x).norm();
-	}
-	while( unit_length_y <= (d2*2.) ){
-		unit_y[1] = ++expand_y;
-		unit_length_y = (lattice_unit_matrix * unit_y).norm();
-	}
-	while( unit_length_z <= (d2*2.) ){
-		unit_z[2] = ++expand_z;
-		unit_length_z = (lattice_unit_matrix * unit_z).norm();
+	{
+		Eigen::Vector3d unit_x, unit_y, unit_z;
+		unit_x << 1, 0, 0;
+		unit_y << 0, 1, 0;
+		unit_z << 0, 0, 1;
+		double unit_length_x = (lattice_unit_matrix * unit_x).norm();
+		double unit_length_y = (lattice_unit_matrix * unit_y).norm();
+		double unit_length_z = (lattice_unit_matrix * unit_z).norm();
+		while( unit_length_x <= (d2*2.) ){
+			unit_x[0] = ++expand_x;
+			unit_length_x = (lattice_unit_matrix * unit_x).norm();
+		}
+		while( unit_length_y <= (d2*2.) ){
+			unit_y[1] = ++expand_y;
+			unit_length_y = (lattice_unit_matrix * unit_y).norm();
+		}
+		while( unit_length_z <= (d2*2.) ){
+			unit_z[2] = ++expand_z;
+			unit_length_z = (lattice_unit_matrix * unit_z).norm();
+		}
 	}
 	std::cout << " poscar.expand = ";
 	std::cout << expand_x << " * " << expand_y << " * " << expand_z << "  ";
@@ -190,27 +203,19 @@ int main(int argc, char* argv[]){
 	nbody = 2;
 	std::unordered_map<double, Eigen::Vector3d> distance_atom;
 	for( int i=1; i<position_ex.size(); ++i ){
-		Eigen::Vector3d d_vec = position_ex[i]-position_ex[0];
-		for( int i=0; i<3; ++i ){ /* boundary condition */
-			if( d_vec(i) >0.5 )        {d_vec(i) = 1-d_vec(i);}
-			else if( d_vec(i) < -0.5 ) {d_vec(i) = 1+d_vec(i);}
-		}
+		Eigen::Vector3d d_vec = validDistance(position_ex[i], position_ex[0]);
 		double distance = (lattice_ex * d_vec).norm();
 		if( distance <= d2 ){
+			distance_atom[distance] = d_vec;
 			auto itr = distance_atom.find(distance);
 			if( itr == distance_atom.end() ) {distance_atom[distance] = d_vec; }
 		}
 	}
 
-	if( distance_atom.empty() ) {
-		std::cout << "empty" << std::endl;
-	} else {
-		std::cout << distance_atom.size() << std::endl;
-	}
-
+	//
 	// for(auto itr = distance_atom.begin(); itr != distance_atom.end(); ++itr) {
-		// std::cout << "key = " <<  distance_atom.at(itr->first) << std::endl;
-		// std::cout << "key = " << itr->first << ", val = " << itr->second << "\n";    // 値を表示
+	// 	std::cout << "key = " <<  distance_atom.at(itr->first) << std::endl;
+	// 	std::cout << "key = " << itr->first << ", val = " << itr->second << "\n";    // 値を表示
 	// }
 
 	std::vector<Eigen::Matrix3d> rotation_matrix;
@@ -231,8 +236,8 @@ int main(int argc, char* argv[]){
 	// std::unordered_map<double, std::vector<std::pair<int, Eigen::Vector3d>>> clusterlist2;
 	std::vector<std::vector<int>> clusterlist2;
 	for( int i=0; i<position_ex.size(); ++i ){
+		std::vector<int> clusterlist2_tmp;
 		for( auto base_atom : distance_atom ) {
-			std::vector<int> clusterlist2_tmp;
 			for( int num_op=0; num_op<max_size_op; ++num_op){
 				Eigen::Vector3d target = rotation_matrix[num_op] * distance_atom[base_atom.first];
 				for( int j=0; j<position_ex.size(); ++j ){
@@ -243,20 +248,20 @@ int main(int argc, char* argv[]){
 						// clusterlist2[i.first] =
 					}
 				}
-			clusterlist2.push_back(clusterlist2_tmp);
 			}
 		}
+		clusterlist2.push_back(clusterlist2_tmp);
 	}
 
 
-	// std::cout << clusterlist2.size() << std::endl;
-	// std::cout << clusterlist2.size() << std::endl;
-	// for( int i=0; i<	clusterlist2.size(); ++i ){
-	// 	for( int j=0; j<	clusterlist2[i].size(); ++j ){
-	// 		std::cout << clusterlist2[i][j];
-	// 	}
-	// 	std::cout << std::endl;
-	// }
+	std::cout << clusterlist2.size() << std::endl;
+	std::cout << clusterlist2.size() << std::endl;
+	for( int i=0; i<	clusterlist2.size(); ++i ){
+		for( int j=0; j<	clusterlist2[i].size(); ++j ){
+			std::cout << clusterlist2[i][j];
+		}
+		std::cout << std::endl;
+	}
 
 	// for(auto itr = distance_atom.begin(); itr != distance_atom.end(); ++itr) {
 	// 	std::cout << "key = " << itr->first << ", val = " << itr->second << "\n";    // 値を表示
