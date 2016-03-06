@@ -17,7 +17,22 @@ public :
 	this->linked_site[distance].push_back(another_site);
 	};
 
-	const std::shared_ptr<Site>& getLinkedSite(const double distance, const int num) const {
+	const std::unordered_map<double, std::vector<std::shared_ptr<Site>>>& getLinkedSite() const {
+		return linked_site;
+	}
+
+	const std::shared_ptr<Site>& getLinkedSite(double distance, const int num) const {
+		if( this->linked_site.find(distance) == this->linked_site.end() ){
+			for( const auto& i : this->linked_site ){
+				if( std::abs( distance - i.first ) < 0.00001 ) {
+					distance = i.first;
+					break;
+				}
+			}
+			/*  distance is not found  */
+			return nullptr;
+		}
+
 		auto it = find_if( linked_site.at(distance).begin(), linked_site.at(distance).end(),
 				[num](const std::shared_ptr<Site> s){ return ( s->getSiteNum() == num );} );
 		if( it != linked_site.at(distance).end() )

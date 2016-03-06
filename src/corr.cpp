@@ -268,73 +268,135 @@ int main(int argc, char* argv[]){
 		site_vec.push_back( std::shared_ptr<Site>( new Site(i, position_ex[i])) );
 	}
 
-	std::unordered_map<double, std::vector<std::vector<int>>> atom_distance_atom;
-	for( const auto& d_a : distance_atom ){
-		std::vector<std::vector<int>> a_d_a;
-		for(int i=0; i<position_ex.size(); ++i){
-			std::vector<int> vec_a;
-			for(int j=0; j<position_ex.size(); ++j){
-				Eigen::Vector3d d_vec = validDistance(position_ex[i], position_ex[j]);
-				double distance = (lattice_ex * d_vec).norm();
-				if( std::abs( distance - d_a.first ) < prec ) {
-					site_vec[i]->setLinkedSite(d_a.first, site_vec[j]);
-					vec_a.push_back(j);
-				}
-			}
-			a_d_a.push_back(vec_a);
-		}
-		atom_distance_atom[d_a.first] = a_d_a;
-	}
-
+	std::ofstream clusters_out( "clusters.out", std::ios::out );
 
 	/*  set nbody = 1 */
+	std::cout << " -- point cluster" << std::endl;
 	for( int i=0; i<position_ex.size(); ++i){
-		std::cout << i << " ";
+		clusters_out << i << " ";
 	}
-	std::cout << std::endl;
+	clusters_out << std::endl;
 
 	/*  set nbody = 2 */
-	for( const auto& i : atom_distance_atom ){
+	std::cout << " -- 2 body cluster" << std::endl;
+
+	std::unordered_map<double, std::vector<std::vector<int>>> distance_site_to_sites;
+	{
+		for( const auto& d_a : distance_atom ){
+			std::vector<std::vector<int>> a_d_a;
+			for(int i=0; i<position_ex.size(); ++i){
+				std::vector<int> vec_a;
+				for(int j=0; j<position_ex.size(); ++j){
+					Eigen::Vector3d d_vec = validDistance(position_ex[i], position_ex[j]);
+					double distance = (lattice_ex * d_vec).norm();
+					if( std::abs( distance - d_a.first ) < prec ) {
+						site_vec[i]->setLinkedSite(d_a.first, site_vec[j]);
+						vec_a.push_back(j);
+					}
+				}
+				a_d_a.push_back(vec_a);
+			}
+			distance_site_to_sites[d_a.first] = a_d_a;
+		}
+	}
+
+	for( const auto& i : distance_site_to_sites ){
+		std::cout << i.first << std::endl;
 		for( int j=0; j<i.second.size(); ++j) {
 			for( const auto& k : i.second[j] ){
-				std::cout << j << " " << k << " ";
+				clusters_out << j << " " << k << " ";
 			}
 		}
-		std::cout << std::endl;
+		clusters_out << std::endl;
 	}
 
 	/*  set nbody = 3 */
+	std::cout << " -- 3 body cluster" << std::endl;
 	std::vector<double> d_vec;
-	for( const auto& i : atom_distance_atom ){
+	for( const auto& i : distance_site_to_sites ){
 		d_vec.push_back(i.first);
-		std::cout << i.first << std::endl;
+		// std::cout << i.first << std::endl;
 	}
-	// std::vector<std::vector<double>> d_b3_index;
+	std::vector<std::vector<double>> d_b3_index;
+	for(const auto& linked_site : site_vec[0]->getLinkedSite() ){
+		for(const auto& site2 : linked_site.second ){
+			for(const auto& linked_site2 : site2->getLinkedSite() ){
+				for(const auto& site3 : linked_site2.second ){
+					Eigen::Vector3d d3 = validDistance(site3->getCoordinate(), site_vec[0]->getCoordinate());
+					double distance = (lattice_ex * d3).norm();
+					if( site3->getLinkedSite(distance, 0) ){
+						std::vector<double> d_vec = {linked_site.first, linked_site2.first, distance};
+						sort(d_vec.begin(), d_vec.end());
+						auto it2 = find( d_b3_index.begin(), d_b3_index.end(), d_vec );
+						if( it2 == d_b3_index.end() ){
+							std::cout << d_vec[0] << " " << d_vec[1] << "  " << d_vec[2] << std::endl;
+							d_b3_index.push_back(d_vec);
+							// is_searched = true;
+						}
+					}
+
+					// for(const auto& linked_site3 : site3->getLinkedSite() ){
+						// auto it = find_if( linked_site3.second.begin(), linked_site3.second.end(),
+						// 		[](const std::shared_ptr<Site> s){ return ( s->getSiteNum() == 0 );} );
+						// if( it != linked_site3.second.end() ){
+						// 	std::vector<double> d_vec = {linked_site.first, linked_site.first, linked_site3.first};
+						// 	sort(d_vec.begin(), d_vec.end());
+						// 	auto it2 = find( d_b3_index.begin(), d_b3_index.end(), d_vec );
+						// 	if( it2 == d_b3_index.end() ){
+						// 		std::cout << d_vec[0] << " " << d_vec[1] << "  " << d_vec[2] << std::endl;
+						// 		d_b3_index.push_back(d_vec);
+						// 		// is_searched = true;
+						// 	}
+						// }
+					// }
+				}
+			}
+		}
+	}
+
 	// for( int i=0; i<d_vec.size(); ++i ){
 	// 	for( int j=i; j<d_vec.size(); ++j ){
 	// 		for( int k=j; k<d_vec.size(); ++k ){
 	// 			std::vector<double> tmp = {d_vec[i], d_vec[j], d_vec[k]};
-	// 			d_b3_index.push_back(tmp);
-	// 		}
-	// 	}
-	// }
 	//
-	// for(const auto& d_b3 : d_b3_index){
-	// 	for( const auto& site : site_vec ){
-	// 		for( const auto& i : site->getLinkedSiteviaDisncace(d_b3[0]) ){
-	// 			for( const auto& j : i->getLinkedSiteviaDisncace(d_b3[1]) ){
-	// 				auto k = j->getLinkedSite(d_b3[2], site->getSiteNum());
-	// 				if( k ) {
-	// 					std::cout << site->getSiteNum() << " " << i->getSiteNum() << " " << j->getSiteNum() << " ";
+	// 			/*  search representative cluster */
+	// 			bool is_searched = false;
+	// 			for(const auto& l : site_vec[0]->getLinkedSiteviaDisncace(d_vec[i]) ){
+	// 				for(const auto& m : l->getLinkedSiteviaDisncace(d_vec[j]) ){
+	// 					if( m->getLinkedSite(d_vec[k], l->getSiteNum()) ) {
+	// 						std::cout << d_vec[i] << " " << d_vec[j] << "  " << d_vec[k] << std::endl;
+	// 						d_b3_index.push_back(tmp);
+	// 						is_searched = true;
+	// 						break;
+	// 					}
 	// 				}
+	// 				if(is_searched) break;
 	// 			}
+	//
 	// 		}
 	// 	}
-	// 	std::cout << std::endl;
 	// }
-	//
-	//
-	// /*  set nbody = 3 */
+
+	std::vector<std::vector<std::shared_ptr<Site>>> clusters_3body;		/* site -> other 2 sites*/
+	for(const auto& d_b3 : d_b3_index){
+		for( const auto& site : site_vec ){
+			for( const auto& i : site->getLinkedSiteviaDisncace(d_b3[0]) ){
+				for( const auto& j : i->getLinkedSiteviaDisncace(d_b3[1]) ){
+					if( j->getLinkedSite(d_b3[2], site->getSiteNum()) ) {
+						clusters_out << site->getSiteNum() << " " << i->getSiteNum() << " " << j->getSiteNum() << " ";
+						clusters_3body.push_back( std::vector<std::shared_ptr<Site>>{i ,j} );
+					}
+				}
+			}
+		}
+		clusters_out << std::endl;
+	}
+
+	clusters_out.close();
+	/*  set nbody = 4 */
+	std::vector<std::vector<std::shared_ptr<Site>>> clusters_4body;		/* site -> other 2 sites*/
+	// for(const auto& d_b3 : d_b3_index){
+
 	// std::vector<std::vector<double>> d_b4_index;
 	// for( int i=0; i<d_vec.size(); ++i ){
 	// 	for( int j=i; j<d_vec.size(); ++j ){
