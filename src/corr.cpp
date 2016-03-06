@@ -23,15 +23,13 @@ constexpr int max_symmetry_num = 48;
 
 #define DEBUG
 
-class hash_vecd {  // ハッシュ関数オブジェクト
+class hash_vecd {
 public:
   double operator()(const std::vector<double> &x) const {
-		std::vector<double> copy = x;
-		std::sort(copy.begin(), copy.end());//昇順ソート
     const int C = 997;      // 素数
     double t = 0;
     for (int i = 0; i != x.size(); ++i) {
-        t = t * C + copy[i];
+        t = t * C + x[i];
     }
     return t;
   }
@@ -79,44 +77,11 @@ void outputSymmetry(int rotation[][3][3], double translation[][3], int num_sym){
 	}
 }
 
-void outputInfoCluster(){
-	// std::ofstream ofs("info-cluster.out");
-	// for( int i=0; i<num_sym; ++i){
-	// 	ofs << "--- sym " << i+1 << " --- " << std::endl;
-	// 	for( int j=0; j<3; ++j){
-	// 		for( int k=0; k<3; ++k){
-	// 			ofs << rotation[i][j][k] << " ";
-	// 		}
-	// 		ofs << std::endl;
-	// 	}
-	// 	ofs << translation[i][0] << " ";
-	// 	ofs << translation[i][1] << " ";
-	// 	ofs << translation[i][2] << " ";
-	// 	ofs << std::endl;
-	// }
-}
-
-// bool is_eq_float(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
-bool is_eq_coordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
-	for(int i=0; i<3; ++i){
-		double x = lhs[i];
-		if( std::abs(x) < 0.00001 ) x = 0;
-		else if( std::abs(1-x) < 0.00001 ) x = 1;
-
-		if( x < 0 ) x+=1;
-		else if( x >= 1 ) x-=1;
-		if( 0.00001 < std::abs(x-rhs[i]) ){
-			return false;
-		}
-	}
-	return true;
-}
-
 Eigen::Vector3d validDistance(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
 	Eigen::Vector3d d_vec = lhs - rhs;
 	for( int i=0; i<3; ++i ){ /* boundary condition */
-		if( d_vec(i) > 0.5 )       {d_vec(i) = 1-d_vec(i);}
-		else if( d_vec(i) < -0.5 ) {d_vec(i) = 1+d_vec(i);}
+		if( d_vec(i) > (0.5-0.00001) )       {d_vec(i) = 1-d_vec(i);}
+		else if( d_vec(i) < -(0.5+0.00001) ) {d_vec(i) = 1+d_vec(i);}
 	}
 	return d_vec;
 };
@@ -124,12 +89,6 @@ Eigen::Vector3d validDistance(const Eigen::Vector3d& lhs, const Eigen::Vector3d&
 int main(int argc, char* argv[]){
 	double d2, d3, d4 = 0;
 	double prec = 0.00001;
-
-	#ifdef DEBUG
-	d2 = 3;
-	d3 = 5;
-	d4 = 5;
-	#endif
 
 	d2 = atof(argv[1]);
 
@@ -279,18 +238,19 @@ int main(int argc, char* argv[]){
 
 	/*  set nbody = 2 */
 	std::cout << " -- 2 body cluster" << std::endl;
-
 	std::unordered_map<double, std::vector<std::vector<int>>> distance_site_to_sites;
 	{
 		for( const auto& d_a : distance_atom ){
 			std::vector<std::vector<int>> a_d_a;
 			for(int i=0; i<position_ex.size(); ++i){
+			// for(int i=0; i<1; ++i){
 				std::vector<int> vec_a;
 				for(int j=0; j<position_ex.size(); ++j){
 					Eigen::Vector3d d_vec = validDistance(position_ex[i], position_ex[j]);
 					double distance = (lattice_ex * d_vec).norm();
 					if( std::abs( distance - d_a.first ) < prec ) {
 						site_vec[i]->setLinkedSite(d_a.first, site_vec[j]);
+						// std::cout << i << " " << j << " ";
 						vec_a.push_back(j);
 					}
 				}
@@ -301,8 +261,9 @@ int main(int argc, char* argv[]){
 	}
 
 	for( const auto& i : distance_site_to_sites ){
-		std::cout << i.first << std::endl;
+		std::cout << i.first << " " << i.second[0].size() << std::endl;
 		for( int j=0; j<i.second.size(); ++j) {
+			assert( i.second[j].size() == i.second[0].size() );
 			for( const auto& k : i.second[j] ){
 				clusters_out << j << " " << k << " ";
 			}
@@ -312,119 +273,126 @@ int main(int argc, char* argv[]){
 
 	/*  set nbody = 3 */
 	std::cout << " -- 3 body cluster" << std::endl;
-	std::vector<double> d_vec;
-	for( const auto& i : distance_site_to_sites ){
-		d_vec.push_back(i.first);
-		// std::cout << i.first << std::endl;
-	}
 	std::vector<std::vector<double>> d_b3_index;
 	for(const auto& linked_site : site_vec[0]->getLinkedSite() ){
 		for(const auto& site2 : linked_site.second ){
 			for(const auto& linked_site2 : site2->getLinkedSite() ){
 				for(const auto& site3 : linked_site2.second ){
-					Eigen::Vector3d d3 = validDistance(site3->getCoordinate(), site_vec[0]->getCoordinate());
-					double distance = (lattice_ex * d3).norm();
+					Eigen::Vector3d valid_ditance = validDistance(site3->getCoordinate(), site_vec[0]->getCoordinate());
+					double distance = (lattice_ex * valid_ditance).norm();
+					distance = site3->getDistance(distance);
 					if( site3->getLinkedSite(distance, 0) ){
 						std::vector<double> d_vec = {linked_site.first, linked_site2.first, distance};
 						sort(d_vec.begin(), d_vec.end());
 						auto it2 = find( d_b3_index.begin(), d_b3_index.end(), d_vec );
 						if( it2 == d_b3_index.end() ){
-							std::cout << d_vec[0] << " " << d_vec[1] << "  " << d_vec[2] << std::endl;
 							d_b3_index.push_back(d_vec);
-							// is_searched = true;
 						}
 					}
-
-					// for(const auto& linked_site3 : site3->getLinkedSite() ){
-						// auto it = find_if( linked_site3.second.begin(), linked_site3.second.end(),
-						// 		[](const std::shared_ptr<Site> s){ return ( s->getSiteNum() == 0 );} );
-						// if( it != linked_site3.second.end() ){
-						// 	std::vector<double> d_vec = {linked_site.first, linked_site.first, linked_site3.first};
-						// 	sort(d_vec.begin(), d_vec.end());
-						// 	auto it2 = find( d_b3_index.begin(), d_b3_index.end(), d_vec );
-						// 	if( it2 == d_b3_index.end() ){
-						// 		std::cout << d_vec[0] << " " << d_vec[1] << "  " << d_vec[2] << std::endl;
-						// 		d_b3_index.push_back(d_vec);
-						// 		// is_searched = true;
-						// 	}
-						// }
-					// }
 				}
 			}
 		}
 	}
 
-	// for( int i=0; i<d_vec.size(); ++i ){
-	// 	for( int j=i; j<d_vec.size(); ++j ){
-	// 		for( int k=j; k<d_vec.size(); ++k ){
-	// 			std::vector<double> tmp = {d_vec[i], d_vec[j], d_vec[k]};
-	//
-	// 			/*  search representative cluster */
-	// 			bool is_searched = false;
-	// 			for(const auto& l : site_vec[0]->getLinkedSiteviaDisncace(d_vec[i]) ){
-	// 				for(const auto& m : l->getLinkedSiteviaDisncace(d_vec[j]) ){
-	// 					if( m->getLinkedSite(d_vec[k], l->getSiteNum()) ) {
-	// 						std::cout << d_vec[i] << " " << d_vec[j] << "  " << d_vec[k] << std::endl;
-	// 						d_b3_index.push_back(tmp);
-	// 						is_searched = true;
-	// 						break;
-	// 					}
-	// 				}
-	// 				if(is_searched) break;
-	// 			}
-	//
-	// 		}
-	// 	}
-	// }
+	/* index -> site -> other 2 sites*/
+	std::unordered_map<std::vector<double>, std::vector<std::vector<std::vector<std::shared_ptr<Site>>>>, hash_vecd> clusters_3body;
+	// std::vector<std::vector<std::vector<std::shared_ptr<Site>>>> clusters_3body;		/* site -> other 2 sites*/
+	for(const auto& representative_d_b3 : d_b3_index){
+		/* construct equivalent d_b3 vec */
+		std::vector<std::vector<double>> all_d_b3;
+		std::vector<double> data = representative_d_b3;
+	  do{ all_d_b3.push_back(data); }while(next_permutation(data.begin(), data.end()));
 
-	std::vector<std::vector<std::shared_ptr<Site>>> clusters_3body;		/* site -> other 2 sites*/
-	for(const auto& d_b3 : d_b3_index){
+		std::vector<std::vector<std::vector<std::shared_ptr<Site>>>> index_clusters;
 		for( const auto& site : site_vec ){
-			for( const auto& i : site->getLinkedSiteviaDisncace(d_b3[0]) ){
-				for( const auto& j : i->getLinkedSiteviaDisncace(d_b3[1]) ){
-					if( j->getLinkedSite(d_b3[2], site->getSiteNum()) ) {
-						clusters_out << site->getSiteNum() << " " << i->getSiteNum() << " " << j->getSiteNum() << " ";
-						clusters_3body.push_back( std::vector<std::shared_ptr<Site>>{i ,j} );
+			std::vector<std::vector<std::shared_ptr<Site>>> site_clusters;
+			for(const auto& d_b3 : all_d_b3){
+				for( const auto& i : site->getLinkedSiteviaDisncace(d_b3[0]) ){
+					for( const auto& j : i->getLinkedSiteviaDisncace(d_b3[1]) ){
+						if( j->getLinkedSite(d_b3[2], site->getSiteNum()) ) {
+							std::vector<std::shared_ptr<Site>> tmp = {i ,j};
+							sort(tmp.begin(), tmp.end());
+							if( find(site_clusters.begin(), site_clusters.end(), tmp) == site_clusters.end() ){
+								// std::cout << tmp[0]->getSiteNum() <<" "<< tmp[1]->getSiteNum() << std::endl;
+								site_clusters.push_back( tmp );
+							}
+						}
 					}
 				}
+				// exit(1);
 			}
+			index_clusters.push_back(site_clusters);
+		}
+		clusters_3body[representative_d_b3] = index_clusters;
+	}
+
+	for(const auto& d_site : clusters_3body){
+		std::cout << d_site.first[0] << " " << d_site.first[1] << " " << d_site.first[2] << " " << d_site.second[0].size() << std::endl;
+		int i = 0;
+		for(const auto& site_clusters : d_site.second){
+			assert( d_site.second[0].size() == site_clusters.size() );
+			for(const auto& site_vec : site_clusters){
+				for(const auto& site : site_vec){
+					clusters_out << i << " " << site->getSiteNum();
+				}
+			}
+			++i;
 		}
 		clusters_out << std::endl;
 	}
 
+
+
 	clusters_out.close();
 	/*  set nbody = 4 */
-	std::vector<std::vector<std::shared_ptr<Site>>> clusters_4body;		/* site -> other 2 sites*/
-	// for(const auto& d_b3 : d_b3_index){
+	std::cout << " -- 4 body cluster" << std::endl;
+	std::vector<std::vector<double>> d_b4_index;
 
-	// std::vector<std::vector<double>> d_b4_index;
-	// for( int i=0; i<d_vec.size(); ++i ){
-	// 	for( int j=i; j<d_vec.size(); ++j ){
-	// 		for( int k=j; k<d_vec.size(); ++k ){
-	// 			for( int l=k; l<d_vec.size(); ++l ){
-	// 				std::vector<double> tmp = {d_vec[i], d_vec[j], d_vec[k], d_vec[l]};
-	// 				d_b4_index.push_back(tmp);
-	// 			}
-	// 		}
+	// for(const auto& sites : clusters_3body[0]){
+	// 	for(const auto& linked_site : site_vec[0]->getLinkedSite() ){
+	// 		auto it = find(linked_site.second.begin(), linked_site.second.end(),
+	//
 	// 	}
 	// }
+
+
 	//
-	// for(const auto& d_b4 : d_b4_index){
-	// 	for( const auto& site : site_vec ){
-	// 		for( const auto& i : site->getLinkedSiteviaDisncace(d_b4[0]) ){
-	// 			for( const auto& j : i->getLinkedSiteviaDisncace(d_b4[1]) ){
-	// 				for( const auto& k : j->getLinkedSiteviaDisncace(d_b4[2]) ){
-	// 					auto l = k->getLinkedSite(d_b4[3], site->getSiteNum());
-	// 					auto m = k->getLinkedSite(d_b4[3], i->getSiteNum());
-	// 					auto n = j->getLinkedSite(d_b4[3], site->getSiteNum());
-	// 					if( l and m and n ) {
-	// 						std::cout << site->getSiteNum() << " " << i->getSiteNum() << " " << j->getSiteNum() << " " << k->getSiteNum() << " ";
+	//
+	// for(const auto& linked_site : site_vec[0]->getLinkedSite() ){
+	// 	for(const auto& site2 : linked_site.second ){
+	// 		for(const auto& linked_site2 : site2->getLinkedSite() ){
+	// 			for(const auto& site3 : linked_site2.second ){
+	// 				for(const auto& linked_site3 : site3->getLinkedSite() ){
+	// 					for(const auto& site4 : linked_site3.second ){
+	// 						for(const auto& linked_site4 : site4->getLinkedSite() ){
+	// 							for(const auto& site5 : linked_site4.second ){
+	// 								for(const auto& linked_site5 : site5->getLinkedSite() ){
+	// 									for(const auto& site6 : linked_site5.second ){
+	// 										Eigen::Vector3d valid_ditance = validDistance(site6->getCoordinate(), site_vec[0]->getCoordinate());
+	// 										double distance = (lattice_ex * valid_ditance).norm();
+	// 										if( site4->getLinkedSite(distance, 0) ){
+	// 											std::vector<double> d_vec = {linked_site.first, linked_site2.first, linked_site3.first, linked_site4.first, linked_site5.first, distance};
+	// 											sort(d_vec.begin(), d_vec.end());
+	// 											auto it2 = find( d_b4_index.begin(), d_b4_index.end(), d_vec );
+	// 											if( it2 == d_b4_index.end() ){
+	// 												std::cout << d_vec[0] << " " << d_vec[1] << "  " << d_vec[2] << " " << d_vec[3] << " " << d_vec[4] << " " << d_vec[5] << std::endl;
+	// 												d_b4_index.push_back(d_vec);
+	// 												// is_searched = true;
+	// 											}
+	// 										}
+	// 									}
+	// 								}
+	// 							}
+	// 						}
 	// 					}
 	// 				}
 	// 			}
 	// 		}
 	// 	}
-	// 	std::cout << std::endl;
 	// }
+
+
+	std::vector<std::vector<std::shared_ptr<Site>>> clusters_4body;		/* site -> other 2 sites*/
+
 
 }
