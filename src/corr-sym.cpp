@@ -98,8 +98,8 @@ Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3
 
 Eigen::Vector3d validCoordinate(Eigen::Vector3d lhs){
 	for( int i=0; i<3; ++i ){ /* boundary condition */
-		if( lhs(i) > (0.5-0.00001) )       {lhs(i) = 1-lhs(i);}
-		else if( lhs(i) < -(0.5+0.00001) ) {lhs(i) = 1+lhs(i);}
+		if( lhs(i) >  (0.5+0.00001) )       {lhs(i) = 1-lhs(i);}
+		else if( lhs(i) < -(0.5-0.00001) ) {lhs(i) = 1+lhs(i);}
 	}
 	return lhs;
 };
@@ -160,11 +160,82 @@ int main(int argc, char* argv[]){
 	int prim_N = spg_standardize_cell(lattice_prim, position_prim, types, N, 1, 0, 0.00001);
 	outputPoscar(lattice_prim, position_prim, prim_N, "prim");
 
-	const int max_size_op = prim_N * max_symmetry_num;
+	int N_unit = spg_standardize_cell(lattice_unit, position_unit, types, N, 0, 0, 0.00001);
+	outputPoscar(lattice_unit, position_unit, N_unit, "unit");
+
+	int expand_x = 1;
+	int expand_y = 1;
+	int expand_z = 1;
+	Eigen::Matrix3d lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice_unit[0][0]);
+	{
+		Eigen::Vector3d unit_x, unit_y, unit_z;
+		unit_x << 1, 0, 0;
+		unit_y << 0, 1, 0;
+		unit_z << 0, 0, 1;
+		double unit_length_x = (lattice_unit_matrix * unit_x).norm();
+		double unit_length_y = (lattice_unit_matrix * unit_y).norm();
+		double unit_length_z = (lattice_unit_matrix * unit_z).norm();
+		while( unit_length_x <= (d2) ){
+			unit_x[0] = ++expand_x;
+			unit_length_x = (lattice_unit_matrix * unit_x).norm();
+		}
+		while( unit_length_y <= (d2) ){
+			unit_y[1] = ++expand_y;
+			unit_length_y = (lattice_unit_matrix * unit_y).norm();
+		}
+		while( unit_length_z <= (d2) ){
+			unit_z[2] = ++expand_z;
+			unit_length_z = (lattice_unit_matrix * unit_z).norm();
+		}
+	}
+	std::cout << " poscar.expand = ";
+	std::cout << expand_x << " * " << expand_y << " * " << expand_z << "  ";
+	std::cout << "poscar.unit" << std::endl;
+
+	std::vector<Eigen::Vector3d> position_ex;
+	Eigen::Matrix3d lattice_ex;
+	double lattice_ex_arr[3][3];
+	double position_ex_arr[N_unit*expand_x*expand_y*expand_z][3];
+	{
+		Eigen::Matrix3d div_mat;
+		div_mat << 1./double(expand_x),0,0,
+							 0,1./double(expand_y),0,
+							 0,0,1./double(expand_z);
+		/* !! Eigen::Map<Eigen::MatrixXd>(&(position_unit[0][0]), N_unit,3) does not work */
+		std::vector<Eigen::Vector3d> position_unit_vec ;
+		for(int i=0; i<N_unit; ++i){
+			position_unit_vec.push_back( div_mat * Eigen::Map<Eigen::Vector3d>(&(position_unit[i][0])));
+		}
+		for(int x=0; x<expand_x; ++x){
+			for(int y=0; y<expand_y; ++y){
+				for(int z=0; z<expand_z; ++z){
+					Eigen::Vector3d block_vec;
+					block_vec << double(x)/double(expand_x), double(y)/double(expand_y), double(z)/double(expand_z);
+					for(int i=0; i<N_unit; ++i){
+						for(int ii=0; ii<3; ++ii){
+							position_ex_arr[position_ex.size()][ii] = block_vec[ii] + position_unit_vec[i](ii);
+						}
+						position_ex.push_back( block_vec + position_unit_vec[i]);
+					}
+				}
+			}
+		}
+		Eigen::Matrix3d max_ex_mat;
+		max_ex_mat << expand_x,0,0, 0,expand_y,0, 0,0,expand_z;
+		lattice_ex = max_ex_mat * lattice_unit_matrix;
+		for(int i=0; i<3; ++i){
+			for(int j=0; j<3; ++j){
+				lattice_ex_arr[i][j] = lattice_ex(i,j);
+			}
+		}
+	}
+	outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
+
+	const int max_size_op = position_ex.size() * max_symmetry_num;
 	int rotation[max_size_op][3][3];
 	double translation[max_size_op][3];
-	int prim_types[1] = {1};
-	const int num_sym = spg_get_symmetry(rotation, translation, max_size_op, lattice_prim, position_prim, prim_types, prim_N, 0.0001);
+	int ex_types[max_size_op];
+	const int num_sym = spg_get_symmetry(rotation, translation, max_size_op, lattice_ex_arr, position_ex_arr, ex_types, position_ex.size(), 0.00001);
 	outputSymmetry(rotation, translation, num_sym);
 
 	std::vector<Eigen::Matrix3d> rotation_matrix;
@@ -184,71 +255,82 @@ int main(int argc, char* argv[]){
 		translation_vector.push_back(Eigen::Map<Eigen::Vector3d>(&(tmp_tra[0])));
 	}
 
-	int N_unit = spg_standardize_cell(lattice_unit, position_unit, types, N, 0, 0, 0.00001);
-	outputPoscar(lattice_unit, position_unit, N_unit, "unit");
+	// int j=16;
+	// std::cout << "!!!" << position_ex[j].transpose() << std::endl;
+	// for(int j=0; j<10; ++j){
+	// 	std::vector<Eigen::Vector3d> a;
+	// 	for(int i=0; i<48; ++i){
+	// 		auto tmp = (rotation_matrix[i+48*j] * (position_ex[j] - translation_vector[i+48*j]));
+	// 		auto target_coord = validCoordinate(tmp);
+	// 		// auto target_coord = tmp;
+	// 		auto it = find_if( a.begin(), a.end(),
+	// 				[target_coord, prec](const Eigen::Vector3d& s){
+	// 					for(int i=0; i<3; ++i){
+	// 						 if( std::abs(s[i]-target_coord[i])>0.01 ){
+	// 							 return false;
+	// 						}
+	// 					}
+	// 				return true;
+	// 			});
+	//
+	// 		if( it == a.end() ){
+	// 			// std::cout << "rotated  " << (target_coord-rcb.second->getCoordinate()).transpose() << std::endl;
+	// 			std::cout << target_coord.transpose() << std::endl;
+	// 			a.push_back(target_coord);
+	// 		}
+	// 	}
+	// 	std::cout << position_ex[j].transpose() << " " << position_ex[j].norm() << "  " << a.size() << std::endl;
+	//
+	// }
 
-	int expand_x = 1;
-	int expand_y = 1;
-	int expand_z = 1;
-	Eigen::Matrix3d lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice_unit[0][0]);
-	{
-		Eigen::Vector3d unit_x, unit_y, unit_z;
-		unit_x << 1, 0, 0;
-		unit_y << 0, 1, 0;
-		unit_z << 0, 0, 1;
-		double unit_length_x = (lattice_unit_matrix * unit_x).norm();
-		double unit_length_y = (lattice_unit_matrix * unit_y).norm();
-		double unit_length_z = (lattice_unit_matrix * unit_z).norm();
-		while( unit_length_x <= (d2*2.) ){
-			unit_x[0] = ++expand_x;
-			unit_length_x = (lattice_unit_matrix * unit_x).norm();
-		}
-		while( unit_length_y <= (d2*2.) ){
-			unit_y[1] = ++expand_y;
-			unit_length_y = (lattice_unit_matrix * unit_y).norm();
-		}
-		while( unit_length_z <= (d2*2.) ){
-			unit_z[2] = ++expand_z;
-			unit_length_z = (lattice_unit_matrix * unit_z).norm();
-		}
-	}
-	std::cout << " poscar.expand = ";
-	std::cout << expand_x << " * " << expand_y << " * " << expand_z << "  ";
-	std::cout << "poscar.unit" << std::endl;
 
-	std::vector<Eigen::Vector3d> position_ex;
-	Eigen::Matrix3d lattice_ex;
-	{
-		Eigen::Matrix3d div_mat;
-		div_mat << 1./double(expand_x),0,0,
-							 0,1./double(expand_y),0,
-							 0,0,1./double(expand_z);
-		/* !! Eigen::Map<Eigen::MatrixXd>(&(position_unit[0][0]), N_unit,3) does not work */
-		std::vector<Eigen::Vector3d> position_unit_vec ;
-		for(int i=0; i<N_unit; ++i){
-			position_unit_vec.push_back( div_mat * Eigen::Map<Eigen::Vector3d>(&(position_unit[i][0]), 3));
+		std::vector<std::shared_ptr<Site>> site_vec;
+		for(int i=0; i<position_ex.size(); ++i) {
+			site_vec.push_back( std::shared_ptr<Site>( new Site(i, position_ex[i])) );
 		}
-		for(int x=0; x<expand_x; ++x){
-			for(int y=0; y<expand_y; ++y){
-				for(int z=0; z<expand_z; ++z){
-					Eigen::Vector3d block_vec;
-					block_vec << double(x)/double(expand_x), double(y)/double(expand_y), double(z)/double(expand_z);
-					for(int i=0; i<N_unit; ++i){
-						position_ex.push_back( block_vec + position_unit_vec[i]);
-					}
-				}
+
+		std::vector<int> a;
+		// std::vector<Eigen::Vector3d> a;
+	for(int i=0; i<max_size_op; ++i){
+		auto tmp = validCoordinate((rotation_matrix[i] * (position_ex[0] - translation_vector[i])));
+		bool is_tmp_zero = ((tmp-position_ex[0]).norm() < prec) ? true : false;
+		for(int j=1; j<site_vec.size(); ++j){
+			auto tmp2 = validCoordinate((rotation_matrix[i] * (position_ex[j] - translation_vector[i])));
+			bool is_tmp2_zero = ((tmp-position_ex[0]).norm() < prec) ? true : false;
+
+			if( !is_tmp_zero and !is_tmp2_zero ) {
+				continue;
 			}
-		}
-		Eigen::Matrix3d max_ex_mat;
-		max_ex_mat << expand_x,0,0, 0,expand_y,0, 0,0,expand_z;
-		lattice_ex = max_ex_mat * lattice_unit_matrix;
-	}
-	outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
 
-	std::vector<std::shared_ptr<Site>> site_vec;
-	for(int i=0; i<position_ex.size(); ++i) {
-		site_vec.push_back( std::shared_ptr<Site>( new Site(i, position_ex[i])) );
+			auto target_coord = validCoordinate(tmp);
+			auto target_coord2 = validCoordinate(tmp2);
+
+			if(validCoordinate(target_coord2,target_coord).norm()>0.4 or validCoordinate(target_coord2,target_coord).norm()<0.3) continue;
+
+			std::cout << validCoordinate(target_coord2,target_coord).norm() << " - ";
+			int tmp_sitenum;
+			if(is_tmp_zero) {
+				tmp_sitenum = j;
+				std::cout << j << " " << target_coord2.transpose() << std::endl;
+			} else {
+				auto it = find_if( position_ex.begin(), position_ex.end(),
+						[tmp, prec](const Eigen::Vector3d& s){
+							return ((tmp-s).norm() < prec) ? true : false;
+					});
+				std::cout << std::distance(position_ex.begin(), it) << " " << target_coord.transpose() << std::endl;
+				tmp_sitenum = std::distance(position_ex.begin(), it);
+			}
+
+			auto it_ = find(a.begin(), a.end(), tmp_sitenum);
+			if( it_ == a.end() ) a.push_back(tmp_sitenum);
+
+		}
 	}
+	std::cout << a.size() << std::endl;
+	for(auto i : a) std::cout << i << " ";
+	std::cout << std::endl;
+exit(1);
+
 
 	std::ofstream clusters_out( "clusters.out", std::ios::out );
 
