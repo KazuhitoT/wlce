@@ -66,4 +66,12 @@ public :
 		return -1;
 	}
 
+	bool isCoordinate( const Eigen::Vector3d& obj ){
+		for( int i=0; i<3; ++i ){
+			if( std::abs( this->coordinate[i]-obj[i] ) > 0.00001 ) {
+				return false;
+			}
+		}
+		return true;
+	}
 };
