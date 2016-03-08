@@ -3,9 +3,9 @@
 
 // requiremnt Eigen boost
 #include <unordered_map>
-#include <map>
 #include <memory>
 #include <iterator>
+#include <regex>
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include "./parsePoscar.hpp"
@@ -14,19 +14,7 @@ extern "C" {
 	#include "../spglib/src/spglib.h"
 }
 
-using vector2i = std::vector<std::vector<int>>;
-using vector3i = std::vector<std::vector<std::vector<int>>>;
-// using vector3i = std::vector<std::vector<std::vector<int>>>;
-// using vector3i = std::vector<std::vector<std::vector<int>>>;
-
-#define MAX_BODY 6
-
 constexpr int max_symmetry_num = 48;
-
-#define DEBUG
-
-// extern Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs);
-// extern Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs);
 
 class hash_vecd {
 public:
@@ -60,7 +48,6 @@ public:
 	bool operator ()(const std::vector<double> &lhs, const std::vector<double> &rhs) const {
 		return accumulate(lhs.begin(), lhs.end(), 0) < accumulate(rhs.begin(), rhs.end(), 0);
 	}
-
 };
 
 void outputPoscar(Eigen::Matrix3d lattice, std::vector<Eigen::Vector3d> position, int N, std::string prefix){
@@ -120,10 +107,28 @@ bool is_line_cluster(std::vector<std::shared_ptr<Site>> cluster){
 
 
 int main(int argc, char* argv[]){
-	double d2, d3, d4 = 0;
+	double d2, d3, d4 = -1;
 	double prec = 0.00001;
 
-	d2 = atof(argv[1]);
+	std::regex re("(-d|-d2|-d3|-d4)\\=(\\d+)?");
+	std::smatch match;
+	for(int i=1; i<argc; i++) {
+		std::string str(argv[i]);
+		if(regex_match(str, match, re)){
+			if( match[1] == "-d2" ) d2=std::stod(match[2]);
+			else if( match[1] == "-d3" ) d3=std::stod(match[2]);
+			else if( match[1] == "-d4" ) d4=std::stod(match[2]);
+			else if( match[1] == "-d" ) d2=std::stod(match[2]);
+		} else {
+			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
+			exit(1);
+		}
+		std::cout << std::endl;
+	}
+
+	if( d2==-1 and d3==-1 and d4==-1 ){
+		std::cerr << " ERROR : commandline argument [-d=*] is required." << std::endl;
+	}
 
 	ParsePoscar poscar("poscar.in");
 	const int N = poscar.getAtoms().size();
@@ -157,9 +162,6 @@ int main(int argc, char* argv[]){
 		++type;
 	}
 	assert( N == count);
-
-	int prim_N = spg_standardize_cell(lattice_prim, position_prim, types, N, 1, 0, 0.00001);
-	outputPoscar(lattice_prim, position_prim, prim_N, "prim");
 
 	int N_unit = spg_standardize_cell(lattice_unit, position_unit, types, N, 0, 0, 0.00001);
 	outputPoscar(lattice_unit, position_unit, N_unit, "unit");
@@ -232,32 +234,6 @@ int main(int argc, char* argv[]){
 	}
 	outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
 
-	const int max_size_op = position_ex.size() * max_symmetry_num;
-	int rotation[max_size_op][3][3];
-	double translation[max_size_op][3];
-	int ex_types[max_size_op];
-	const int num_sym = spg_get_symmetry(rotation, translation, max_size_op, lattice_ex_arr, position_ex_arr, ex_types, position_ex.size(), 0.00001);
-	outputSymmetry(rotation, translation, num_sym);
-
-	std::vector<Eigen::Matrix3d> rotation_matrix;
-	std::vector<Eigen::Vector3d> translation_vector;
-	for(int i=0; i<max_size_op; ++i) {
-		double tmp_rot[3][3];
-		double tmp_tra[3];
-		for( int tmp_i=0; tmp_i<3; ++tmp_i ){
-			for( int tmp_j=0; tmp_j<3; ++tmp_j ){
-				tmp_rot[tmp_i][tmp_j] = double(rotation[i][tmp_i][tmp_j]);
-			}
-			tmp_tra[tmp_i] = translation[i][tmp_i];
-		}
-		Eigen::Map<Eigen::Matrix3d> tmp_rot_eigen(&(tmp_rot[0][0]));
-		rotation_matrix.push_back(tmp_rot_eigen.transpose()/tmp_rot_eigen.determinant());
-		// rotation_matrix.push_back(Eigen::Map<Eigen::Matrix3d>(&(tmp_rot[0][0])));
-		translation_vector.push_back(Eigen::Map<Eigen::Vector3d>(&(tmp_tra[0])));
-	}
-
-
-
 	std::vector<std::shared_ptr<Site>> site_vec;
 	for(int i=0; i<position_ex.size(); ++i) {
 		site_vec.push_back( std::shared_ptr<Site>( new Site(i, position_ex[i])) );
@@ -265,54 +241,6 @@ int main(int argc, char* argv[]){
 	for( const auto& site : site_vec){
 		site->setRelativeSite(site_vec);
 	}
-
-	//
-	// std::unordered_map<double, std::vector<Eigen::Vector3d>> rep_pair_cluster;
-	// for(int i=0; i<max_size_op; ++i){
-	// 	auto coord_site0 = validCoordinate((rotation_matrix[i] * (position_ex[0] - translation_vector[i])));
-	// 	bool is_site0_zero = ((coord_site0-position_ex[0]).norm() < prec) ? true : false;
-	// 	for(int j=1; j<site_vec.size(); ++j){
-	// 		auto coord_another_site = validCoordinate((rotation_matrix[i] * (position_ex[j] - translation_vector[i])));
-	//
-	// 		// bool is_over_half = false;
-	// 		// for(int k=0; k<3; ++k){ if(std::abs(coord_another_site[k]-coord_site0[k])>=(0.5-prec)){ is_over_half=true;break;};}
-	// 		// if(is_over_half) continue;
-	// 		if( (lattice_ex*validCoordinate(coord_another_site, coord_site0)).norm()>d2 ) continue;
-	//
-	// 		bool is_anothersite_zero = ((coord_site0-position_ex[0]).norm() < prec) ? true : false;
-	// 		if( !is_site0_zero and !is_anothersite_zero ) continue;
-	//
-	// 		double distance = validCoordinate(coord_another_site, coord_site0).norm();
-	// 		for(const auto& i : rep_pair_cluster){
-	// 			if( std::abs(i.first-distance) < prec ){
-	// 				distance = i.first;
-	// 				break;
-	// 			}
-	// 		}
-	//
-	// 		std::shared_ptr<Site> tmp_site;
-	// 		if(is_site0_zero) {
-	// 			tmp_site = site_vec[j];
-	// 		} else {
-	// 			auto it = find_if( position_ex.begin(), position_ex.end(),
-	// 					[coord_site0, prec](const Eigen::Vector3d& s){
-	// 						return ((coord_site0-s).norm() < prec) ? true : false;
-	// 				});
-	// 			tmp_site = site_vec[std::distance(position_ex.begin(), it)];
-	// 		}
-	//
-	// 		auto tmp_coord = validCoordinate(tmp_site->getCoordinate());
-	// 		auto it = find_if(rep_pair_cluster[distance].begin(), rep_pair_cluster[distance].end(),
-	// 				[tmp_coord, prec](const Eigen::Vector3d& s){
-	// 					return (tmp_coord-s).norm() < prec;
-	// 			});
-	//
-	// 		if( it == rep_pair_cluster[distance].end() ){
-	// 			// std::cout << validCoordinate(tmp_site->getCoordinate()).transpose() << std::endl;
-	// 			rep_pair_cluster[distance].push_back(validCoordinate(tmp_site->getCoordinate()));
-	// 		}
-	// 	}
-	// }
 
 	std::ofstream clusters_out( "clusters.out", std::ios::out );
 	std::ofstream multiplicity_out( "multiplicity.out", std::ios::out );
@@ -520,9 +448,15 @@ int main(int argc, char* argv[]){
 			}
 		}
 	}
-
-	// for(int i=2; i>=0; --i){
-	// 	stable_sort(d_b4_index.begin(), d_b4_index.end(), [i](const std::vector<double>& lhs, const std::vector<double>& rhs){ return lhs[i] < rhs[i]; });
+	//
+	// for(int i=3; i>=0; --i){
+	// 	stable_sort(d_b4_index.begin(), d_b4_index.end(),
+	// 	[i](const std::vector<std::vector<double>>& lhs, const std::vector<std::vector<double>>& rhs){
+	// 		for(int j=2; j>=0; --j){
+	// 			if(lhs[i][j] == rhs[i][j]) continue;
+	// 			return lhs[i][j] < rhs[i][j];
+	// 		}
+	// 	});
 	// }
 
 	for(const auto& index : d_b4_index){
