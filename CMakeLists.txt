@@ -11,11 +11,11 @@ else()
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
-
-add_executable(corr
-	./src/parsePoscar.cpp
-	./src/corr.cpp
-)
+# 
+# add_executable(corr
+# 	./src/parsePoscar.cpp
+# 	./src/corr.cpp
+# )
 
 add_executable(corr-sym
 	./src/parsePoscar.cpp
@@ -23,10 +23,10 @@ add_executable(corr-sym
 )
 
 # link_directories(~/gitkawailab/cluster-expand/spglib/src/.libs)
-target_link_libraries(corr
-	symspg
-	m
-)
+# target_link_libraries(corr
+# 	symspg
+# 	m
+# )
 
 target_link_libraries(corr-sym
 	symspg

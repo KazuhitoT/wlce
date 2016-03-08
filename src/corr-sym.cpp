@@ -25,6 +25,9 @@ constexpr int max_symmetry_num = 48;
 
 #define DEBUG
 
+// extern Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs);
+// extern Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs);
+
 class hash_vecd {
 public:
   double operator()(const std::vector<double> &x) const {
@@ -86,23 +89,6 @@ void outputSymmetry(int rotation[][3][3], double translation[][3], int num_sym){
 		ofs << std::endl;
 	}
 }
-
-Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
-	Eigen::Vector3d d_vec = lhs - rhs;
-	for( int i=0; i<3; ++i ){ /* boundary condition */
-		if( d_vec(i) > (0.5-0.00001) )       {d_vec(i) = 1-d_vec(i);}
-		else if( d_vec(i) < -(0.5+0.00001) ) {d_vec(i) = 1+d_vec(i);}
-	}
-	return d_vec;
-};
-
-Eigen::Vector3d validCoordinate(Eigen::Vector3d lhs){
-	for( int i=0; i<3; ++i ){ /* boundary condition */
-		if( lhs(i) >  (0.5+0.00001) )       {lhs(i) = 1-lhs(i);}
-		else if( lhs(i) < -(0.5-0.00001) ) {lhs(i) = 1+lhs(i);}
-	}
-	return lhs;
-};
 
 bool is_line_cluster(std::vector<std::shared_ptr<Site>> cluster){
 	Eigen::Vector3d center;
@@ -175,15 +161,15 @@ int main(int argc, char* argv[]){
 		double unit_length_x = (lattice_unit_matrix * unit_x).norm();
 		double unit_length_y = (lattice_unit_matrix * unit_y).norm();
 		double unit_length_z = (lattice_unit_matrix * unit_z).norm();
-		while( unit_length_x <= (d2) ){
+		while( unit_length_x <= (d2*2.) ){
 			unit_x[0] = ++expand_x;
 			unit_length_x = (lattice_unit_matrix * unit_x).norm();
 		}
-		while( unit_length_y <= (d2) ){
+		while( unit_length_y <= (d2*2.) ){
 			unit_y[1] = ++expand_y;
 			unit_length_y = (lattice_unit_matrix * unit_y).norm();
 		}
-		while( unit_length_z <= (d2) ){
+		while( unit_length_z <= (d2*2.) ){
 			unit_z[2] = ++expand_z;
 			unit_length_z = (lattice_unit_matrix * unit_z).norm();
 		}
@@ -284,53 +270,60 @@ int main(int argc, char* argv[]){
 	// }
 
 
-		std::vector<std::shared_ptr<Site>> site_vec;
-		for(int i=0; i<position_ex.size(); ++i) {
-			site_vec.push_back( std::shared_ptr<Site>( new Site(i, position_ex[i])) );
-		}
+	std::vector<std::shared_ptr<Site>> site_vec;
+	for(int i=0; i<position_ex.size(); ++i) {
+		site_vec.push_back( std::shared_ptr<Site>( new Site(i, position_ex[i])) );
+	}
+	for( const auto& site : site_vec){
+		site->setRelativeSite(site_vec);
+	}
 
-		std::vector<int> a;
-		// std::vector<Eigen::Vector3d> a;
+	std::unordered_map<double, std::vector<Eigen::Vector3d>> rep_pair_cluster;
 	for(int i=0; i<max_size_op; ++i){
-		auto tmp = validCoordinate((rotation_matrix[i] * (position_ex[0] - translation_vector[i])));
-		bool is_tmp_zero = ((tmp-position_ex[0]).norm() < prec) ? true : false;
+		auto coord_site0 = validCoordinate((rotation_matrix[i] * (position_ex[0] - translation_vector[i])));
+		bool is_site0_zero = ((coord_site0-position_ex[0]).norm() < prec) ? true : false;
 		for(int j=1; j<site_vec.size(); ++j){
-			auto tmp2 = validCoordinate((rotation_matrix[i] * (position_ex[j] - translation_vector[i])));
-			bool is_tmp2_zero = ((tmp-position_ex[0]).norm() < prec) ? true : false;
+			auto coord_another_site = validCoordinate((rotation_matrix[i] * (position_ex[j] - translation_vector[i])));
 
-			if( !is_tmp_zero and !is_tmp2_zero ) {
-				continue;
+			// bool is_over_half = false;
+			// for(int k=0; k<3; ++k){ if(std::abs(coord_another_site[k]-coord_site0[k])>=(0.5-prec)){ is_over_half=true;break;};}
+			// if(is_over_half) continue;
+			if( (lattice_ex*validCoordinate(coord_another_site, coord_site0)).norm()>d2 ) continue;
+
+			bool is_anothersite_zero = ((coord_site0-position_ex[0]).norm() < prec) ? true : false;
+			if( !is_site0_zero and !is_anothersite_zero ) continue;
+
+			double distance = validCoordinate(coord_another_site, coord_site0).norm();
+			for(const auto& i : rep_pair_cluster){
+				if( std::abs(i.first-distance) < prec ){
+					distance = i.first;
+					break;
+				}
 			}
 
-			auto target_coord = validCoordinate(tmp);
-			auto target_coord2 = validCoordinate(tmp2);
-
-			if(validCoordinate(target_coord2,target_coord).norm()>0.4 or validCoordinate(target_coord2,target_coord).norm()<0.3) continue;
-
-			std::cout << validCoordinate(target_coord2,target_coord).norm() << " - ";
-			int tmp_sitenum;
-			if(is_tmp_zero) {
-				tmp_sitenum = j;
-				std::cout << j << " " << target_coord2.transpose() << std::endl;
+			std::shared_ptr<Site> tmp_site;
+			if(is_site0_zero) {
+				tmp_site = site_vec[j];
 			} else {
 				auto it = find_if( position_ex.begin(), position_ex.end(),
-						[tmp, prec](const Eigen::Vector3d& s){
-							return ((tmp-s).norm() < prec) ? true : false;
+						[coord_site0, prec](const Eigen::Vector3d& s){
+							return ((coord_site0-s).norm() < prec) ? true : false;
 					});
-				std::cout << std::distance(position_ex.begin(), it) << " " << target_coord.transpose() << std::endl;
-				tmp_sitenum = std::distance(position_ex.begin(), it);
+				tmp_site = site_vec[std::distance(position_ex.begin(), it)];
 			}
 
-			auto it_ = find(a.begin(), a.end(), tmp_sitenum);
-			if( it_ == a.end() ) a.push_back(tmp_sitenum);
+			auto tmp_coord = validCoordinate(tmp_site->getCoordinate());
+			auto it = find_if(rep_pair_cluster[distance].begin(), rep_pair_cluster[distance].end(),
+					[tmp_coord, prec](const Eigen::Vector3d& s){
+						return (tmp_coord-s).norm() < prec;
+				});
 
+			if( it == rep_pair_cluster[distance].end() ){
+				// std::cout << validCoordinate(tmp_site->getCoordinate()).transpose() << std::endl;
+				rep_pair_cluster[distance].push_back(validCoordinate(tmp_site->getCoordinate()));
+			}
 		}
 	}
-	std::cout << a.size() << std::endl;
-	for(auto i : a) std::cout << i << " ";
-	std::cout << std::endl;
-exit(1);
-
 
 	std::ofstream clusters_out( "clusters.out", std::ios::out );
 
@@ -343,107 +336,30 @@ exit(1);
 
 	/*  set nbody = 2 */
 	std::cout << " -- 2 body cluster" << std::endl;
-
-	/* represetative cluster nbody=2 */
-	std::unordered_map<double, std::shared_ptr<Site>> rep_clu_b2;
-	for( int i=1; i<site_vec.size(); ++i ){
-		Eigen::Vector3d d_vec = validCoordinate(position_ex[i], position_ex[0]);
-		double distance = (lattice_ex * d_vec).norm();
-		if( distance <= d2  ){
-			bool is_found = false;
-			for( const auto& i : rep_clu_b2 ){
-				if( std::abs(i.first-distance) < prec ) {
-					is_found = true;
-					break;
-				}
-			}
-			if( !is_found ) {rep_clu_b2[distance] = site_vec[i]; }
-		}
-	}
-
-	/* construct */
-	for( const auto& rcb : rep_clu_b2 ){
-		std::vector<std::vector<int>> a_d_a;
-		for( const auto& i : site_vec ){
-			for( const auto& j : site_vec ){
-				Eigen::Vector3d d_vec = validCoordinate(i->getCoordinate(), j->getCoordinate());
-				double distance = (lattice_ex * d_vec).norm();
-				if( std::abs( distance - rcb.first ) < prec ) {
-					i->setLinkedSite(rcb.first, j);
-				}
-			}
-		}
-	}
-
 	/* output */
-	for( const auto& rcb : rep_clu_b2 ){
-		std::cout << rcb.first << " " << site_vec[0]->getLinkedSiteviaDisncace(rcb.first).size() << std::endl;
-		for( const auto& site : site_vec ) {
-			assert( site->getLinkedSiteviaDisncace(rcb.first).size() == site_vec[0]->getLinkedSiteviaDisncace(rcb.first).size());
-			for( const auto& linked_site : site->getLinkedSiteviaDisncace(rcb.first) ) {
-				clusters_out << site->getSiteNum() << " " << linked_site->getSiteNum() << " ";
+
+	for(const auto& i : rep_pair_cluster){
+		double display_distance = (lattice_ex * validCoordinate(site_vec[0]->getCoordinate(), i.second[0])).norm();
+		std::cout << "distance = " << display_distance << " -- multiplicity = " << i.second.size() << std::endl;
+		std::cout << "relative coordinate : " << i.second[0].transpose() << std::endl;
+		std::cout << std::endl;
+		for(const auto& site : site_vec ){
+			for(const auto& relative_coord : i.second){
+				// auto absolute_coord = validCoordinate(relative_coord, -site->getCoordinate());
+				// std::cout << site->getSiteNum() << " " << relative_coord.transpose()  << std::endl;
+				clusters_out << site->getSiteNum() << " " << site->getRelativeSite(relative_coord)->getSiteNum() << " ";
 			}
 		}
 		clusters_out << std::endl;
 	}
 
-	for( const auto& rcb : rep_clu_b2 ){
-		// target_coord = lattice_ex * target_coord;
-		Eigen::Vector3d base;
-		base << 0.5, 0.5, 0.5;
-		const Eigen::Vector3d base_target_coord =  rcb.second->getCoordinate() - site_vec[0]->getCoordinate();
-		std::cout << "target_coord  " << rcb.second->getCoordinate().transpose() << std::endl;
-
-		// std::vector<int> a;
-		std::vector<Eigen::Vector3d> a;
-		for( int i=0; i<max_size_op; ++i) {
-			// std::cout << " max_size_op " << i << " " << rotation_matrix[i] << std::endl;
-			Eigen::Vector3d target_coord = base_target_coord;
-			Eigen::Vector3d target_trans;
-			target_trans << 0,0,0;
-			do {
-				target_coord = rotation_matrix[i] * target_coord;
-
-				// std::cout << "r  " << target_coord.transpose() << std::endl;
-				// auto it = find(a.begin(), a.end(), target_coord);
-				auto it = find_if( a.begin(), a.end(),
-						[target_coord, prec](const Eigen::Vector3d& s){
-							for(int i=0; i<3; ++i){
-								 if( std::abs(s[i]-target_coord[i])>prec ){
-									 return false;
-								}
-							}
-						return true;
-					});
-
-				if( it == a.end() ){
-					std::cout << "rotated  " << (target_coord-rcb.second->getCoordinate()).transpose() << std::endl;
-					a.push_back(target_coord);
-				}
-			} while ( std::abs(target_coord[0]-base_target_coord[0]) > prec
-		 	or std::abs(target_coord[1]-base_target_coord[1]) > prec
-			or std::abs(target_coord[2]-base_target_coord[2]) > prec	);
-			// exit(1);
-			//
-			// for( const auto& site : site_vec ){
-			// 	// auto tmp = validCoordinate(rotation_matrix[i] * target_coord + site->getCoordinate());
-			// 	if( site->isCoordinate(tmp) ){
-			// 		// std::cout << site->getSiteNum() << std::endl;
-			// 		a.push_back(site->getSiteNum());
-			// 		break;
-			// 	}
-			// }
-		}
-		// exit(1);
-
-		// std::sort(a.begin(), a.end());
-		// a.erase(std::unique(a.begin(), a.end()), a.end());
-		std::cout << a.size() << std::endl;
-	}
 
 
-	// /*  set nbody = 3 */
+
+	/*  set nbody = 3 */
 	// std::cout << " -- 3 body cluster" << std::endl;
+	// std::unordered_map<std::vector<double>, std::vector<Eigen::Vector3d>, hash_vecd> rep_triplet_cluster;
+	//
 	// std::vector<std::vector<double>> d_b3_index;
 	// for(const auto& linked_site : site_vec[0]->getLinkedSite() ){
 	// 	for(const auto& site2 : linked_site.second ){
@@ -467,7 +383,7 @@ exit(1);
 	// 		}
 	// 	}
 	// }
-	//
+
 	// for(int i=2; i>=0; --i){
 	// 	stable_sort(d_b3_index.begin(), d_b3_index.end(), [i](const std::vector<double>& lhs, const std::vector<double>& rhs){ return lhs[i] < rhs[i]; });
 	// }
