@@ -2,9 +2,6 @@
 #include <Eigen/Core>
 #include <unordered_map>
 #include <vector>
-#include <utility>
-#include <iostream>
-
 
 Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
 	Eigen::Vector3d d_vec = lhs - rhs;
@@ -22,6 +19,32 @@ Eigen::Vector3d validCoordinate(Eigen::Vector3d lhs){
 	}
 	return lhs;
 };
+
+std::vector<std::vector<double>> getAllTriplets(const std::vector<Eigen::Vector3d>& points, const Eigen::Matrix3d& lattice, double maxd){
+	std::vector<std::vector<double>> result;
+	for(int i=0; i<points.size(); ++i){
+		for(int j=(i+1); j<points.size(); ++j){
+			for(int k=(j+1); k<points.size(); ++k){
+				double distance1 = ( lattice * validCoordinate(points[i], points[j]) ).norm();
+				double distance2 = ( lattice * validCoordinate(points[j], points[k]) ).norm();
+				double distance3 = ( lattice * validCoordinate(points[k], points[i]) ).norm();
+				if( distance1 > maxd or distance2 > maxd or distance3 > maxd
+						or distance1 < 0.00001 or distance2 < 0.00001  or distance3 < 0.00001) continue;
+				std::vector<double> lines = {distance1, distance2, distance3};
+				sort(lines.begin(), lines.end());
+				result.push_back(lines);
+			}
+		}
+	}
+
+	for(int i=(points.size()-1); i>=0; --i){
+		sort(result.begin(), result.end(), [i](const std::vector<double>& lhs, const std::vector<double>& rhs){
+			return lhs[i] < rhs[i];
+		});
+	}
+
+	return result;
+}
 
 class Site {
 private :
