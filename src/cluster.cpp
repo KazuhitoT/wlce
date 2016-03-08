@@ -126,7 +126,7 @@ int main(int argc, char* argv[]){
 		std::cout << std::endl;
 	}
 
-	if( d2==-1 and d3==-1 and d4==-1 ){
+	if( argc == 1 or (d2==-1 and d3==-1 and d4==-1) ){
 		std::cerr << " ERROR : commandline argument [-d=*] is required." << std::endl;
 	}
 
@@ -240,6 +240,7 @@ int main(int argc, char* argv[]){
 	}
 	for( const auto& site : site_vec){
 		site->setRelativeSite(site_vec);
+		assert( site->getSiteRelative().size() == site_vec.size() );
 	}
 
 	std::ofstream clusters_out( "clusters.out", std::ios::out );
@@ -336,7 +337,7 @@ int main(int argc, char* argv[]){
 					Eigen::Vector3d valid_ditance = validCoordinate(site3->getCoordinate(), site_vec[0]->getCoordinate());
 					double distance = (lattice_ex * valid_ditance).norm();
 					distance = site3->getDistance(distance);
-					if( site3->getLinkedSite(distance, 0) ){
+					if( distance > 0 and site3->getLinkedSite(distance, 0) ){
 						std::vector<double> d_vec = {linked_site.first, linked_site2.first, distance};
 						std::vector<Eigen::Vector3d> relative_coords = {
 							validCoordinate(site2->getCoordinate(), site_vec[0]->getCoordinate()),
@@ -386,8 +387,9 @@ int main(int argc, char* argv[]){
 	for(const auto& index : d_b3_index){
 		for(const auto& site : site_vec ){
 			for(const auto& two_relative_coord : triplet_cluster[index]){
-				// auto absolute_coord = validCoordinate(relative_coord, -site->getCoordinate());
-				// std::cout << site->getSiteNum() << " " << relative_coord.transpose()  << std::endl;
+				assert( two_relative_coord.size() == 2 );
+				assert( site->getSiteRelative().size() == position_ex.size() );
+				assert( site->getSiteRelative().size() == site_vec.size() );
 				clusters_out << site->getSiteNum() << " ";
 				clusters_out << site->getRelativeSite(two_relative_coord[0])->getSiteNum() << " ";
 				clusters_out << site->getRelativeSite(two_relative_coord[1])->getSiteNum() << " ";

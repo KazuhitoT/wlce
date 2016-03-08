@@ -2,6 +2,7 @@
 #include <Eigen/Core>
 #include <unordered_map>
 #include <vector>
+#include <iostream>
 
 Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
 	Eigen::Vector3d d_vec = lhs - rhs;
@@ -78,19 +79,26 @@ public :
 
 	void setRelativeSite(const std::vector<std::shared_ptr<Site>>& all_sites){
 		for( const auto& site : all_sites){
-			// std::cout << site_num << " " << site->getSiteNum() << " - " <<  validCoordinate(site->getCoordinate(), this->coordinate).transpose() << std::endl;
-			// site_relative.push_back( std::pair<Eigen::Vector3d, std::shared_ptr<Site>>(validCoordinate(site->getCoordinate(), this->coordinate), site) );
 			site_relative[validCoordinate(site->getCoordinate(), this->coordinate)] = site;
 		}
 		assert( this->site_relative.size() == all_sites.size() );
 	}
 
 	std::shared_ptr<Site> getRelativeSite(const Eigen::Vector3d& coord){
-		return this->site_relative[coord];
+		if( this->site_relative.find(coord) != this->site_relative.end() ){
+			return this->site_relative.at(coord);
+		} else {
+			for(const auto& site : site_relative){
+				if( (site.first-coord).norm() < 0.00001 ) return site.second;
+			}
+		}
+		/* if not found */
+		std::cerr << " ERROR : in [site.hpp, getRelativeSite() ] relative site is not found." << std::endl;
+		exit(1);
 	}
 
 	void setLinkedSite(double distance, const std::shared_ptr<Site> another_site){
-	this->linked_site[distance].push_back(another_site);
+		this->linked_site[distance].push_back(another_site);
 	};
 
 	const std::unordered_map<double, std::vector<std::shared_ptr<Site>>>& getLinkedSite() const {
@@ -108,7 +116,9 @@ public :
 				}
 			}
 			/*  distance is not found  */
-			if(!is_found)	return nullptr;
+			std::cerr << " ERROR : in [site.hpp, getLinkedSite(double, const int) ] distance ";
+			std::cerr << distance << " is not found in linked_site." << std::endl;
+			exit(1);
 		}
 
 		auto it = find_if( linked_site.at(distance).begin(), linked_site.at(distance).end(),
@@ -122,8 +132,11 @@ public :
 	const std::vector<std::shared_ptr<Site>>& getLinkedSiteviaDisncace(const double distance) const {
 		return this->linked_site.at(distance);
 	};
+	const std::unordered_map<Eigen::Vector3d, std::shared_ptr<Site>, hash_vec3d> getSiteRelative(){
+		return site_relative;
+	}
 
-	int getSiteNum() const { return this->site_num; };
+	const int getSiteNum() const { return this->site_num; };
 	const Eigen::Vector3d& getCoordinate() const { return this->coordinate; };
 	const double getDistance(double distance) const {
 		if( this->linked_site.find(distance) == this->linked_site.end() ){
@@ -133,10 +146,14 @@ public :
 				}
 			}
 			/*  distance is not found  */
+			return -1;
+
+			// std::cerr << " ERROR : in [site.hpp, getDistance(double) ] distance ";
+			// std::cerr << distance << " is not found in linked_site." << std::endl;
+			// exit(1);
 		} else {
-		return distance;
+			return distance;
 		}
-		return -1;
 	}
 
 	bool isCoordinate( const Eigen::Vector3d& obj ){
