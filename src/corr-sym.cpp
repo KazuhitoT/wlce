@@ -315,6 +315,7 @@ int main(int argc, char* argv[]){
 	// }
 
 	std::ofstream clusters_out( "clusters.out", std::ios::out );
+	std::ofstream multiplicity_out( "multiplicity.out", std::ios::out );
 
 	/*  set nbody = 1 */
 	std::cout << " -- point cluster" << std::endl;
@@ -322,6 +323,7 @@ int main(int argc, char* argv[]){
 		clusters_out << i << " ";
 	}
 	clusters_out << std::endl;
+	multiplicity_out << "1 " << position_ex.size() << std::endl;
 
 	/*  set nbody = 2 */
 	std::cout << " -- 2 body cluster" << std::endl;
@@ -366,6 +368,7 @@ int main(int argc, char* argv[]){
 
 	for( const auto& i : distance_site_to_sites ){
 		std::cout << i.first << " " << i.second[0].size() << std::endl;
+		multiplicity_out << "2 " << i.second[0].size()*position_ex.size()/2  << std::endl;
 		for( int j=0; j<i.second.size(); ++j) {
 			assert( i.second[j].size() == i.second[0].size() );
 			for( const auto& k : i.second[j] ){
@@ -443,6 +446,7 @@ int main(int argc, char* argv[]){
 
 	for(const auto& index : d_b3_index){
 		std::cout << "multiplicity = " << triplet_cluster[index].size() << std::endl;
+		multiplicity_out << "3 " << triplet_cluster[index].size()*position_ex.size()/3 << std::endl;
 		std::cout << index[0] << " " << index[1] << " " << index[2] << std::endl;
 		std::cout << " -- relative_coords -- "<< std::endl;
 		std::cout << site_vec[0]->getCoordinate().transpose() << std::endl;
@@ -469,50 +473,61 @@ int main(int argc, char* argv[]){
 	std::vector<std::vector<std::vector<double>>> d_b4_index;
 	std::unordered_map<std::vector<std::vector<double>>, std::vector<std::vector<Eigen::Vector3d>>, hash_vec2d> quadlet_cluster;
 	for( const auto& index : d_b3_index ){
-		for( const auto& linked_sites : site_vec[0]->getLinkedSite() ){
-			for( const auto& linked_site : linked_sites.second ){
+		for( int i=0; i<triplet_cluster[index].size(); ++i){
+			for( const auto& linked_sites : site_vec[0]->getLinkedSite() ){
+				for( const auto& linked_site : linked_sites.second ){
 
-				if( linked_site->getCoordinate() == triplet_cluster[index][0][0]
-					or linked_site->getCoordinate() == triplet_cluster[index][0][1] ){
-						continue;
-				}
+					if(  linked_site->getCoordinate() == triplet_cluster[index][i][0]
+						or linked_site->getCoordinate() == triplet_cluster[index][i][1] ){
+							continue;
+					}
 
-				auto all_triplets = getAllTriplets( std::vector<Eigen::Vector3d>{
-					site_vec[0]->getCoordinate(),
-					triplet_cluster[index][0][0],
-					triplet_cluster[index][0][1],
-					linked_site->getCoordinate()
-				}, lattice_ex , d2);
-				if( all_triplets.size() != 4 ) continue;
+					auto all_triplets = getAllTriplets( std::vector<Eigen::Vector3d>{
+						site_vec[0]->getCoordinate(),
+						triplet_cluster[index][i][0],
+						triplet_cluster[index][i][1],
+						linked_site->getCoordinate()
+					}, lattice_ex , d2);
+					if( all_triplets.size() != 4 ) continue;
 
-				std::vector<Eigen::Vector3d> relative_coords = {
-					validCoordinate(triplet_cluster[index][0][0], site_vec[0]->getCoordinate()),
-					validCoordinate(triplet_cluster[index][0][1], site_vec[0]->getCoordinate()),
-					validCoordinate(linked_site->getCoordinate(), site_vec[0]->getCoordinate())
-				};
+					std::vector<Eigen::Vector3d> relative_coords = {
+						validCoordinate(triplet_cluster[index][i][0], site_vec[0]->getCoordinate()),
+						validCoordinate(triplet_cluster[index][i][1], site_vec[0]->getCoordinate()),
+						validCoordinate(linked_site->getCoordinate(), site_vec[0]->getCoordinate())
+					};
 
-				auto it = find(d_b4_index.begin(), d_b4_index.end(), all_triplets);
-				if( it==d_b4_index.end() ) {
-					d_b4_index.push_back(all_triplets);
-					quadlet_cluster[all_triplets].push_back(relative_coords);
-				} else {
-					auto it2 = find_if( quadlet_cluster[all_triplets].begin(), quadlet_cluster[all_triplets].end(),
-					[relative_coords, prec](const std::vector<Eigen::Vector3d>& obj){
-						for(int i=0; i<3; ++i){
-							if( (relative_coords[i]-obj[i]).norm() > prec ) return false;
-						}
-						return true;
-					});
-					if( it2 == quadlet_cluster[all_triplets].end() ){
+					for(int i=2; i>=0; --i){
+						stable_sort(relative_coords.begin(), relative_coords.end(), [i](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){ return lhs[i] < rhs[i]; });
+					}
+
+					auto it = find(d_b4_index.begin(), d_b4_index.end(), all_triplets);
+					if( it==d_b4_index.end() ) {
+						d_b4_index.push_back(all_triplets);
 						quadlet_cluster[all_triplets].push_back(relative_coords);
+					} else {
+						auto it2 = find_if( quadlet_cluster[all_triplets].begin(), quadlet_cluster[all_triplets].end(),
+						[relative_coords, prec](const std::vector<Eigen::Vector3d>& obj){
+							for(int i=0; i<3; ++i){
+								if( (relative_coords[i]-obj[i]).norm() > prec ) return false;
+							}
+							return true;
+						});
+						if( it2 == quadlet_cluster[all_triplets].end() ){
+							quadlet_cluster[all_triplets].push_back(relative_coords);
+						}
 					}
 				}
 			}
 		}
 	}
 
+	// for(int i=2; i>=0; --i){
+	// 	stable_sort(d_b4_index.begin(), d_b4_index.end(), [i](const std::vector<double>& lhs, const std::vector<double>& rhs){ return lhs[i] < rhs[i]; });
+	// }
+
 	for(const auto& index : d_b4_index){
 		std::cout << "multiplicity = " << quadlet_cluster[index].size() << std::endl;
+		multiplicity_out << "4 " << quadlet_cluster[index].size()*position_ex.size()/4 << std::endl;
 		std::cout << " -- relative_coords -- "<< std::endl;
 		std::cout << site_vec[0]->getCoordinate().transpose() << std::endl;
 		std::cout << quadlet_cluster[index][0][0].transpose() << std::endl;
@@ -532,193 +547,7 @@ int main(int argc, char* argv[]){
 		}
 		clusters_out << std::endl;
 	}
-	//
-	// for(const auto& i : a){
-	// 	std::cout << "[";
-	// 	for(const auto& j : i){
-	// 		std::cout << j << ",";
-	// 	}
-	// 	std::cout << "]";
-	// }
-	// std::cout << std::endl;
-	//
-	// for( int i=0; i<d_b3_index.size(); ++i ){
-	// 	for( int j=i; j<d_b3_index.size(); ++j ){
-	// 		for( int k=j; k<d_b3_index.size(); ++k ){
-	// 			for( int l=k; l<d_b3_index.size(); ++l ){
-	// 				std::cout << "[";
-	// 				for( int m=0; m<3; ++m){ std::cout << d_b3_index[i][m] << ",";}
-	// 				std::cout << "] ";
-	// 				std::cout << "[";
-	// 				for( int m=0; m<3; ++m){ std::cout << d_b3_index[j][m] << ",";}
-	// 				std::cout << "] ";
-	// 				std::cout << "[";
-	// 				for( int m=0; m<3; ++m){ std::cout << d_b3_index[k][m] << ",";}
-	// 				std::cout << "] ";
-	// 				std::cout << "[";
-	// 				for( int m=0; m<3; ++m){ std::cout << d_b3_index[l][m] << ",";}
-	// 				std::cout << "] ";
-	// 				std::cout << std::endl;
-	// 			}
-	// 		}
-	// 	}
-	// }
-	exit(1);
 
-	//
-	// std::vector<std::vector<double>> d_b4_index;
-	// for(const auto& sites : clusters_3body){
-	// 	for(const auto& linked_site : sites.second[0] ){
-	// 		for(const auto& another_site : site_vec ){
-	//
-	// 			assert( linked_site.size() == 2 );
-	// 			if( another_site == site_vec[0] or another_site == linked_site[0] or another_site == linked_site[1])
-	// 				continue;
-	//
-	// 			Eigen::Vector3d valid_ditance1 = validCoordinate(another_site->getCoordinate(), site_vec[0]->getCoordinate());
-	// 			double distance1 = (lattice_ex * valid_ditance1).norm();
-	// 			distance1 = another_site->getDistance(distance1);
-	// 			Eigen::Vector3d valid_ditance2 = validCoordinate(another_site->getCoordinate(), linked_site[0]->getCoordinate());
-	// 			double distance2 = (lattice_ex * valid_ditance2).norm();
-	// 			distance2 = another_site->getDistance(distance2);
-	// 			Eigen::Vector3d valid_ditance3 = validCoordinate(another_site->getCoordinate(), linked_site[1]->getCoordinate());
-	// 			double distance3 = (lattice_ex * valid_ditance3).norm();
-	// 			distance3 = another_site->getDistance(distance3);
-	//
-	// 			if( another_site->getLinkedSite(distance1, 0) and another_site->getLinkedSite(distance2, linked_site[0]->getSiteNum()) and another_site->getLinkedSite(distance3, linked_site[1]->getSiteNum())){
-	// 				std::vector<double> d_vec = {sites.first[0], sites.first[1], sites.first[2], distance1, distance2, distance3};
-	// 				sort(d_vec.begin(), d_vec.end());
-	// 				// 2.82843 2.82843 2.82843 2.82843 2.82843 4
-	// 				// if( std::abs(d_vec[0]-2.82843)<0.00001 and std::abs(d_vec[1]-2.82843 )<0.00001 and std::abs(d_vec[2]-2.82843)<0.00001 and std::abs(d_vec[3]-2.82843)<0.00001 and std::abs(d_vec[4]-2.82843)<0.00001 and std::abs(d_vec[5]-4)<0.00001 ){
-	// 				// 	std::cout << 0 << " " << linked_site[0]->getSiteNum() <<" "<< linked_site[1]->getSiteNum() <<" "<< another_site->getSiteNum() << std::endl;
-	// 				// 	exit(1);
-	// 				// }
-	// 				auto it = find( d_b4_index.begin(), d_b4_index.end(), d_vec);
-	// 				if( it == d_b4_index.end() ){
-	// 					d_b4_index.push_back(d_vec);
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
-	//
-	// for(int i=5; i>=0; --i){
-	// 	stable_sort(d_b4_index.begin(), d_b4_index.end(), [i](const std::vector<double>& lhs, const std::vector<double>& rhs){ return lhs[i] < rhs[i]; });
-	// }
-	//
-	// /* index -> site -> other 3 sites*/
-	// std::unordered_map<std::vector<double>, std::vector<std::vector<std::vector<std::shared_ptr<Site>>>>, hash_vecd> clusters_4body;
-	// for(const auto& representative_d_b4 : d_b4_index){
-	// 	/* construct equivalent d_b4 vec */
-	// 	std::vector<std::vector<double>> all_d_b4;
-	// 	std::vector<double> data = representative_d_b4;
-	//   do{ all_d_b4.push_back(data); }while(next_permutation(data.begin(), data.end()));
-	//
-	// 	std::vector<std::vector<std::vector<std::shared_ptr<Site>>>> index_clusters;
-	// 	for( const auto& site : site_vec ){
-	// 		std::vector<std::vector<std::shared_ptr<Site>>> site_clusters;
-	// 		for(const auto& d_b4 : all_d_b4){
-	// 			for( const auto& i : site->getLinkedSiteviaDisncace(d_b4[0]) ){
-	// 				for( const auto& j : i->getLinkedSiteviaDisncace(d_b4[1]) ){
-	// 					for( const auto& k : j->getLinkedSiteviaDisncace(d_b4[2]) ){
-	// 						if( site->getLinkedSite(d_b4[3], j->getSiteNum()) and  site->getLinkedSite(d_b4[4], k->getSiteNum()) and i->getLinkedSite(d_b4[5], k->getSiteNum()) ) {
-	// 							std::vector<std::shared_ptr<Site>> tmp = {i ,j, k};
-	// 							sort(tmp.begin(), tmp.end());
-	// 							if( find(site_clusters.begin(), site_clusters.end(), tmp) == site_clusters.end() ){
-	// 								// !! 3*3*3 bug
-	// 								// 4 5.65685 5.65685
-	// 								// if( std::abs(d_b3[0]-4)<0.00001 and std::abs(d_b3[1]-5.65685 )<0.00001 and std::abs(d_b3[2]-5.65685)<0.00001 ){
-	// 								// 	std::cout << site->getSiteNum() << " " << tmp[0]->getSiteNum() <<" "<< tmp[1]->getSiteNum() << std::endl;
-	// 								// 	exit(1);
-	// 								// }
-	// 								site_clusters.push_back( tmp );
-	// 							}
-	// 						}
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 		index_clusters.push_back(site_clusters);
-	// 	}
-	// 	clusters_4body[representative_d_b4] = index_clusters;
-	// 	break;
-	// }
-	//
-	// for(const auto& rep_d_b4 : d_b4_index){
-	// 	std::cout << rep_d_b4[0] << " " << rep_d_b4[1] << " " << rep_d_b4[2] << " " << rep_d_b4[3] << " " << rep_d_b4[4] << " " << rep_d_b4[5] << " " << clusters_4body[rep_d_b4][0].size() << std::endl;
-	// 	int i = 0;
-	// 	for(const auto& site_clusters : clusters_4body[rep_d_b4]){
-	// 		assert( clusters_4body[rep_d_b4][0].size() == site_clusters.size() );
-	// 		for(const auto& site_vec : site_clusters){
-	// 			clusters_out << i << " ";
-	// 			for(const auto& site : site_vec){
-	// 				clusters_out << site->getSiteNum() << " ";
-	// 			}
-	// 		}
-	// 		++i;
-	// 	}
-	// 	clusters_out << std::endl;
-	// }
-	//
-	// clusters_out.close();
-
-
-		// 		Eigen::Vector3d valid_ditance = validCoordinate(site3->getCoordinate(), site_vec[0]->getCoordinate());
-		// 		double distance = (lattice_ex * valid_ditance).norm();
-		// 		distance = site3->getDistance(distance);
-		// 		if( site3->getLinkedSite(distance, 0) ){
-		// 			std::vector<double> d_vec = {linked_site.first, linked_site2.first, distance};
-		// 			sort(d_vec.begin(), d_vec.end());
-		// 			auto it2 = find( d_b3_index.begin(), d_b3_index.end(), d_vec );
-		// 			if( it2 == d_b3_index.end() ){
-		// 				d_b3_index.push_back(d_vec);
-		// 			}
-		// 		}
-		// //
-		// for(const auto& linked_site : site_vec[0]->getLinkedSite() ){
-		// 	auto it = find(linked_site.second.begin(), linked_site.second.end(),
-	// 		}
-	// 	}
-	// }
-
-
-	//
-	//
-	// for(const auto& linked_site : site_vec[0]->getLinkedSite() ){
-	// 	for(const auto& site2 : linked_site.second ){
-	// 		for(const auto& linked_site2 : site2->getLinkedSite() ){
-	// 			for(const auto& site3 : linked_site2.second ){
-	// 				for(const auto& linked_site3 : site3->getLinkedSite() ){
-	// 					for(const auto& site4 : linked_site3.second ){
-	// 						for(const auto& linked_site4 : site4->getLinkedSite() ){
-	// 							for(const auto& site5 : linked_site4.second ){
-	// 								for(const auto& linked_site5 : site5->getLinkedSite() ){
-	// 									for(const auto& site6 : linked_site5.second ){
-	// 										Eigen::Vector3d valid_ditance = validCoordinate(site6->getCoordinate(), site_vec[0]->getCoordinate());
-	// 										double distance = (lattice_ex * valid_ditance).norm();
-	// 										if( site4->getLinkedSite(distance, 0) ){
-	// 											std::vector<double> d_vec = {linked_site.first, linked_site2.first, linked_site3.first, linked_site4.first, linked_site5.first, distance};
-	// 											sort(d_vec.begin(), d_vec.end());
-	// 											auto it2 = find( d_b4_index.begin(), d_b4_index.end(), d_vec );
-	// 											if( it2 == d_b4_index.end() ){
-	// 												std::cout << d_vec[0] << " " << d_vec[1] << "  " << d_vec[2] << " " << d_vec[3] << " " << d_vec[4] << " " << d_vec[5] << std::endl;
-	// 												d_b4_index.push_back(d_vec);
-	// 												// is_searched = true;
-	// 											}
-	// 										}
-	// 									}
-	// 								}
-	// 							}
-	// 						}
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-
-	// std::vector<std::vector<std::shared_ptr<Site>>> clusters_4body;		/* site -> other 2 sites*/
-
-
+	clusters_out.close();
+	multiplicity_out.close();
 }

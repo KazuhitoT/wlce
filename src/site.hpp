@@ -38,7 +38,7 @@ std::vector<std::vector<double>> getAllTriplets(const std::vector<Eigen::Vector3
 	}
 
 	for(int i=(points.size()-1); i>=0; --i){
-		sort(result.begin(), result.end(), [i](const std::vector<double>& lhs, const std::vector<double>& rhs){
+		stable_sort(result.begin(), result.end(), [i](const std::vector<double>& lhs, const std::vector<double>& rhs){
 			return lhs[i] < rhs[i];
 		});
 	}
