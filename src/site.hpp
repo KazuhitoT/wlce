@@ -26,9 +26,9 @@ Eigen::Vector3d validCoordinate(Eigen::Vector3d lhs){
 class Site {
 private :
 
-	class hash_vecd {
+	class hash_vec3d {
 	public:
-	  double operator()(const std::vector<double> &x) const {
+	  double operator()(const Eigen::Vector3d &x) const {
 	    const int C = 997;      // 素数
 	    double t = 0;
 	    for (int i = 0; i != x.size(); ++i) {
@@ -43,7 +43,8 @@ private :
 	std::unordered_map<double, std::vector<std::shared_ptr<Site>>> linked_site;
 
 	/*  site-> pair< corrdination, site >  */
-	std::vector<std::pair<Eigen::Vector3d, std::shared_ptr<Site>>> site_relative;
+	// std::vector<std::pair<Eigen::Vector3d, std::shared_ptr<Site>>> site_relative;
+	std::unordered_map<Eigen::Vector3d, std::shared_ptr<Site>, hash_vec3d> site_relative;
 
 public :
 	Site(int _n, const Eigen::Vector3d& _c):site_num(_n), coordinate(_c) {};
@@ -55,17 +56,14 @@ public :
 	void setRelativeSite(const std::vector<std::shared_ptr<Site>>& all_sites){
 		for( const auto& site : all_sites){
 			// std::cout << site_num << " " << site->getSiteNum() << " - " <<  validCoordinate(site->getCoordinate(), this->coordinate).transpose() << std::endl;
-			site_relative.push_back( std::pair<Eigen::Vector3d, std::shared_ptr<Site>>(validCoordinate(site->getCoordinate(), this->coordinate), site) );
+			// site_relative.push_back( std::pair<Eigen::Vector3d, std::shared_ptr<Site>>(validCoordinate(site->getCoordinate(), this->coordinate), site) );
+			site_relative[validCoordinate(site->getCoordinate(), this->coordinate)] = site;
 		}
 		assert( this->site_relative.size() == all_sites.size() );
 	}
 
 	std::shared_ptr<Site> getRelativeSite(const Eigen::Vector3d& coord){
-		for( const auto& site : this->site_relative){
-			if( (validCoordinate(site.first, coord)).norm() < 0.00001 ){ return site.second; }
-		}
-		assert(nullptr);
-		return nullptr;
+		return this->site_relative[coord];
 	}
 
 	void setLinkedSite(double distance, const std::shared_ptr<Site> another_site){

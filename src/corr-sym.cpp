@@ -241,33 +241,6 @@ int main(int argc, char* argv[]){
 		translation_vector.push_back(Eigen::Map<Eigen::Vector3d>(&(tmp_tra[0])));
 	}
 
-	// int j=16;
-	// std::cout << "!!!" << position_ex[j].transpose() << std::endl;
-	// for(int j=0; j<10; ++j){
-	// 	std::vector<Eigen::Vector3d> a;
-	// 	for(int i=0; i<48; ++i){
-	// 		auto tmp = (rotation_matrix[i+48*j] * (position_ex[j] - translation_vector[i+48*j]));
-	// 		auto target_coord = validCoordinate(tmp);
-	// 		// auto target_coord = tmp;
-	// 		auto it = find_if( a.begin(), a.end(),
-	// 				[target_coord, prec](const Eigen::Vector3d& s){
-	// 					for(int i=0; i<3; ++i){
-	// 						 if( std::abs(s[i]-target_coord[i])>0.01 ){
-	// 							 return false;
-	// 						}
-	// 					}
-	// 				return true;
-	// 			});
-	//
-	// 		if( it == a.end() ){
-	// 			// std::cout << "rotated  " << (target_coord-rcb.second->getCoordinate()).transpose() << std::endl;
-	// 			std::cout << target_coord.transpose() << std::endl;
-	// 			a.push_back(target_coord);
-	// 		}
-	// 	}
-	// 	std::cout << position_ex[j].transpose() << " " << position_ex[j].norm() << "  " << a.size() << std::endl;
-	//
-	// }
 
 
 	std::vector<std::shared_ptr<Site>> site_vec;
@@ -278,52 +251,53 @@ int main(int argc, char* argv[]){
 		site->setRelativeSite(site_vec);
 	}
 
-	std::unordered_map<double, std::vector<Eigen::Vector3d>> rep_pair_cluster;
-	for(int i=0; i<max_size_op; ++i){
-		auto coord_site0 = validCoordinate((rotation_matrix[i] * (position_ex[0] - translation_vector[i])));
-		bool is_site0_zero = ((coord_site0-position_ex[0]).norm() < prec) ? true : false;
-		for(int j=1; j<site_vec.size(); ++j){
-			auto coord_another_site = validCoordinate((rotation_matrix[i] * (position_ex[j] - translation_vector[i])));
-
-			// bool is_over_half = false;
-			// for(int k=0; k<3; ++k){ if(std::abs(coord_another_site[k]-coord_site0[k])>=(0.5-prec)){ is_over_half=true;break;};}
-			// if(is_over_half) continue;
-			if( (lattice_ex*validCoordinate(coord_another_site, coord_site0)).norm()>d2 ) continue;
-
-			bool is_anothersite_zero = ((coord_site0-position_ex[0]).norm() < prec) ? true : false;
-			if( !is_site0_zero and !is_anothersite_zero ) continue;
-
-			double distance = validCoordinate(coord_another_site, coord_site0).norm();
-			for(const auto& i : rep_pair_cluster){
-				if( std::abs(i.first-distance) < prec ){
-					distance = i.first;
-					break;
-				}
-			}
-
-			std::shared_ptr<Site> tmp_site;
-			if(is_site0_zero) {
-				tmp_site = site_vec[j];
-			} else {
-				auto it = find_if( position_ex.begin(), position_ex.end(),
-						[coord_site0, prec](const Eigen::Vector3d& s){
-							return ((coord_site0-s).norm() < prec) ? true : false;
-					});
-				tmp_site = site_vec[std::distance(position_ex.begin(), it)];
-			}
-
-			auto tmp_coord = validCoordinate(tmp_site->getCoordinate());
-			auto it = find_if(rep_pair_cluster[distance].begin(), rep_pair_cluster[distance].end(),
-					[tmp_coord, prec](const Eigen::Vector3d& s){
-						return (tmp_coord-s).norm() < prec;
-				});
-
-			if( it == rep_pair_cluster[distance].end() ){
-				// std::cout << validCoordinate(tmp_site->getCoordinate()).transpose() << std::endl;
-				rep_pair_cluster[distance].push_back(validCoordinate(tmp_site->getCoordinate()));
-			}
-		}
-	}
+	//
+	// std::unordered_map<double, std::vector<Eigen::Vector3d>> rep_pair_cluster;
+	// for(int i=0; i<max_size_op; ++i){
+	// 	auto coord_site0 = validCoordinate((rotation_matrix[i] * (position_ex[0] - translation_vector[i])));
+	// 	bool is_site0_zero = ((coord_site0-position_ex[0]).norm() < prec) ? true : false;
+	// 	for(int j=1; j<site_vec.size(); ++j){
+	// 		auto coord_another_site = validCoordinate((rotation_matrix[i] * (position_ex[j] - translation_vector[i])));
+	//
+	// 		// bool is_over_half = false;
+	// 		// for(int k=0; k<3; ++k){ if(std::abs(coord_another_site[k]-coord_site0[k])>=(0.5-prec)){ is_over_half=true;break;};}
+	// 		// if(is_over_half) continue;
+	// 		if( (lattice_ex*validCoordinate(coord_another_site, coord_site0)).norm()>d2 ) continue;
+	//
+	// 		bool is_anothersite_zero = ((coord_site0-position_ex[0]).norm() < prec) ? true : false;
+	// 		if( !is_site0_zero and !is_anothersite_zero ) continue;
+	//
+	// 		double distance = validCoordinate(coord_another_site, coord_site0).norm();
+	// 		for(const auto& i : rep_pair_cluster){
+	// 			if( std::abs(i.first-distance) < prec ){
+	// 				distance = i.first;
+	// 				break;
+	// 			}
+	// 		}
+	//
+	// 		std::shared_ptr<Site> tmp_site;
+	// 		if(is_site0_zero) {
+	// 			tmp_site = site_vec[j];
+	// 		} else {
+	// 			auto it = find_if( position_ex.begin(), position_ex.end(),
+	// 					[coord_site0, prec](const Eigen::Vector3d& s){
+	// 						return ((coord_site0-s).norm() < prec) ? true : false;
+	// 				});
+	// 			tmp_site = site_vec[std::distance(position_ex.begin(), it)];
+	// 		}
+	//
+	// 		auto tmp_coord = validCoordinate(tmp_site->getCoordinate());
+	// 		auto it = find_if(rep_pair_cluster[distance].begin(), rep_pair_cluster[distance].end(),
+	// 				[tmp_coord, prec](const Eigen::Vector3d& s){
+	// 					return (tmp_coord-s).norm() < prec;
+	// 			});
+	//
+	// 		if( it == rep_pair_cluster[distance].end() ){
+	// 			// std::cout << validCoordinate(tmp_site->getCoordinate()).transpose() << std::endl;
+	// 			rep_pair_cluster[distance].push_back(validCoordinate(tmp_site->getCoordinate()));
+	// 		}
+	// 	}
+	// }
 
 	std::ofstream clusters_out( "clusters.out", std::ios::out );
 
@@ -336,22 +310,155 @@ int main(int argc, char* argv[]){
 
 	/*  set nbody = 2 */
 	std::cout << " -- 2 body cluster" << std::endl;
-	/* output */
+	std::unordered_map<double, Eigen::Vector3d> distance_atom;
+	for( int i=1; i<position_ex.size(); ++i ){
+		Eigen::Vector3d d_vec = validCoordinate(position_ex[i], position_ex[0]);
+		double distance = (lattice_ex * d_vec).norm();
+		if( distance <= d2 ){
+			bool is_found = false;
+			for( const auto& i : distance_atom ){
+				if( std::abs(i.first-distance) < prec ) {
+					is_found = true;
+					break;
+				}
+			}
+			auto itr = distance_atom.find(distance);
+			if( !is_found ) {distance_atom[distance] = d_vec; }
+		}
+	}
 
-	for(const auto& i : rep_pair_cluster){
-		double display_distance = (lattice_ex * validCoordinate(site_vec[0]->getCoordinate(), i.second[0])).norm();
-		std::cout << "distance = " << display_distance << " -- multiplicity = " << i.second.size() << std::endl;
-		std::cout << "relative coordinate : " << i.second[0].transpose() << std::endl;
-		std::cout << std::endl;
-		for(const auto& site : site_vec ){
-			for(const auto& relative_coord : i.second){
-				// auto absolute_coord = validCoordinate(relative_coord, -site->getCoordinate());
-				// std::cout << site->getSiteNum() << " " << relative_coord.transpose()  << std::endl;
-				clusters_out << site->getSiteNum() << " " << site->getRelativeSite(relative_coord)->getSiteNum() << " ";
+	std::unordered_map<double, std::vector<std::vector<int>>> distance_site_to_sites;
+	{
+		for( const auto& d_a : distance_atom ){
+			std::vector<std::vector<int>> a_d_a;
+			for(int i=0; i<position_ex.size(); ++i){
+			// for(int i=0; i<1; ++i){
+				std::vector<int> vec_a;
+				for(int j=0; j<position_ex.size(); ++j){
+					Eigen::Vector3d d_vec = validCoordinate(position_ex[i], position_ex[j]);
+					double distance = (lattice_ex * d_vec).norm();
+					if( std::abs( distance - d_a.first ) < prec ) {
+						site_vec[i]->setLinkedSite(d_a.first, site_vec[j]);
+						// std::cout << i << " " << j << " ";
+						vec_a.push_back(j);
+					}
+				}
+				a_d_a.push_back(vec_a);
+			}
+			distance_site_to_sites[d_a.first] = a_d_a;
+		}
+	}
+
+	for( const auto& i : distance_site_to_sites ){
+		std::cout << i.first << " " << i.second[0].size() << std::endl;
+		for( int j=0; j<i.second.size(); ++j) {
+			assert( i.second[j].size() == i.second[0].size() );
+			for( const auto& k : i.second[j] ){
+				clusters_out << j << " " << k << " ";
 			}
 		}
 		clusters_out << std::endl;
 	}
+
+
+	/*  set nbody = 3 */
+	std::cout << " -- 3 body cluster" << std::endl;
+	/*  key:   */
+	std::unordered_map<std::vector<double>, std::vector<std::vector<Eigen::Vector3d>>, hash_vecd> rep_triplet_cluster;
+	std::vector<std::vector<double>> d_b3_index;
+	for(const auto& linked_site : site_vec[0]->getLinkedSite() ){
+		for(const auto& site2 : linked_site.second ){
+			for(const auto& linked_site2 : site2->getLinkedSite() ){
+				for(const auto& site3 : linked_site2.second ){
+
+					/* reject line cluster */
+					// Eigen::Matrix3d triplet;
+					// auto vector_02 = validCoordinate(site_vec[0]->getCoordinate(), site2->getCoordinate());
+					// auto vector_03 = validCoordinate(site_vec[0]->getCoordinate(), site3->getCoordinate());
+					// triplet << vector_02[0], vector_02[1], vector_02[2],
+					// 	 vector_03[0], vector_03[1], vector_03[2],
+					// 		1, 1, 1;
+					// double triplet_area  = triplet.determinant();
+					// if( triplet_area < prec ) {
+					// 	continue;
+					// }
+
+					Eigen::Vector3d valid_ditance = validCoordinate(site3->getCoordinate(), site_vec[0]->getCoordinate());
+					double distance = (lattice_ex * valid_ditance).norm();
+					distance = site3->getDistance(distance);
+					if( site3->getLinkedSite(distance, 0) ){
+						std::vector<double> d_vec = {linked_site.first, linked_site2.first, distance};
+						std::vector<Eigen::Vector3d> relative_coords = {validCoordinate(site2->getCoordinate()), validCoordinate(site3->getCoordinate())};
+						for(int i=2; i>=0; --i){
+							stable_sort(relative_coords.begin(), relative_coords.end(), [i](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){ return lhs[i] < rhs[i]; });
+						}
+						sort(d_vec.begin(), d_vec.end());
+						auto it = find( d_b3_index.begin(), d_b3_index.end(), d_vec );
+						if( it == d_b3_index.end() ){
+							d_b3_index.push_back(d_vec);
+							rep_triplet_cluster[d_vec].push_back(relative_coords);
+						} else {
+							auto it2 = find_if( rep_triplet_cluster[d_vec].begin(), rep_triplet_cluster[d_vec].end(),
+							[relative_coords, prec](const std::vector<Eigen::Vector3d>& obj){
+								for(int i=0; i<2; ++i){
+									if( (relative_coords[i]-obj[i]).norm() > prec ) return false;
+								}
+								return true;;
+							});
+							if( it2 == rep_triplet_cluster[d_vec].end() ){
+								rep_triplet_cluster[d_vec].push_back(relative_coords);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for(int i=2; i>=0; --i){
+		stable_sort(d_b3_index.begin(), d_b3_index.end(), [i](const std::vector<double>& lhs, const std::vector<double>& rhs){ return lhs[i] < rhs[i]; });
+	}
+
+	for(const auto& index : d_b3_index){
+		std::cout << "multiplicity = " << rep_triplet_cluster[index].size() << std::endl;
+		std::cout << index[0] << " " << index[1] << " " << index[2] << std::endl;
+		std::cout << " -- relative_coords -- "<< std::endl;
+		std::cout << site_vec[0]->getCoordinate().transpose() << std::endl;
+		std::cout << rep_triplet_cluster[index][0][0].transpose() << std::endl;
+		std::cout << rep_triplet_cluster[index][0][1].transpose() << std::endl;
+		std::cout << std::endl;
+	}
+
+	for(const auto& index : d_b3_index){
+		for(const auto& site : site_vec ){
+			for(const auto& two_relative_coord : rep_triplet_cluster[index]){
+				// auto absolute_coord = validCoordinate(relative_coord, -site->getCoordinate());
+				// std::cout << site->getSiteNum() << " " << relative_coord.transpose()  << std::endl;
+				clusters_out << site->getSiteNum() << " ";
+				clusters_out << site->getRelativeSite(two_relative_coord[0])->getSiteNum() << " ";
+				clusters_out << site->getRelativeSite(two_relative_coord[1])->getSiteNum() << " ";
+			}
+		}
+		clusters_out << std::endl;
+	}
+
+	exit(1);
+	/* output */
+	//
+	// for(const auto& i : rep_pair_cluster){
+	// 	double display_distance = (lattice_ex * validCoordinate(site_vec[0]->getCoordinate(), i.second[0])).norm();
+	// 	std::cout << "distance = " << display_distance << " -- multiplicity = " << i.second.size() << std::endl;
+	// 	std::cout << "relative coordinate : " << i.second[0].transpose() << std::endl;
+	// 	std::cout << std::endl;
+	// 	for(const auto& site : site_vec ){
+	// 		for(const auto& relative_coord : i.second){
+	// 			// auto absolute_coord = validCoordinate(relative_coord, -site->getCoordinate());
+	// 			// std::cout << site->getSiteNum() << " " << relative_coord.transpose()  << std::endl;
+	// 			clusters_out << site->getSiteNum() << " " << site->getRelativeSite(relative_coord)->getSiteNum() << " ";
+	// 		}
+	// 	}
+	// 	clusters_out << std::endl;
+	// }
 
 
 

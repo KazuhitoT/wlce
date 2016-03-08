@@ -173,15 +173,15 @@ int main(int argc, char* argv[]){
 		double unit_length_x = (lattice_unit_matrix * unit_x).norm();
 		double unit_length_y = (lattice_unit_matrix * unit_y).norm();
 		double unit_length_z = (lattice_unit_matrix * unit_z).norm();
-		while( unit_length_x <= (d2*4.) ){
+		while( unit_length_x <= (d2*2.) ){
 			unit_x[0] = ++expand_x;
 			unit_length_x = (lattice_unit_matrix * unit_x).norm();
 		}
-		while( unit_length_y <= (d2*4.) ){
+		while( unit_length_y <= (d2*2.) ){
 			unit_y[1] = ++expand_y;
 			unit_length_y = (lattice_unit_matrix * unit_y).norm();
 		}
-		while( unit_length_z <= (d2*4.) ){
+		while( unit_length_z <= (d2*2.) ){
 			unit_z[2] = ++expand_z;
 			unit_length_z = (lattice_unit_matrix * unit_z).norm();
 		}
