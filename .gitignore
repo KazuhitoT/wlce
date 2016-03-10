@@ -4,6 +4,7 @@ spglib/
 tmp/
 bin/
 cuau/
+tags
 
 # cmake artifacts
 MakeFile

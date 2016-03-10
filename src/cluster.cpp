@@ -42,14 +42,6 @@ public:
   }
 };
 
-
-class hash_vecd_less {
-public:
-	bool operator ()(const std::vector<double> &lhs, const std::vector<double> &rhs) const {
-		return accumulate(lhs.begin(), lhs.end(), 0) < accumulate(rhs.begin(), rhs.end(), 0);
-	}
-};
-
 void outputPoscar(Eigen::Matrix3d lattice, std::vector<Eigen::Vector3d> position, int N, std::string prefix){
 	std::ofstream ofs("poscar."+prefix);
 	ofs << "POSCAR" << std::endl;
@@ -75,38 +67,8 @@ void outputPoscar(Eigen::Matrix3d lattice, std::vector<Eigen::Vector3d> position
 	}
 };
 
-void outputSymmetry(int rotation[][3][3], double translation[][3], int num_sym){
-	std::ofstream ofs("sym.out");
-	for( int i=0; i<num_sym; ++i){
-		ofs << "--- sym " << i+1 << " --- " << std::endl;
-		for( int j=0; j<3; ++j){
-			for( int k=0; k<3; ++k){
-				ofs << rotation[i][j][k] << " ";
-			}
-			ofs << std::endl;
-		}
-		ofs << translation[i][0] << " ";
-		ofs << translation[i][1] << " ";
-		ofs << translation[i][2] << " ";
-		ofs << std::endl;
-	}
-}
-
-bool is_line_cluster(std::vector<std::shared_ptr<Site>> cluster){
-	Eigen::Vector3d center;
-	center << 0,0,0;
-	for( const auto& site : cluster ){
-		center += site->getCoordinate();
-	}
-	center /= cluster.size();
-	for( const auto& site : cluster ){
-		if( center == site->getCoordinate() ) return true;
-	}
-	return false;
-}
-
-
 int main(int argc, char* argv[]){
+	bool noexpand = false;
 	double d2, d3, d4 = -1;
 	double prec = 0.00001;
 
@@ -119,6 +81,8 @@ int main(int argc, char* argv[]){
 			else if( match[1] == "-d3" ) d3=std::stod(match[2]);
 			else if( match[1] == "-d4" ) d4=std::stod(match[2]);
 			else if( match[1] == "-d" ) d2=std::stod(match[2]);
+		} else if( str == "-noexpand" ){
+			noexpand = true;
 		} else {
 			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
 			exit(1);
@@ -128,72 +92,68 @@ int main(int argc, char* argv[]){
 
 	if( argc == 1 or (d2==-1 and d3==-1 and d4==-1) ){
 		std::cerr << " ERROR : commandline argument [-d=*] is required." << std::endl;
+		exit(1);
 	}
 
 	ParsePoscar poscar("poscar.in");
 	const int N = poscar.getAtoms().size();
 
 	double lattice[3][3];
-	double lattice_prim[3][3];
 	double lattice_unit[3][3];
 	Eigen::Map<Eigen::Matrix3d>(&(lattice[0][0]), 3, 3)      = poscar.getAxis();
-	Eigen::Map<Eigen::Matrix3d>(&(lattice_prim[0][0]), 3, 3) = poscar.getAxis();
 	Eigen::Map<Eigen::Matrix3d>(&(lattice_unit[0][0]), 3, 3) = poscar.getAxis();
 
 	double position[N][3];
-	double position_prim[N][3];
 	double position_unit[N][3];
 	const auto atoms = poscar.getAtoms();
 	for( int i=0; i<N; ++i ){
 		for( int j=0; j<3; ++j ){
 			position[i][j]      = atoms[i].second[j];
-			position_prim[i][j] = position[i][j];
 			position_unit[i][j] = position[i][j];
 		}
  	}
 
-	int count = 0;
-	int type  = 1;
 	int types[N];
-	for( const auto& i : poscar.getNumAtoms() ){
-		for( int j=0; j<i; ++j){
-			types[count++] = type;
-		}
-		++type;
-	}
-	assert( N == count);
+	for( int i=0; i<N; ++i )	types[i] = 1;
 
-	int N_unit = spg_standardize_cell(lattice_unit, position_unit, types, N, 0, 0, 0.00001);
-	outputPoscar(lattice_unit, position_unit, N_unit, "unit");
-
+	int N_unit = N;
 	int expand_x = 1;
 	int expand_y = 1;
 	int expand_z = 1;
-	Eigen::Matrix3d lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice_unit[0][0]);
-	{
-		Eigen::Vector3d unit_x, unit_y, unit_z;
-		unit_x << 1, 0, 0;
-		unit_y << 0, 1, 0;
-		unit_z << 0, 0, 1;
-		double unit_length_x = (lattice_unit_matrix * unit_x).norm();
-		double unit_length_y = (lattice_unit_matrix * unit_y).norm();
-		double unit_length_z = (lattice_unit_matrix * unit_z).norm();
-		while( unit_length_x <= (d2*2.) ){
-			unit_x[0] = ++expand_x;
-			unit_length_x = (lattice_unit_matrix * unit_x).norm();
+	Eigen::Matrix3d lattice_unit_matrix;
+	if( noexpand ){
+		lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice[0][0]);
+	} else if( !noexpand ){
+		N_unit = spg_standardize_cell(lattice_unit, position_unit, types, N, 0, 0, 0.00001);
+		outputPoscar(lattice_unit, position_unit, N_unit, "unit");
+
+		lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice_unit[0][0]);
+
+		{
+			Eigen::Vector3d unit_x, unit_y, unit_z;
+			unit_x << 1, 0, 0;
+			unit_y << 0, 1, 0;
+			unit_z << 0, 0, 1;
+			double unit_length_x = (lattice_unit_matrix * unit_x).norm();
+			double unit_length_y = (lattice_unit_matrix * unit_y).norm();
+			double unit_length_z = (lattice_unit_matrix * unit_z).norm();
+			while( unit_length_x <= (d2*2.) ){
+				unit_x[0] = ++expand_x;
+				unit_length_x = (lattice_unit_matrix * unit_x).norm();
+			}
+			while( unit_length_y <= (d2*2.) ){
+				unit_y[1] = ++expand_y;
+				unit_length_y = (lattice_unit_matrix * unit_y).norm();
+			}
+			while( unit_length_z <= (d2*2.) ){
+				unit_z[2] = ++expand_z;
+				unit_length_z = (lattice_unit_matrix * unit_z).norm();
+			}
 		}
-		while( unit_length_y <= (d2*2.) ){
-			unit_y[1] = ++expand_y;
-			unit_length_y = (lattice_unit_matrix * unit_y).norm();
-		}
-		while( unit_length_z <= (d2*2.) ){
-			unit_z[2] = ++expand_z;
-			unit_length_z = (lattice_unit_matrix * unit_z).norm();
-		}
+		std::cout << " poscar.expand = ";
+		std::cout << expand_x << " * " << expand_y << " * " << expand_z << "  ";
+		std::cout << "poscar.unit" << std::endl;
 	}
-	std::cout << " poscar.expand = ";
-	std::cout << expand_x << " * " << expand_y << " * " << expand_z << "  ";
-	std::cout << "poscar.unit" << std::endl;
 
 	std::vector<Eigen::Vector3d> position_ex;
 	Eigen::Matrix3d lattice_ex;
@@ -390,9 +350,13 @@ int main(int argc, char* argv[]){
 				assert( two_relative_coord.size() == 2 );
 				assert( site->getSiteRelative().size() == position_ex.size() );
 				assert( site->getSiteRelative().size() == site_vec.size() );
-				clusters_out << site->getSiteNum() << " ";
-				clusters_out << site->getRelativeSite(two_relative_coord[0])->getSiteNum() << " ";
-				clusters_out << site->getRelativeSite(two_relative_coord[1])->getSiteNum() << " ";
+				auto site2 = site->getRelativeSite(two_relative_coord[0]);
+				auto site3 = site->getRelativeSite(two_relative_coord[1]);
+				if( site2 and site3 ) {
+					clusters_out << site->getSiteNum() << " ";
+					clusters_out << site2->getSiteNum() << " ";
+					clusters_out << site3->getSiteNum() << " ";
+				}
 			}
 		}
 		clusters_out << std::endl;
@@ -451,14 +415,24 @@ int main(int argc, char* argv[]){
 		}
 	}
 	//
-	// for(int i=3; i>=0; --i){
-	// 	stable_sort(d_b4_index.begin(), d_b4_index.end(),
-	// 	[i](const std::vector<std::vector<double>>& lhs, const std::vector<std::vector<double>>& rhs){
-	// 		for(int j=2; j>=0; --j){
-	// 			if(lhs[i][j] == rhs[i][j]) continue;
-	// 			return lhs[i][j] < rhs[i][j];
+	for(int i=3; i>=0; --i){
+		for(int j=2; j>=0; --j){
+		stable_sort(d_b4_index.begin(), d_b4_index.end(),
+			[i,j](const std::vector<std::vector<double>>& lhs, const std::vector<std::vector<double>>& rhs){
+				return lhs[i][j] < rhs[i][j];
+			});
+		}
+	}
+
+	// for(const auto& index : d_b4_index){
+	// 	for(const auto& i : index){
+	// 		std::cout << "[";
+	// 		for(const auto& j : i){
+	// 			std::cout << j << ",";
 	// 		}
-	// 	});
+	// 		std::cout << "]";
+	// 	}
+	// 	std::cout << std::endl;
 	// }
 
 	for(const auto& index : d_b4_index){
@@ -475,10 +449,15 @@ int main(int argc, char* argv[]){
 	for(const auto& index : d_b4_index){
 		for(const auto& site : site_vec ){
 			for(const auto& three_relative_coord : quadlet_cluster[index]){
-				clusters_out << site->getSiteNum() << " ";
-				clusters_out << site->getRelativeSite(three_relative_coord[0])->getSiteNum() << " ";
-				clusters_out << site->getRelativeSite(three_relative_coord[1])->getSiteNum() << " ";
-				clusters_out << site->getRelativeSite(three_relative_coord[2])->getSiteNum() << " ";
+				auto site2 = site->getRelativeSite(three_relative_coord[0]);
+				auto site3 = site->getRelativeSite(three_relative_coord[1]);
+				auto site4 = site->getRelativeSite(three_relative_coord[2]);
+				if( site2 and site3 and site4 ) {
+					clusters_out << site->getSiteNum() << " ";
+					clusters_out << site2->getSiteNum() << " ";
+					clusters_out << site3->getSiteNum() << " ";
+					clusters_out << site3->getSiteNum() << " ";
+				}
 			}
 		}
 		clusters_out << std::endl;

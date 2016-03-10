@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 include(CheckCXXCompilerFlag)
 
 add_definitions("-g")
+add_definitions("-DNDEBUG")
 
 # link_directories(~/gitkawailab/cluster-expand/spglib/src/.libs)
 

@@ -93,8 +93,9 @@ public :
 			}
 		}
 		/* if not found */
-		std::cerr << " ERROR : in [site.hpp, getRelativeSite() ] relative site is not found." << std::endl;
-		exit(1);
+		// std::cerr << " ERROR : in [site.hpp, getRelativeSite() ] relative site is not found." << std::endl;
+		// exit(1);
+		return nullptr;
 	}
 
 	void setLinkedSite(double distance, const std::shared_ptr<Site> another_site){
