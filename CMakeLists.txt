@@ -32,6 +32,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 add_executable(cluster
 	./src/parsePoscar.cpp
 	./src/cluster.cpp
+	./src/conf2corr.cpp
 )
 target_link_libraries(cluster
 	symspg

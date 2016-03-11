@@ -10,11 +10,13 @@
 #include <Eigen/LU>
 #include "./parsePoscar.hpp"
 #include "./site.hpp"
+#include "./conf2corr.hpp"
+
 extern "C" {
 	#include "../spglib/src/spglib.h"
 }
 
-constexpr int max_symmetry_num = 48;
+using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
 
 class hash_vecd {
 public:
@@ -72,7 +74,7 @@ int main(int argc, char* argv[]){
 	double d2, d3, d4 = -1;
 	double prec = 0.00001;
 
-	std::regex re("(-d|-d2|-d3|-d4)\\=(\\d+)?");
+	std::regex re("(-d|-d2|-d3|-d4)\\=(\\d+(\\.\\d+)?)?");
 	std::smatch match;
 	for(int i=1; i<argc; i++) {
 		std::string str(argv[i]);
@@ -97,6 +99,7 @@ int main(int argc, char* argv[]){
 
 	ParsePoscar poscar("poscar.in");
 	const int N = poscar.getAtoms().size();
+	std::vector<double> spins_poscar = {-1, 1};
 
 	double lattice[3][3];
 	double lattice_unit[3][3];
@@ -115,6 +118,17 @@ int main(int argc, char* argv[]){
 
 	int types[N];
 	for( int i=0; i<N; ++i )	types[i] = 1;
+
+	// int type = 1;
+	// int count = 0;
+	std::vector<double> spins;
+	for(int i=0; i<poscar.getNumAtoms().size(); ++i) {
+		for(int j=0; j<poscar.getNumAtoms()[i]; ++j){
+			spins.push_back(spins_poscar[i]);
+			// types[count++] = type;
+		}
+		// ++type;
+	}
 
 	int N_unit = N;
 	int expand_x = 1;
@@ -155,6 +169,7 @@ int main(int argc, char* argv[]){
 		std::cout << "poscar.unit" << std::endl;
 	}
 
+	std::vector<double> spins_ex;
 	std::vector<Eigen::Vector3d> position_ex;
 	Eigen::Matrix3d lattice_ex;
 	double lattice_ex_arr[3][3];
@@ -193,6 +208,21 @@ int main(int argc, char* argv[]){
 		}
 	}
 	outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
+	//
+	// {
+	// 	Eigen::Vector3d ex_limit_coord;
+	// 	ex_limit_coord << 1,1,1;
+	// 	ex_limit_coord = lattice_ex * ex_limit_coord;
+	//
+	// 	// Eigen::Vector3d x_c
+	//
+	// 	int in2ex_x = 1;
+	// 	int in2ex_y = 1;
+	// 	int in2ex_z = 1;
+	// 	while(  ){}
+	//
+	//
+	// }
 
 	std::vector<std::shared_ptr<Site>> site_vec;
 	for(int i=0; i<position_ex.size(); ++i) {
@@ -203,14 +233,19 @@ int main(int argc, char* argv[]){
 		assert( site->getSiteRelative().size() == site_vec.size() );
 	}
 
+	std::shared_ptr<allclusters> pall_clusters(new allclusters);
 	std::ofstream clusters_out( "clusters.out", std::ios::out );
 	std::ofstream multiplicity_out( "multiplicity.out", std::ios::out );
 
 	/*  set nbody = 1 */
 	std::cout << " -- point cluster" << std::endl;
+	std::cout << "0  0" << std::endl;
+	std::vector<std::vector<std::vector<int>>> point_clusters;
 	for( int i=0; i<position_ex.size(); ++i){
 		clusters_out << i << " ";
+		point_clusters.push_back(std::vector<std::vector<int>>());
 	}
+	pall_clusters->push_back(point_clusters);
 	clusters_out << std::endl;
 	multiplicity_out << "1 " << position_ex.size() << std::endl;
 
@@ -256,14 +291,19 @@ int main(int argc, char* argv[]){
 	}
 
 	for( const auto& i : distance_site_to_sites ){
+		std::vector<std::vector<std::vector<int>>> pair_clusters;
 		std::cout << i.first << " " << i.second[0].size() << std::endl;
 		multiplicity_out << "2 " << i.second[0].size()*position_ex.size()/2  << std::endl;
 		for( int j=0; j<i.second.size(); ++j) {
+			std::vector<std::vector<int>> site_clusters;
 			assert( i.second[j].size() == i.second[0].size() );
 			for( const auto& k : i.second[j] ){
 				clusters_out << j << " " << k << " ";
+				site_clusters.push_back(std::vector<int>{k});
 			}
+			pair_clusters.push_back(site_clusters);
 		}
+		pall_clusters->push_back(pair_clusters);
 		clusters_out << std::endl;
 	}
 
@@ -345,7 +385,9 @@ int main(int argc, char* argv[]){
 	}
 
 	for(const auto& index : d_b3_index){
+		std::vector<std::vector<std::vector<int>>> triplet_cluster_int;
 		for(const auto& site : site_vec ){
+			std::vector<std::vector<int>> site_clusters;
 			for(const auto& two_relative_coord : triplet_cluster[index]){
 				assert( two_relative_coord.size() == 2 );
 				assert( site->getSiteRelative().size() == position_ex.size() );
@@ -356,9 +398,12 @@ int main(int argc, char* argv[]){
 					clusters_out << site->getSiteNum() << " ";
 					clusters_out << site2->getSiteNum() << " ";
 					clusters_out << site3->getSiteNum() << " ";
+					site_clusters.push_back(std::vector<int>{site2->getSiteNum(), site3->getSiteNum()});
 				}
 			}
+			triplet_cluster_int.push_back(site_clusters);
 		}
+		pall_clusters->push_back(triplet_cluster_int);
 		clusters_out << std::endl;
 	}
 
@@ -447,7 +492,9 @@ int main(int argc, char* argv[]){
 	}
 
 	for(const auto& index : d_b4_index){
+		std::vector<std::vector<std::vector<int>>> quadlet_cluster_int;
 		for(const auto& site : site_vec ){
+			std::vector<std::vector<int>> site_clusters;
 			for(const auto& three_relative_coord : quadlet_cluster[index]){
 				auto site2 = site->getRelativeSite(three_relative_coord[0]);
 				auto site3 = site->getRelativeSite(three_relative_coord[1]);
@@ -456,13 +503,22 @@ int main(int argc, char* argv[]){
 					clusters_out << site->getSiteNum() << " ";
 					clusters_out << site2->getSiteNum() << " ";
 					clusters_out << site3->getSiteNum() << " ";
-					clusters_out << site3->getSiteNum() << " ";
+					clusters_out << site4->getSiteNum() << " ";
+					site_clusters.push_back(std::vector<int>{site2->getSiteNum(), site3->getSiteNum(), site4->getSiteNum()});
 				}
 			}
+			quadlet_cluster_int.push_back(site_clusters);
 		}
+		pall_clusters->push_back(quadlet_cluster_int);
 		clusters_out << std::endl;
 	}
 
 	clusters_out.close();
 	multiplicity_out.close();
+
+	for(int i=0; i<position_ex.size(); ++i) spins_ex.push_back(-1);
+
+	Conf2corr(spins_ex, std::vector<double>{-1, 0, 1}, std::vector<double>{-1, 0 ,1}, pall_clusters);
+	// Conf2corr("poscar.in", std::vector<double>{-1, 1}, std::vector<double>{-1, 1}, pall_clusters);
+
 }
