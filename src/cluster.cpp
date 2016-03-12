@@ -416,8 +416,8 @@ int main(int argc, char* argv[]){
 			for( const auto& linked_sites : site_vec[0]->getLinkedSite() ){
 				for( const auto& linked_site : linked_sites.second ){
 
-					if(  linked_site->getCoordinate() == triplet_cluster[index][i][0]
-						or linked_site->getCoordinate() == triplet_cluster[index][i][1] ){
+					if(  validCoordinate(linked_site->getCoordinate(), triplet_cluster[index][i][0]).norm() < prec
+						or validCoordinate(linked_site->getCoordinate(), triplet_cluster[index][i][1]).norm() < prec ){
 							continue;
 					}
 
@@ -439,7 +439,20 @@ int main(int argc, char* argv[]){
 						stable_sort(relative_coords.begin(), relative_coords.end(), [i](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){ return lhs[i] < rhs[i]; });
 					}
 
-					auto it = find(d_b4_index.begin(), d_b4_index.end(), all_triplets);
+					// auto it = find(d_b4_index.begin(), d_b4_index.end(), all_triplets);
+					auto it = find_if( d_b4_index.begin(), d_b4_index.end(),
+						[all_triplets, prec](const std::vector<std::vector<double>>& obj){
+							for(int i=0; i<obj.size(); ++i){
+								double norm = 0;
+								for(int j=0; j<obj[i].size(); ++j){
+									norm += std::pow(all_triplets[i][j]-obj[i][j], 2.);
+								}
+								if( std::sqrt(norm) > 0.001 ){
+									return false;
+								}
+							}
+							return true;
+						});
 					if( it==d_b4_index.end() ) {
 						d_b4_index.push_back(all_triplets);
 						quadlet_cluster[all_triplets].push_back(relative_coords);
@@ -469,17 +482,6 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	// for(const auto& index : d_b4_index){
-	// 	for(const auto& i : index){
-	// 		std::cout << "[";
-	// 		for(const auto& j : i){
-	// 			std::cout << j << ",";
-	// 		}
-	// 		std::cout << "]";
-	// 	}
-	// 	std::cout << std::endl;
-	// }
-
 	for(const auto& index : d_b4_index){
 		std::cout << "multiplicity = " << quadlet_cluster[index].size() << std::endl;
 		multiplicity_out << "4 " << quadlet_cluster[index].size()*position_ex.size()/4 << std::endl;
@@ -488,6 +490,17 @@ int main(int argc, char* argv[]){
 		std::cout << quadlet_cluster[index][0][0].transpose() << std::endl;
 		std::cout << quadlet_cluster[index][0][1].transpose() << std::endl;
 		std::cout << quadlet_cluster[index][0][2].transpose() << std::endl;
+		std::cout << std::endl;
+
+		std::cout << " -- all triangles  -- "<< std::endl;
+		for(const auto& i : index){
+			std::cout << "[";
+			for(const auto& j : i){
+				std::cout << j << ",";
+			}
+			std::cout << "]" << std::endl;
+		}
+		std::cout << std::endl;
 		std::cout << std::endl;
 	}
 
