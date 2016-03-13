@@ -9,9 +9,13 @@ Conf2corr::Conf2corr(std::vector<double> _spins,
  ) : pbasis_functions(new basisfunc()), pindex_orders(new indexorders())
  {
 	spins = _spins;
+	spins_before = spins;
 	spinposcar = _spinposcar;
 	spince = _spince;
 	pall_clusters = _ptr;
+
+	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, spins.size()-1), mt);
+	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
 
 	assert( spinposcar.size()>0 );
 	assert( spince.size()>0 );
@@ -106,7 +110,6 @@ void Conf2corr::setInitialCorrelationFunction(){
 			//  orders == [1112]
 			for(const auto& orders : index_order ){
 				double average_spin_prod = 0;
-				// for(const auto& site : (*pall_clusters)[i] ) {
 				for(int site=0; site<(*pall_clusters)[i].size(); ++site) {
 					if( (*pall_clusters)[i][site].size() == 0 ) { /*  point cluster */
 						average_spin_prod += getBasisFunction(orders[0], spins[site]);
@@ -123,13 +126,66 @@ void Conf2corr::setInitialCorrelationFunction(){
 				}
 				corr_averaged_same_index += average_spin_prod;
 			}
-			corr_averaged_same_index /= (double)index_order.size() * (double)num_of_cluster * (double)spins.size();
+			corr_averaged_same_index /= (double)index_order.size() * (double)num_of_cluster * (double)spins.size() ;
 			tmp_corr.push_back(corr_averaged_same_index);
 		}
 		corr.push_back(tmp_corr);
 	}
 	this->correlation_functions = corr;
-	this->dispCorr();
+	this->correlation_functions_before = corr;
+}
+
+//  !! note : point cluster is troublesome
+void Conf2corr::setCorrelationFunction_flip(){
+	const int lattice_point = this->rnd_int_N();
+	auto before_spin = this->spins[lattice_point];
+	auto after_spin  = before_spin;
+	auto tmp_spins = this->spince;
+	while( before_spin == after_spin ){
+		after_spin = tmp_spins[0];
+		tmp_spins.erase(tmp_spins.begin());
+	}
+	this->spins[lattice_point] = after_spin;
+
+	for(int i=0, imax=(*pall_clusters).size(); i<imax; ++i){  // i == cluster index
+		std::vector<double> tmp_corr;
+		int num_of_cluster = 1;
+		int num_in_cluster = 1;
+		if( (*pall_clusters)[i].size()>0 ) {
+			num_of_cluster = (*pall_clusters)[i][0].size();
+			if( num_of_cluster>0 ){
+				num_in_cluster = (*pall_clusters)[i][0][0].size()+1;
+			}
+		}
+		if( i==0 ) num_of_cluster = 1;
+
+		int count_index_order = 0;
+		for(const auto& index_order : (*pindex_orders)[num_in_cluster-1] ){
+			double delta_corr_averaged_same_index = 0;
+			// index_order == [[1112], [1121], [1211],...]
+			//  orders == [1112]
+			for(const auto& orders : index_order ){
+				double delta_average_spin_prod = 0;
+				// for(const auto& site : (*pall_clusters)[i] ) {
+				if( (*pall_clusters)[i][lattice_point].size() == 0 ) { /*  point cluster */
+					delta_average_spin_prod += getBasisFunction(orders[0], after_spin) - getBasisFunction(orders[0], before_spin);
+				} else {
+					for(const auto& site_clusters : (*pall_clusters)[i][lattice_point] ) {
+						double delta_spin_prod = getBasisFunction(orders[0], after_spin) - getBasisFunction(orders[0], before_spin);
+						for(int k=0; k<site_clusters.size(); ++k){
+							delta_spin_prod *= getBasisFunction(orders[k+1], spins[site_clusters[k]]);
+						}
+						delta_average_spin_prod += delta_spin_prod;
+					}
+				}
+				delta_corr_averaged_same_index += delta_average_spin_prod;
+			}
+			delta_corr_averaged_same_index /= (double)index_order.size() * (double)spins.size() * (double)num_of_cluster / (double)num_in_cluster;
+			this->correlation_functions[i+1][count_index_order] += delta_corr_averaged_same_index;
+			++count_index_order;
+		}
+	}
+
 }
 
 /* vec[basis][degree] vec[basis]->polynomials */

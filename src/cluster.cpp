@@ -529,10 +529,25 @@ int main(int argc, char* argv[]){
 	clusters_out.close();
 	multiplicity_out.close();
 
-	for(int i=0; i<position_ex.size()/2; ++i) spins_ex.push_back(-1);
-	for(int i=0; i<position_ex.size()/2; ++i) spins_ex.push_back(1);
+	for(int i=0; i<position_ex.size(); ++i) spins_ex.push_back(-1);
+	// for(int i=0; i<position_ex.size()/2; ++i) spins_ex.push_back(-1);
+	// for(int i=0; i<position_ex.size()/2; ++i) spins_ex.push_back(1);
 
-	Conf2corr(spins_ex, std::vector<double>{-1, 0, 1}, std::vector<double>{-1, 0 ,1}, pall_clusters);
+	Conf2corr test(spins_ex, std::vector<double>{-1,1}, std::vector<double>{-1,1}, pall_clusters);
+	test.dispCorr();
+	std::cout << std::endl;
+	std::cout << std::endl;
+
+	for(int i=0; i<1000; ++i){
+		test.setCorrelationFunction_flip();
+	}
+	test.dispCorr();
+	std::cout << std::endl;
+	std::cout << std::endl;
+
+	test.setInitialCorrelationFunction();
+	test.dispCorr();
+
 	// Conf2corr("poscar.in", std::vector<double>{-1, 1}, std::vector<double>{-1, 1}, pall_clusters);
 
 }

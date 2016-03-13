@@ -23,8 +23,6 @@ using basisfunc   = std::vector<std::vector<double>>;
 
 class Conf2corr {
 	private:
-		friend class Conf2corrTest;
-
 		std::vector<double> spins;
 		std::vector<double> spins_before;
 		std::vector<std::vector<double>> correlation_functions;
@@ -42,6 +40,11 @@ class Conf2corr {
 		/*  allclusters index->site->multiplicity->clusters */
 		std::shared_ptr<allclusters> pall_clusters;
 		/* ------------------------------------------------- */
+
+		std::random_device rd;
+		std::mt19937 mt;
+		std::function<int ()> rnd_int_N;
+		std::function<double ()> rnd_real;
 
 	public:
 		Conf2corr(){};
@@ -65,13 +68,14 @@ class Conf2corr {
 
 		void setBasisCoefficient();
 		void setIndexOrders();
-
 		double getBasisFunction(int, int);
+
 		void setInitialCorrelationFunction();
+		void setCorrelationFunction_flip();
 
 		void dispCorr();
 
-  	Conf2corr &operator=(const Conf2corr&);    // 代入演算子
+  	// Conf2corr &operator=(const Conf2corr&);    // 代入演算子
 };
 
 #endif
