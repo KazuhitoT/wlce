@@ -121,9 +121,9 @@ int main(int argc, char* argv[]){
 	double lattice[3][3];
 	double lattice_prim[3][3];
 	double lattice_unit[3][3];
-	Eigen::Map<Eigen::Matrix3d>(&(lattice[0][0]), 3, 3)      = poscar.getLattice();
-	Eigen::Map<Eigen::Matrix3d>(&(lattice_prim[0][0]), 3, 3) = poscar.getLattice();
-	Eigen::Map<Eigen::Matrix3d>(&(lattice_unit[0][0]), 3, 3) = poscar.getLattice();
+	Eigen::Map<Eigen::Matrix3d>(&(lattice[0][0]), 3, 3)      = poscar.getLatticeBasis();
+	Eigen::Map<Eigen::Matrix3d>(&(lattice_prim[0][0]), 3, 3) = poscar.getLatticeBasis();
+	Eigen::Map<Eigen::Matrix3d>(&(lattice_unit[0][0]), 3, 3) = poscar.getLatticeBasis();
 
 	double position[N][3];
 	double position_prim[N][3];

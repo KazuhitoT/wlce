@@ -78,7 +78,7 @@ ParsePoscar::ParsePoscar(const char *filename){
 
 }
 
-Eigen::Matrix3d ParsePoscar::getLattice(){
+Eigen::Matrix3d ParsePoscar::getLatticeBasis(){
 	return lattice_basis;
 };
 

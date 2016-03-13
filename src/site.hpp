@@ -1,3 +1,5 @@
+#ifndef _SITE_HPP
+#define _SITE_HPP
 
 #include <Eigen/Core>
 #include <unordered_map>
@@ -176,3 +178,5 @@ public :
 		return true;
 	}
 };
+
+#endif

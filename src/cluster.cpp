@@ -103,8 +103,8 @@ int main(int argc, char* argv[]){
 
 	double lattice[3][3];
 	double lattice_unit[3][3];
-	Eigen::Map<Eigen::Matrix3d>(&(lattice[0][0]), 3, 3)      = poscar.getLattice();
-	Eigen::Map<Eigen::Matrix3d>(&(lattice_unit[0][0]), 3, 3) = poscar.getLattice();
+	Eigen::Map<Eigen::Matrix3d>(&(lattice[0][0]), 3, 3)      = poscar.getLatticeBasis();
+	Eigen::Map<Eigen::Matrix3d>(&(lattice_unit[0][0]), 3, 3) = poscar.getLatticeBasis();
 
 	double position[N][3];
 	double position_unit[N][3];
@@ -529,7 +529,8 @@ int main(int argc, char* argv[]){
 	clusters_out.close();
 	multiplicity_out.close();
 
-	for(int i=0; i<position_ex.size(); ++i) spins_ex.push_back(-1);
+	for(int i=0; i<position_ex.size()/2; ++i) spins_ex.push_back(-1);
+	for(int i=0; i<position_ex.size()/2; ++i) spins_ex.push_back(1);
 
 	Conf2corr(spins_ex, std::vector<double>{-1, 0, 1}, std::vector<double>{-1, 0 ,1}, pall_clusters);
 	// Conf2corr("poscar.in", std::vector<double>{-1, 1}, std::vector<double>{-1, 1}, pall_clusters);
