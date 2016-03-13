@@ -121,9 +121,9 @@ int main(int argc, char* argv[]){
 	double lattice[3][3];
 	double lattice_prim[3][3];
 	double lattice_unit[3][3];
-	Eigen::Map<Eigen::Matrix3d>(&(lattice[0][0]), 3, 3)      = poscar.getAxis();
-	Eigen::Map<Eigen::Matrix3d>(&(lattice_prim[0][0]), 3, 3) = poscar.getAxis();
-	Eigen::Map<Eigen::Matrix3d>(&(lattice_unit[0][0]), 3, 3) = poscar.getAxis();
+	Eigen::Map<Eigen::Matrix3d>(&(lattice[0][0]), 3, 3)      = poscar.getLattice();
+	Eigen::Map<Eigen::Matrix3d>(&(lattice_prim[0][0]), 3, 3) = poscar.getLattice();
+	Eigen::Map<Eigen::Matrix3d>(&(lattice_unit[0][0]), 3, 3) = poscar.getLattice();
 
 	double position[N][3];
 	double position_prim[N][3];
@@ -140,7 +140,7 @@ int main(int argc, char* argv[]){
 	int count = 0;
 	int type  = 1;
 	int types[N];
-	for( const auto& i : poscar.getNumAtoms() ){
+	for( const auto& i : poscar.getAtomTypes() ){
 		for( int j=0; j<i; ++j){
 			types[count++] = type;
 		}

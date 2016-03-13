@@ -13,9 +13,9 @@ void outputPoscar(double lattice[3][3], double position[][3], int N, std::string
 
 class ParsePoscar {
 private:
-	std::vector<int> num_atoms;
+	std::vector<int> atom_types;
 	std::vector<std::pair<int, Eigen::Vector3d>> atoms;
-	Eigen::Matrix3d axis;
+	Eigen::Matrix3d lattice_basis;
 	std::string coordinate_type;
 	std::string comment;
 
@@ -23,8 +23,8 @@ public:
 	ParsePoscar(){};
 	ParsePoscar(const char*);
 
-	Eigen::Matrix3d getAxis();
-	std::vector<int> getNumAtoms();
+	Eigen::Matrix3d getLatticeBasis();
+	std::vector<int> getAtomTypes();
 	std::vector<std::pair<int, Eigen::Vector3d>> getAtoms();
 	std::string getComment() const {return comment;}
 	std::string getCoordinateType() const {return coordinate_type;}

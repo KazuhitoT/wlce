@@ -41,9 +41,9 @@ ParsePoscar::ParsePoscar(const char *filename){
 	double x,y,z;
 	for (int i = 0; i < 3; ++i){
 		input >> x >> y >> z;
-		axis.col(i) << x ,y, z;
+		lattice_basis.col(i) << x ,y, z;
 	}
-	axis *= unit;
+	lattice_basis *= unit;
 
 	std::string del1;
 	std::getline (input, del1);
@@ -55,7 +55,7 @@ ParsePoscar::ParsePoscar(const char *filename){
 			break;
 		}
 		else if ( a != 0){
-			num_atoms.push_back(a);
+			atom_types.push_back(a);
 		}
 	}
 
@@ -68,7 +68,7 @@ ParsePoscar::ParsePoscar(const char *filename){
 	}
 	std::getline(input2, coordinate_type);
 
-	int num_all_atoms = std::accumulate(num_atoms.begin(), num_atoms.end(), 0);
+	int num_all_atoms = std::accumulate(atom_types.begin(), atom_types.end(), 0);
 
 	for( int i=0; i<num_all_atoms; ++i ){
 		input2 >> x >> y >> z;
@@ -78,12 +78,12 @@ ParsePoscar::ParsePoscar(const char *filename){
 
 }
 
-Eigen::Matrix3d ParsePoscar::getAxis(){
-	return axis;
+Eigen::Matrix3d ParsePoscar::getLattice(){
+	return lattice_basis;
 };
 
-std::vector<int> ParsePoscar::getNumAtoms(){
-	return num_atoms;
+std::vector<int> ParsePoscar::getAtomTypes(){
+	return atom_types;
 };
 
 std::vector<std::pair<int, Eigen::Vector3d>> ParsePoscar::getAtoms(){

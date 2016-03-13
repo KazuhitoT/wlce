@@ -103,8 +103,8 @@ int main(int argc, char* argv[]){
 
 	double lattice[3][3];
 	double lattice_unit[3][3];
-	Eigen::Map<Eigen::Matrix3d>(&(lattice[0][0]), 3, 3)      = poscar.getAxis();
-	Eigen::Map<Eigen::Matrix3d>(&(lattice_unit[0][0]), 3, 3) = poscar.getAxis();
+	Eigen::Map<Eigen::Matrix3d>(&(lattice[0][0]), 3, 3)      = poscar.getLattice();
+	Eigen::Map<Eigen::Matrix3d>(&(lattice_unit[0][0]), 3, 3) = poscar.getLattice();
 
 	double position[N][3];
 	double position_unit[N][3];
@@ -122,8 +122,8 @@ int main(int argc, char* argv[]){
 	// int type = 1;
 	// int count = 0;
 	std::vector<double> spins;
-	for(int i=0; i<poscar.getNumAtoms().size(); ++i) {
-		for(int j=0; j<poscar.getNumAtoms()[i]; ++j){
+	for(int i=0; i<poscar.getAtomTypes().size(); ++i) {
+		for(int j=0; j<poscar.getAtomTypes()[i]; ++j){
 			spins.push_back(spins_poscar[i]);
 			// types[count++] = type;
 		}
