@@ -457,15 +457,15 @@ int main(int argc, char* argv[]){
 						d_b4_index.push_back(all_triplets);
 						quadlet_cluster[all_triplets].push_back(relative_coords);
 					} else {
-						auto it2 = find_if( quadlet_cluster[all_triplets].begin(), quadlet_cluster[all_triplets].end(),
+						auto it2 = find_if( quadlet_cluster[(*it)].begin(), quadlet_cluster[(*it)].end(),
 						[relative_coords, prec](const std::vector<Eigen::Vector3d>& obj){
 							for(int i=0; i<3; ++i){
 								if( (relative_coords[i]-obj[i]).norm() > prec ) return false;
 							}
 							return true;
 						});
-						if( it2 == quadlet_cluster[all_triplets].end() ){
-							quadlet_cluster[all_triplets].push_back(relative_coords);
+						if( it2 == quadlet_cluster[(*it)].end() ){
+							quadlet_cluster[(*it)].push_back(relative_coords);
 						}
 					}
 				}
