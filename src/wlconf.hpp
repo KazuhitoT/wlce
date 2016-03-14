@@ -19,8 +19,6 @@ class WLconf : public Conf2corr{
 			 std::vector<double> _chemical_potential = std::vector<double>()
 		 ):Conf2corr(filename, _spinposcar, _spince, _pall_clusters, _pbasis_functions, _pindex_orders){
 
-		 }
-
 
 		// WLconf(char* filename,
 		// 	 vector<double> _spinposcar = vector<double>(),

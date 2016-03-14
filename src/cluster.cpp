@@ -12,10 +12,6 @@
 #include "./site.hpp"
 #include "./conf2corr.hpp"
 
-extern "C" {
-	#include "../spglib/src/spglib.h"
-}
-
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
 
 class hash_vecd {
@@ -70,8 +66,7 @@ void outputPoscar(Eigen::Matrix3d lattice, std::vector<Eigen::Vector3d> position
 };
 
 int main(int argc, char* argv[]){
-	bool noexpand = false;
-	double d2, d3, d4 = -1;
+	double d2 = -1;
 	double prec = 0.00001;
 
 	std::regex re("(-d|-d2|-d3|-d4)\\=(\\d+(\\.\\d+)?)?");
@@ -79,12 +74,7 @@ int main(int argc, char* argv[]){
 	for(int i=1; i<argc; i++) {
 		std::string str(argv[i]);
 		if(regex_match(str, match, re)){
-			if( match[1] == "-d2" ) d2=std::stod(match[2]);
-			else if( match[1] == "-d3" ) d3=std::stod(match[2]);
-			else if( match[1] == "-d4" ) d4=std::stod(match[2]);
-			else if( match[1] == "-d" ) d2=std::stod(match[2]);
-		} else if( str == "-noexpand" ){
-			noexpand = true;
+			if( match[1] == "-d" ) d2=std::stod(match[2]);
 		} else {
 			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
 			exit(1);
@@ -92,7 +82,7 @@ int main(int argc, char* argv[]){
 		std::cout << std::endl;
 	}
 
-	if( argc == 1 or (d2==-1 and d3==-1 and d4==-1) ){
+	if( argc == 1 or d2==-1 ){
 		std::cerr << " ERROR : commandline argument [-d=*] is required." << std::endl;
 		exit(1);
 	}
@@ -116,18 +106,11 @@ int main(int argc, char* argv[]){
 		}
  	}
 
-	int types[N];
-	for( int i=0; i<N; ++i )	types[i] = 1;
-
-	// int type = 1;
-	// int count = 0;
 	std::vector<double> spins;
 	for(int i=0; i<poscar.getAtomTypes().size(); ++i) {
 		for(int j=0; j<poscar.getAtomTypes()[i]; ++j){
 			spins.push_back(spins_poscar[i]);
-			// types[count++] = type;
 		}
-		// ++type;
 	}
 
 	int N_unit = N;
@@ -135,39 +118,7 @@ int main(int argc, char* argv[]){
 	int expand_y = 1;
 	int expand_z = 1;
 	Eigen::Matrix3d lattice_unit_matrix;
-	if( noexpand ){
-		lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice[0][0]);
-	} else if( !noexpand ){
-		N_unit = spg_standardize_cell(lattice_unit, position_unit, types, N, 0, 0, 0.00001);
-		outputPoscar(lattice_unit, position_unit, N_unit, "unit");
-
-		lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice_unit[0][0]);
-
-		{
-			Eigen::Vector3d unit_x, unit_y, unit_z;
-			unit_x << 1, 0, 0;
-			unit_y << 0, 1, 0;
-			unit_z << 0, 0, 1;
-			double unit_length_x = (lattice_unit_matrix * unit_x).norm();
-			double unit_length_y = (lattice_unit_matrix * unit_y).norm();
-			double unit_length_z = (lattice_unit_matrix * unit_z).norm();
-			while( unit_length_x <= (d2*2.) ){
-				unit_x[0] = ++expand_x;
-				unit_length_x = (lattice_unit_matrix * unit_x).norm();
-			}
-			while( unit_length_y <= (d2*2.) ){
-				unit_y[1] = ++expand_y;
-				unit_length_y = (lattice_unit_matrix * unit_y).norm();
-			}
-			while( unit_length_z <= (d2*2.) ){
-				unit_z[2] = ++expand_z;
-				unit_length_z = (lattice_unit_matrix * unit_z).norm();
-			}
-		}
-		std::cout << " poscar.expand = ";
-		std::cout << expand_x << " * " << expand_y << " * " << expand_z << "  ";
-		std::cout << "poscar.unit" << std::endl;
-	}
+	lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice[0][0]);
 
 	std::vector<double> spins_ex;
 	std::vector<Eigen::Vector3d> position_ex;
@@ -208,21 +159,6 @@ int main(int argc, char* argv[]){
 		}
 	}
 	outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
-	//
-	// {
-	// 	Eigen::Vector3d ex_limit_coord;
-	// 	ex_limit_coord << 1,1,1;
-	// 	ex_limit_coord = lattice_ex * ex_limit_coord;
-	//
-	// 	// Eigen::Vector3d x_c
-	//
-	// 	int in2ex_x = 1;
-	// 	int in2ex_y = 1;
-	// 	int in2ex_z = 1;
-	// 	while(  ){}
-	//
-	//
-	// }
 
 	std::vector<std::shared_ptr<Site>> site_vec;
 	for(int i=0; i<position_ex.size(); ++i) {
@@ -233,7 +169,6 @@ int main(int argc, char* argv[]){
 		assert( site->getSiteRelative().size() == site_vec.size() );
 	}
 
-	std::shared_ptr<allclusters> pall_clusters(new allclusters);
 	std::ofstream clusters_out( "clusters.out", std::ios::out );
 	std::ofstream multiplicity_out( "multiplicity.out", std::ios::out );
 
@@ -245,7 +180,6 @@ int main(int argc, char* argv[]){
 		clusters_out << i << " ";
 		point_clusters.push_back(std::vector<std::vector<int>>());
 	}
-	pall_clusters->push_back(point_clusters);
 	clusters_out << std::endl;
 	multiplicity_out << "1 " << position_ex.size() << std::endl;
 
@@ -291,7 +225,6 @@ int main(int argc, char* argv[]){
 	}
 
 	for( const auto& i : distance_site_to_sites ){
-		std::vector<std::vector<std::vector<int>>> pair_clusters;
 		std::cout << i.first << " " << i.second[0].size() << std::endl;
 		multiplicity_out << "2 " << i.second[0].size()*position_ex.size()/2  << std::endl;
 		for( int j=0; j<i.second.size(); ++j) {
@@ -299,11 +232,8 @@ int main(int argc, char* argv[]){
 			assert( i.second[j].size() == i.second[0].size() );
 			for( const auto& k : i.second[j] ){
 				clusters_out << j << " " << k << " ";
-				site_clusters.push_back(std::vector<int>{k});
 			}
-			pair_clusters.push_back(site_clusters);
 		}
-		pall_clusters->push_back(pair_clusters);
 		clusters_out << std::endl;
 	}
 
@@ -385,7 +315,6 @@ int main(int argc, char* argv[]){
 	}
 
 	for(const auto& index : d_b3_index){
-		std::vector<std::vector<std::vector<int>>> triplet_cluster_int;
 		for(const auto& site : site_vec ){
 			std::vector<std::vector<int>> site_clusters;
 			for(const auto& two_relative_coord : triplet_cluster[index]){
@@ -398,12 +327,9 @@ int main(int argc, char* argv[]){
 					clusters_out << site->getSiteNum() << " ";
 					clusters_out << site2->getSiteNum() << " ";
 					clusters_out << site3->getSiteNum() << " ";
-					site_clusters.push_back(std::vector<int>{site2->getSiteNum(), site3->getSiteNum()});
 				}
 			}
-			triplet_cluster_int.push_back(site_clusters);
 		}
-		pall_clusters->push_back(triplet_cluster_int);
 		clusters_out << std::endl;
 	}
 
@@ -505,9 +431,7 @@ int main(int argc, char* argv[]){
 	}
 
 	for(const auto& index : d_b4_index){
-		std::vector<std::vector<std::vector<int>>> quadlet_cluster_int;
 		for(const auto& site : site_vec ){
-			std::vector<std::vector<int>> site_clusters;
 			for(const auto& three_relative_coord : quadlet_cluster[index]){
 				auto site2 = site->getRelativeSite(three_relative_coord[0]);
 				auto site3 = site->getRelativeSite(three_relative_coord[1]);
@@ -517,36 +441,14 @@ int main(int argc, char* argv[]){
 					clusters_out << site2->getSiteNum() << " ";
 					clusters_out << site3->getSiteNum() << " ";
 					clusters_out << site4->getSiteNum() << " ";
-					site_clusters.push_back(std::vector<int>{site2->getSiteNum(), site3->getSiteNum(), site4->getSiteNum()});
 				}
 			}
-			quadlet_cluster_int.push_back(site_clusters);
 		}
-		pall_clusters->push_back(quadlet_cluster_int);
 		clusters_out << std::endl;
 	}
 
 	clusters_out.close();
 	multiplicity_out.close();
-
-	for(int i=0; i<position_ex.size(); ++i) spins_ex.push_back(-1);
-	// for(int i=0; i<position_ex.size()/2; ++i) spins_ex.push_back(-1);
-	// for(int i=0; i<position_ex.size()/2; ++i) spins_ex.push_back(1);
-
-	Conf2corr test(spins_ex, std::vector<double>{-1,1}, std::vector<double>{-1,1}, pall_clusters);
-	test.dispCorr();
-	std::cout << std::endl;
-	std::cout << std::endl;
-
-	for(int i=0; i<1000; ++i){
-		test.setCorrelationFunction_flip();
-	}
-	test.dispCorr();
-	std::cout << std::endl;
-	std::cout << std::endl;
-
-	test.setInitialCorrelationFunction();
-	test.dispCorr();
 
 	// Conf2corr("poscar.in", std::vector<double>{-1, 1}, std::vector<double>{-1, 1}, pall_clusters);
 
