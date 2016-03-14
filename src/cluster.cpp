@@ -224,13 +224,17 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	for( const auto& i : distance_site_to_sites ){
-		std::cout << i.first << " " << i.second[0].size() << std::endl;
-		multiplicity_out << "2 " << i.second[0].size()*position_ex.size()/2  << std::endl;
-		for( int j=0; j<i.second.size(); ++j) {
+	std::vector<double> distances;
+	for(const auto i : distance_site_to_sites) distances.push_back(i.first);
+	sort(distances.begin(), distances.end());
+
+	for( const auto& distance : distances ){
+		std::cout << distance << " " << distance_site_to_sites[distance][0].size() << std::endl;
+		multiplicity_out << "2 " << distance_site_to_sites[distance][0].size()*position_ex.size()/2  << std::endl;
+		for( int j=0; j<distance_site_to_sites[distance].size(); ++j) {
 			std::vector<std::vector<int>> site_clusters;
-			assert( i.second[j].size() == i.second[0].size() );
-			for( const auto& k : i.second[j] ){
+			assert( distance_site_to_sites[distance][j].size() == distance_site_to_sites[distance][0].size() );
+			for( const auto& k : distance_site_to_sites[distance][j] ){
 				clusters_out << j << " " << k << " ";
 			}
 		}
