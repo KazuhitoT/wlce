@@ -1,5 +1,6 @@
 #include "./Conf2corr.hpp"
 
+/* for corrdump */
 Conf2corr::Conf2corr(std::vector<double> _spins,
 	 std::vector<double> _spinposcar,
 	 std::vector<double> _spince,

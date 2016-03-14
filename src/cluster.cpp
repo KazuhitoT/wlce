@@ -21,26 +21,26 @@ using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
 class hash_vecd {
 public:
   double operator()(const std::vector<double> &x) const {
-    const int C = 997;      // 素数
-    double t = 0;
-    for (int i = 0; i != x.size(); ++i) {
-        t = t * C + x[i];
+    const int C = 997;
+    double result = 0;
+    for (int i=0; i<x.size(); ++i) {
+        result = result * C + x[i];
     }
-    return t;
+    return result;
   }
 };
 
 class hash_vec2d {
 public:
   double operator()(const std::vector<std::vector<double>> &x) const {
-    const int C = 997;      // 素数
-    double t = 0;
-		for (int i = 0; i != x.size(); ++i) {
-			for (int j = 0; j != x[i].size(); ++j) {
-        t = t * C + x[i][j];
+    const int C = 997;
+    double result = 0;
+		for (int i=0; i<x.size(); ++i) {
+			for (int j=0; j<x[i].size(); ++j) {
+        result = result * C + x[i][j];
 			}
     }
-    return t;
+    return result;
   }
 };
 
