@@ -55,13 +55,6 @@ class Conf2corr {
 			std::shared_ptr<basisfunc>   _pbasis_functions = nullptr,
 			std::shared_ptr<indexorders> _pindex_orders = nullptr
 		);
-		Conf2corr(std::vector<double> _spins,
-			std::vector<double> _spinposcar,
-			std::vector<double> _spince,
-			std::shared_ptr<allclusters> _pall_clusters,
-			std::shared_ptr<basisfunc>   _pbasis_functions = nullptr,
-			std::shared_ptr<indexorders> _pindex_orders = nullptr
-		);
 		~Conf2corr(){};
 
 		void setSpins(char* filename);

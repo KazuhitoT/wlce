@@ -13,11 +13,12 @@ class WLconf : public Conf2corr{
 			 std::vector<double> _spinposcar,
 			 std::vector<double> _spince,
 			 std::shared_ptr<allclusters> _pall_clusters,
+			 std::map<int /*index*/ , double /*eci*/> ecicar,
 			 std::shared_ptr<basisfunc>   _pbasis_functions = nullptr,
 			 std::shared_ptr<indexorders> _pindex_orders = nullptr,
 			 bool is_exchange = false,
 			 std::vector<double> _chemical_potential = std::vector<double>()
-		 ):Conf2corr(filename, _spinposcar, _spince, _pall_clusters, _pbasis_functions, _pindex_orders){
+		 ):Conf2corr(filename, _spinposcar, _spince, _pall_clusters, _pbasis_functions, _pindex_orders){}
 
 
 		// WLconf(char* filename,

@@ -1,7 +1,6 @@
 #include "./Conf2corr.hpp"
 
-/* for corrdump */
-Conf2corr::Conf2corr(std::vector<double> _spins,
+Conf2corr::Conf2corr(char* filename,
 	 std::vector<double> _spinposcar,
 	 std::vector<double> _spince,
 	 std::shared_ptr<allclusters> _ptr,
@@ -9,11 +8,29 @@ Conf2corr::Conf2corr(std::vector<double> _spins,
 	 std::shared_ptr<indexorders> _pindex_orders
  ) : pbasis_functions(new basisfunc()), pindex_orders(new indexorders())
  {
-	spins = _spins;
-	spins_before = spins;
 	spinposcar = _spinposcar;
 	spince = _spince;
 	pall_clusters = _ptr;
+
+	ParsePoscar poscarSpin(filename);
+	std::vector<std::pair<int, Eigen::Vector3d>> poscar_spin = poscarSpin.getAtoms();
+
+	std::vector<int> atom_types = poscarSpin.getAtomTypes();
+	int type = 0;
+	for(const auto& num_types : atom_types ){
+		for(int i=0; i<num_types; ++i){
+			spins.push_back(spinposcar[type]);
+		}
+		++type;
+	}
+
+	spins_before = spins;
+
+	if( poscar_spin.size() != spins.size() ){
+		std::cerr<< "ERROR : the number of atoms in [poscar.in] != total spins in [poscar.in]" << std::endl;
+		exit(1);
+	}
+
 
 	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, spins.size()-1), mt);
 	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
@@ -21,9 +38,9 @@ Conf2corr::Conf2corr(std::vector<double> _spins,
 	assert( spinposcar.size()>0 );
 	assert( spince.size()>0 );
 
-	if( !_pindex_orders )	setIndexOrders();
+	if( _pindex_orders == nullptr )	setIndexOrders();
 	else this->pindex_orders = _pindex_orders;
-	if( !_pbasis_functions ) setBasisCoefficient();
+	if( _pbasis_functions == nullptr ) setBasisCoefficient();
 	else this->pbasis_functions = _pbasis_functions;
 
 	setInitialCorrelationFunction();
@@ -35,7 +52,7 @@ void Conf2corr::setIndexOrders(){
 
 	unsigned int max_num_cluster=0;
 	for(const auto& i: *pall_clusters ){
-		if( i.size()>0 and i[0].size()>0 and max_num_cluster < i[0][0].size() )
+		if( i.size()>0 and i[0].size()>0 and max_num_cluster < (i[0][0].size()+1) )
 			max_num_cluster = i[0][0].size()+1;
 	}
 
@@ -102,8 +119,10 @@ void Conf2corr::setInitialCorrelationFunction(){
 			if( num_of_cluster>0 ){
 				num_in_cluster = (*pall_clusters)[i][0][0].size()+1;
 			}
+		} else {
+			num_of_cluster = 1;
+			num_in_cluster = 1;
 		}
-		if( i==0 ) num_of_cluster = 1;
 
 		for(const auto& index_order : (*pindex_orders)[num_in_cluster-1] ){
 			double corr_averaged_same_index = 0;

@@ -4,7 +4,9 @@
 #include <random>
 #include <chrono>
 
+#include "./Parser.hpp"
 #include "./Input.hpp"
+#include "./WLconf.hpp"
 
 // #include "./WLconf.hpp"
 // #include "update.hpp"
@@ -31,7 +33,7 @@ bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<
 int main(int argc, char* argv[]){
 	Input in("wang-landau.ini");
 
-	std::vector<int> spince, spinposcar;
+	std::vector<double> spince, spinposcar;
 	std::vector<double> chemical_potential;
 	int mcstep, setrandom, bin, flatcheck;
 	double factor, flimit, emin, emax, lflat;
@@ -51,24 +53,6 @@ int main(int argc, char* argv[]){
 	in.setData("EMIN", emin, true);
 	in.setData("EMAX", emax, true);
 	in.setData("LFLAT", lflat, true);
-	//
-	// std::regex re("(-d|-d2|-d3|-d4)\\=(\\d+(\\.\\d+)?)?");
-	// std::smatch match;
-	// for(int i=1; i<argc; i++) {
-	// 	std::string str(argv[i]);
-	// 	if(regex_match(str, match, re)){
-	// 		if( match[1] == "-d2" ) d2=std::stod(match[2]);
-	// 		else if( match[1] == "-d3" ) d3=std::stod(match[2]);
-	// 		else if( match[1] == "-d4" ) d4=std::stod(match[2]);
-	// 		else if( match[1] == "-d" ) d2=std::stod(match[2]);
-	// 	} else if( str == "-noexpand" ){
-	// 		noexpand = true;
-	// 	} else {
-	// 		std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
-	// 		exit(1);
-	// 	}
-	// 	std::cout << std::endl;
-	// }
 
 	bool spin_exchange = false;
 	for(int i=1; i<argc; i++) {
@@ -81,7 +65,22 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	WLconf PoscarSpin("./POSCAR.spin", spinposcar, spince, exchange, chemical_potential);
+	const ParseEcicar ecicar("./ecicar");
+	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
+	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
+
+	WLconf PoscarSpin("./poscar.spin",
+			spinposcar,
+			spince,
+			cluster_in.getCluster(),
+			ecicar.getEci(),
+			nullptr,
+			nullptr,
+			spin_exchange,
+			chemical_potential
+	);
+
+	PoscarSpin.dispCorr();
 
 //
 // 	const int N = PoscarSpin.getSpins().size();

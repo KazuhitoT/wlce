@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 #include <boost/algorithm/string.hpp>
+#include <memory>
 
 // #define DEBUG
 
@@ -44,6 +45,7 @@ class ParseEcicar : public Parser{
 		std::map<int, double> 	getEci()			const {return ecicar;};
 };
 
+using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
 class ParseMultiplicityIn : public Parser{
 	private:
 		std::map<int /* = index */, std::pair<int /* = numPoints */, int /* = numClusters */> > multiplicity;
@@ -58,11 +60,11 @@ class ParseMultiplicityIn : public Parser{
 class ParseClusterIn : public Parser{
 	private:
 		// ClusterOut[index][lattice_point]~
-		std::vector<std::vector<std::vector<std::vector<int> > > > clusters;
-		// std::vector<std::vector<std::vector<std::vector<int>>>> pclusters;
+		std::shared_ptr<allclusters> pclusters;
+		std::vector<int> index;
 	public:
 		ParseClusterIn(const char*, const std::vector<int>&, const std::map<int , std::pair<int, int> >&);
-		std::vector<std::vector<int> > getClusterIn(int index, int lattice_point) const {return clusters[index][lattice_point]; };
+		std::shared_ptr<allclusters> getCluster() const {return pclusters;};
 
  		/* ちゃんとパースできてるかの確認*/
 		void checkClusterIn();
