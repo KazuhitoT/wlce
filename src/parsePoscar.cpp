@@ -48,15 +48,17 @@ ParsePoscar::ParsePoscar(const char *filename){
 	std::string del1;
 	std::getline (input, del1);
 
-	for (int i = 0; i < 20; ++i){
-		int a = 0;
+	for (int i=0; i<20; ++i){
+		int num_atom_type;
+		std::string a;
 		input >> a;
-		if ( a == 0){
+		std::cout << a << std::endl;
+		try {
+			num_atom_type = std::stoi(a);
+		} catch (std::invalid_argument e) {
 			break;
 		}
-		else if ( a != 0){
-			atom_types.push_back(a);
-		}
+		atom_types.push_back(num_atom_type);
 	}
 
 	input.close();
