@@ -15,7 +15,9 @@
 #include <Eigen/LU>
 #include <memory>
 #include <cfloat>
+
 #include "./parsePoscar.hpp"
+#include "./input.hpp"
 
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
 using indexorders = std::vector<std::vector<std::vector<std::vector<int>>>>;
@@ -51,6 +53,12 @@ class Conf2corr {
 		Conf2corr(char* filename,
 			std::vector<double> _spinposcar,
 			std::vector<double> _spince,
+			std::shared_ptr<allclusters> _pall_clusters,
+			std::shared_ptr<basisfunc>   _pbasis_functions = nullptr,
+			std::shared_ptr<indexorders> _pindex_orders = nullptr
+		);
+		Conf2corr(char* filename,
+			std::shared_ptr<Input> _in,
 			std::shared_ptr<allclusters> _pall_clusters,
 			std::shared_ptr<basisfunc>   _pbasis_functions = nullptr,
 			std::shared_ptr<indexorders> _pindex_orders = nullptr

@@ -12,6 +12,43 @@ Conf2corr::Conf2corr(char* filename,
 	spince = _spince;
 	pall_clusters = _ptr;
 
+	this->setSpins(filename);
+
+	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
+	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
+
+	if( _pindex_orders == nullptr )	setIndexOrders();
+	else this->pindex_orders = _pindex_orders;
+	if( _pbasis_functions == nullptr ) setBasisCoefficient();
+	else this->pbasis_functions = _pbasis_functions;
+
+	setInitialCorrelationFunction();
+}
+
+Conf2corr::Conf2corr(char* filename,
+	std::shared_ptr<Input> _in,
+	std::shared_ptr<allclusters> _pall_clusters,
+	std::shared_ptr<basisfunc>   _pbasis_functions,
+	std::shared_ptr<indexorders> _pindex_orders
+) : pbasis_functions(new basisfunc()), pindex_orders(new indexorders()){
+	_in->setData("SPINCE", spince, true);
+	_in->setData("SPINPOSCAR", spinposcar, true);
+	pall_clusters = _pall_clusters;
+
+	this->setSpins(filename);
+
+	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
+	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
+
+	if( _pindex_orders == nullptr )	setIndexOrders();
+	else this->pindex_orders = _pindex_orders;
+	if( _pbasis_functions == nullptr ) setBasisCoefficient();
+	else this->pbasis_functions = _pbasis_functions;
+
+	this->setInitialCorrelationFunction();
+};
+
+void Conf2corr::setSpins(char* filename){
 	ParsePoscar poscarSpin(filename);
 	std::vector<std::pair<int, Eigen::Vector3d>> poscar_spin = poscarSpin.getAtoms();
 
@@ -24,26 +61,12 @@ Conf2corr::Conf2corr(char* filename,
 		++type;
 	}
 
-	spins_before = spins;
-
 	if( poscar_spin.size() != spins.size() ){
 		std::cerr<< "ERROR : the number of atoms in [poscar.in] != total spins in [poscar.in]" << std::endl;
 		exit(1);
 	}
 
-
-	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, spins.size()-1), mt);
-	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
-
-	assert( spinposcar.size()>0 );
-	assert( spince.size()>0 );
-
-	if( _pindex_orders == nullptr )	setIndexOrders();
-	else this->pindex_orders = _pindex_orders;
-	if( _pbasis_functions == nullptr ) setBasisCoefficient();
-	else this->pbasis_functions = _pbasis_functions;
-
-	setInitialCorrelationFunction();
+	this->spins_before = this->spins;
 }
 
 void Conf2corr::setIndexOrders(){

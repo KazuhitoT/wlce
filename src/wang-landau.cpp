@@ -8,18 +8,11 @@
 #include "./Input.hpp"
 #include "./WLconf.hpp"
 
-// #include "./WLconf.hpp"
-// #include "update.hpp"
-// #include "wlInput.hpp"
-// #include "output.hpp"
-// #include "wlStep.hpp"
-// #include "enum.hpp"
-
 bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, double low_cutoff=0.5){
 	double ave = accumulate(histogram.begin(), histogram.end(), 0) / (double)histogram.size();
 	double limit = ave * lflat ;
 	for(int i=0, imax=histogram.size(); i<imax; ++i){
-		/*  存在しないbinはスルーする */
+
 		auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , i);
 		if( it != index_neglect_bin.end() ) continue;
 
@@ -31,28 +24,28 @@ bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<
 
 
 int main(int argc, char* argv[]){
-	Input in("wang-landau.ini");
+	std::shared_ptr<Input> in(new Input("wang-landau.ini"));
 
 	std::vector<double> spince, spinposcar;
 	std::vector<double> chemical_potential;
 	int mcstep, setrandom, bin, flatcheck;
 	double factor, flimit, emin, emax, lflat;
 	std::string input_spin_filename;
-
-	in.setData("SPINCE", spince, true);
-	in.setData("SPINPOSCAR", spinposcar, true);
-	in.setData("CHEMIPOT", chemical_potential);
-	in.setData("MCSTEP", mcstep, true);
-	in.setData("SPININPUT", input_spin_filename);
-	in.setData("SETRANDOM", setrandom);
-
-	in.setData("BIN", bin, true);
-	in.setData("FLATCHECK", flatcheck, true);
-	in.setData("FACTOR", factor, true);
-	in.setData("FLIMIT", flimit, true);
-	in.setData("EMIN", emin, true);
-	in.setData("EMAX", emax, true);
-	in.setData("LFLAT", lflat, true);
+	//
+	// in.setData("SPINCE", spince, true);
+	// in.setData("SPINPOSCAR", spinposcar, true);
+	// in.setData("CHEMIPOT", chemical_potential);
+	// in.setData("MCSTEP", mcstep, true);
+	// in.setData("SPININPUT", input_spin_filename);
+	// in.setData("SETRANDOM", setrandom);
+	//
+	// in.setData("BIN", bin, true);
+	// in.setData("FLATCHECK", flatcheck, true);
+	// in.setData("FACTOR", factor, true);
+	// in.setData("FLIMIT", flimit, true);
+	// in.setData("EMIN", emin, true);
+	// in.setData("EMAX", emax, true);
+	// in.setData("LFLAT", lflat, true);
 
 	bool spin_exchange = false;
 	for(int i=1; i<argc; i++) {
@@ -69,35 +62,20 @@ int main(int argc, char* argv[]){
 	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
 	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
 
-	WLconf PoscarSpin("./poscar.spin",
-			spinposcar,
-			spince,
-			cluster_in.getCluster(),
-			ecicar.getEci(),
-			nullptr,
-			nullptr,
-			spin_exchange,
-			chemical_potential
-	);
-
+	WLconf PoscarSpin("./poscar.spin", in, cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr, spin_exchange);
 	PoscarSpin.dispCorr();
 
-//
 // 	const int N = PoscarSpin.getSpins().size();
-// 	std::vector<int>     index_neglect_bin;
+	std::vector<int>     index_neglect_bin;
 //
-// 	if( in.setrandom and in.input_spin_filename.size() ){
-// 		std::cout << "ERROR : Both SETRANDOM and SPININPUT are available." << std::endl;
-// 		std::cout << "Plese make available only one configuration." << std::endl;
-// 		exit(1);
-// 	} else if(in.input_spin_filename.size()){
-// 		PoscarSpin.setSpinsFromDat(in.input_spin_filename, in.emin, in.emax);
-// 		index_neglect_bin = PoscarSpin.getNeglectBinIndex();
-// 		PoscarSpin.setCorrelationFunctionFromClucar();
-// 	} else if(in.setrandom){
-// 		PoscarSpin.setSpinsRandom();
-// 	}
-// 	PoscarSpin.setIndex();
+	// if( input_spin_filename.size()>0 ){
+	// 	PoscarSpin.setSpinsFromDat(input_spin_filename, in.emin, in.emax);
+	// 	index_neglect_bin = PoscarSpin.getNeglectBinIndex();
+	// 	PoscarSpin.setCorrelationFunctionFromClucar();
+	// } else if(in.setrandom){
+	// 	PoscarSpin.setSpinsRandom();
+	// }
+	// PoscarSpin.setIndex();
 //
 // 	double delta = ( in.emax - in.emin )/ (double)(in.bin);
 //

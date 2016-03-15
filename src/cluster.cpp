@@ -454,6 +454,4 @@ int main(int argc, char* argv[]){
 	clusters_out.close();
 	multiplicity_out.close();
 
-	// Conf2corr("poscar.in", std::vector<double>{-1, 1}, std::vector<double>{-1, 1}, pall_clusters);
-
 }

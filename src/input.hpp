@@ -15,19 +15,12 @@
 #include <boost/optional.hpp>
 #include <boost/lexical_cast.hpp>
 
-// using namespace boost;
-// using namespace boost::property_tree;
-// using namespace std;
-
-
 class Input {
 private:
 	boost::property_tree::ptree pt;
 
 public:
-	Input(char* filename){
-		read_ini(filename, pt);
-	};
+	Input(char* filename){ read_ini(filename, pt); };
 	template<typename T> void setData(std::string dataName, T &data, bool required=false);
 	template<typename T> void setData(std::string dataName, std::vector<T> &data, bool required=false);
 	void disp(void);

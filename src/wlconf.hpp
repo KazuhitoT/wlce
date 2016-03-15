@@ -8,6 +8,8 @@ class WLconf : public Conf2corr{
 		double emin, emax, edelta;
 		int bin, index;
 
+		std::vector<double> chemical_potential;
+
 	public:
 		WLconf(char* filename,
 			 std::vector<double> _spinposcar,
@@ -19,6 +21,16 @@ class WLconf : public Conf2corr{
 			 bool is_exchange = false,
 			 std::vector<double> _chemical_potential = std::vector<double>()
 		 ):Conf2corr(filename, _spinposcar, _spince, _pall_clusters, _pbasis_functions, _pindex_orders){}
+
+		WLconf(char* filename,
+			std::shared_ptr<Input> _in,
+			std::shared_ptr<allclusters> _pall_clusters,
+			std::map<int /*index*/ , double /*eci*/> ecicar,
+			std::shared_ptr<basisfunc>   _pbasis_functions = nullptr,
+			std::shared_ptr<indexorders> _pindex_orders = nullptr,
+			bool is_exchange = false
+		);
+
 
 
 		// WLconf(char* filename,
