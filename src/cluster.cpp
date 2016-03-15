@@ -119,6 +119,22 @@ int main(int argc, char* argv[]){
 	int expand_z = 1;
 	Eigen::Matrix3d lattice_unit_matrix;
 	lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice[0][0]);
+	Eigen::Vector3d unit_x, unit_y, unit_z;
+	unit_x << 1, 0, 0;
+	unit_y << 0, 1, 0;
+	unit_z << 0, 0, 1;
+	double length_x = (poscar.getLatticeBasis() * unit_x).norm();
+	double length_y = (poscar.getLatticeBasis() * unit_y).norm();
+	double length_z = (poscar.getLatticeBasis() * unit_z).norm();
+	if( length_x <= (d2*2.)
+	or length_y <= (d2*2.)
+	or length_z <= (d2*2.) ){
+		std::cerr << "-d=* is too small for poscar.in." << std::endl;
+		std::cerr << "-d=* should be less than a half of minimum one side of the cell." << std::endl;
+		exit(1);
+	}
+
+	lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice[0][0]);
 
 	std::vector<double> spins_ex;
 	std::vector<Eigen::Vector3d> position_ex;
@@ -126,6 +142,15 @@ int main(int argc, char* argv[]){
 	double lattice_ex_arr[3][3];
 	double position_ex_arr[N_unit*expand_x*expand_y*expand_z][3];
 	{
+		Eigen::Matrix3d max_ex_mat;
+		max_ex_mat << expand_x,0,0, 0,expand_y,0, 0,0,expand_z;
+		lattice_ex = max_ex_mat * lattice_unit_matrix;
+		for(int i=0; i<3; ++i){
+			for(int j=0; j<3; ++j){
+				lattice_ex_arr[i][j] = lattice_ex(i,j);
+			}
+		}
+
 		Eigen::Matrix3d div_mat;
 		div_mat << 1./double(expand_x),0,0,
 							 0,1./double(expand_y),0,
@@ -141,22 +166,16 @@ int main(int argc, char* argv[]){
 					Eigen::Vector3d block_vec;
 					block_vec << double(x)/double(expand_x), double(y)/double(expand_y), double(z)/double(expand_z);
 					for(int i=0; i<N_unit; ++i){
+						auto tmp_position = block_vec + position_unit_vec[i];
 						for(int ii=0; ii<3; ++ii){
-							position_ex_arr[position_ex.size()][ii] = block_vec[ii] + position_unit_vec[i](ii);
+							position_ex_arr[position_ex.size()][ii] = tmp_position[ii];
 						}
-						position_ex.push_back( block_vec + position_unit_vec[i]);
+						position_ex.push_back( tmp_position );
 					}
 				}
 			}
 		}
-		Eigen::Matrix3d max_ex_mat;
-		max_ex_mat << expand_x,0,0, 0,expand_y,0, 0,0,expand_z;
-		lattice_ex = max_ex_mat * lattice_unit_matrix;
-		for(int i=0; i<3; ++i){
-			for(int j=0; j<3; ++j){
-				lattice_ex_arr[i][j] = lattice_ex(i,j);
-			}
-		}
+
 	}
 	// outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
 
@@ -202,6 +221,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
+	std::vector<double> distances;
 	std::unordered_map<double, std::vector<std::vector<int>>> distance_site_to_sites;
 	{
 		for( const auto& d_a : distance_atom ){
@@ -221,11 +241,10 @@ int main(int argc, char* argv[]){
 				a_d_a.push_back(vec_a);
 			}
 			distance_site_to_sites[d_a.first] = a_d_a;
+			distances.push_back(d_a.first);
 		}
 	}
 
-	std::vector<double> distances;
-	for(const auto i : distance_site_to_sites) distances.push_back(i.first);
 	sort(distances.begin(), distances.end());
 
 	for( const auto& distance : distances ){
@@ -356,7 +375,7 @@ int main(int argc, char* argv[]){
 						triplet_cluster[index][i][0],
 						triplet_cluster[index][i][1],
 						linked_site->getCoordinate()
-					}, lattice_ex , d2);
+					}, lattice_ex , d2, distances);
 					if( all_triplets.size() != 4 ) continue;
 
 					std::vector<Eigen::Vector3d> relative_coords = {
