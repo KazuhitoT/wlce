@@ -9,8 +9,11 @@ class WLconf : public Conf2corr{
 		int mcstep, flatcheck_step, setrandom;
 		std::string input_spin_filename;
 
-		int bin, index;
+		double totalEnergy, totalEnergy_before;
+		int bin, index, index_before;
+		bool is_exchange;
 
+		std::vector<std::pair<int, std::vector<double>>> eci;
 		std::vector<double> chemical_potential;
 
 	public:
@@ -28,7 +31,7 @@ class WLconf : public Conf2corr{
 		WLconf(char* filename,
 			std::shared_ptr<Input> _in,
 			std::shared_ptr<allclusters> _pall_clusters,
-			std::map<int /*index*/ , double /*eci*/> ecicar,
+			const std::map<int /*index*/ , std::vector<double> /*eci*/>& ecicar,
 			std::shared_ptr<basisfunc>   _pbasis_functions = nullptr,
 			std::shared_ptr<indexorders> _pindex_orders = nullptr,
 			bool is_exchange = false
@@ -36,9 +39,44 @@ class WLconf : public Conf2corr{
 
 		void dispInput();
 
+		void setEci(const std::map<int, std::vector<double>>& ecicar);
 		bool setSpinsFromDat();
+
 		std::vector<int> getNeglectBinIndex();
 
+		void setTotalEnergy();
+		void setNewConf();
+		void setCorrelationFunction(){
+			setMemento();
+			if(is_exchange) this->setCorrelationFunction_flip();
+			else this->setCorrelationFunction_exchange();
+		};
+
+		void setIndex(){
+			index = (this->getTotalEnergy() - emin) / edelta;
+			this->indexValidation();
+		}
+
+		void setMemento(){
+			Conf2corr::setMemento();
+			this->totalEnergy_before = this->totalEnergy;
+			this->index_before = this->index;
+		}
+		void Memento(){
+			Conf2corr::Memento();
+			this->totalEnergy = this->totalEnergy_before;
+			this->index = this->index_before;
+		}
+
+		void indexValidation(){
+			if( index<0 )
+				index = 0;
+			else if( index>(bin-1) )
+				index = bin-1;
+		};
+
+		int getIndex(){ return index; }
+		double getTotalEnergy(){ return totalEnergy;}
 		// WLconf(char* filename,
 		// 	 vector<double> _spinposcar = vector<double>(),
 		// 	 vector<double> _spince = vector<double>(),

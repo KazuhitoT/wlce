@@ -22,15 +22,46 @@ bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<
 	return true;
 }
 
+void outputHistogram(const std::vector<double>& dos, const std::vector<double>& histogram, double emin, double delta, int fstep, std::string prefix = ""){
+		std::ofstream ofs("out-wl"+prefix+std::to_string(fstep)+".dat");
+		ofs.setf(std::ios_base::fixed, std::ios_base::floatfield);
+		for(int i=0, imax=dos.size(); i<imax; ++i){
+			ofs << i << " " << std::setprecision(10) << emin + i*delta << " " << emin + (i+1)*delta << " " <<
+			std::setprecision(10) << dos[i] << " " << histogram[i] << std::endl;
+		}
+		ofs.close();
+}
+
+double wl_step(WLconf& conf, const std::vector<double>& dos){
+	conf.setTotalEnergy();
+	conf.setIndex();
+	int index_before = conf.getIndex();
+	int index_after  = index_before;
+
+	conf.setNewConf();
+	index_after  = conf.getIndex();
+
+	double b = exp(dos.at(index_before) - dos.at(index_after));
+	if(b>=1.0 or b>conf.RandReal()){
+	} else {
+		conf.Memento();
+	}
+	return conf.getTotalEnergy();
+}
 
 int main(int argc, char* argv[]){
 	std::shared_ptr<Input> in(new Input("wang-landau.ini"));
 
 	int mcstep, bin, flatcheck_step;
-	double logfactor, logflimit, emin, emax, flat_criterion;
+	double logfactor, logflimit, emin, emax, edelta, flat_criterion;
+	double low_cutoff = 0.5;
 
 	in->setData("BIN",  bin, true);
 	in->setData("MCSTEP", mcstep, true);
+
+	in->setData("EMIN", emin, true);
+	in->setData("EMAX", emax, true);
+	edelta = (emax - emin) / (double)bin;
 
 	in->setData("FLATCHECKSTEP", flatcheck_step, true);
 	in->setData("LOGFACTOR", logfactor, true);
@@ -93,42 +124,42 @@ int main(int argc, char* argv[]){
 
 	auto f_start = std::chrono::system_clock::now();
 	auto f_end   = std::chrono::system_clock::now();
-	//
- // 	int final_mcsweep = 0;
- // 	while(logflimit < logfactor){
-	// 	std::vector<double> histogram(bin, 0);
-	// 	std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
-	// 	std::cout << std::setprecision(10) << "--- fstep " << fstep << " --  log(factor) = " << logfactor << std::endl;
-	// 	for(int i=1; ; ++i, ++mc_time){
-	// 		for(int j=0; j<N ; ++j){  // スピン数だけステップ回す これで1MCSweep
-	//
-	// 			int before_index = PoscarSpin.getIndex();
-	//
-	// 			wl_step(PoscarSpin, dos);
-	// 			int index = PoscarSpin.getIndex();
-	// 			dos.at(index) += factor;
-	// 			histogram.at(index) += 1;
-	//
-	//
-	// 		}  /*  end MC sweep */
-	//
-	// 		if((i % mcstep) == 0){
-	// 			outputHistogram(dos,  histogram, emin, edelta, fstep);
-	// 			std::cout << i << "sweep done " << std::endl;
-	// 		}
-	// 		if((i % in.flatcheck) == 0 and checkHistogramFlat(histogram, in.lflat, in.low_cutoff)){
-	// 			outputHistogram(dos,  histogram, in.emin, in.edelta, fstep);
-	// 			final_mcsweep = i;
-	// 			break;
-	// 		}
-	// 	}
-	// 	f_end = std::chrono::system_clock::now();
-	// 	auto f_sec = std::chrono::duration_cast<std::chrono::seconds>(f_end-f_start).count();
-	// 	std::cout << " fstep = " << fstep << " " << f_sec << " seconds "<< final_mcsweep << " sweeps" << std::endl;
-	// 	f_start = std::chrono::system_clock::now();
-	// 	factor/=2.0;
-	// 	++fstep;
-	// }
+
+ 	int final_mcsweep = 0;
+ 	while(logflimit < logfactor){
+		std::vector<double> histogram(bin, 0);
+		std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
+		std::cout << std::setprecision(10) << "--- fstep " << fstep << " --  log(factor) = " << logfactor << std::endl;
+		for(int i=1; ; ++i, ++mc_time){
+			for(int j=0; j<N ; ++j){  // スピン数だけステップ回す これで1MCSweep
+
+				int before_index = PoscarSpin.getIndex();
+
+				wl_step(PoscarSpin, dos);
+				PoscarSpin.setIndex();
+				int index = PoscarSpin.getIndex();
+				dos.at(index) += logfactor;
+				histogram.at(index) += 1;
+
+			}  /*  end MC sweep */
+
+			if((i % mcstep) == 0){
+				outputHistogram(dos,  histogram, emin, edelta, fstep);
+				std::cout << i << "sweep done " << std::endl;
+			}
+			if((i % flatcheck_step) == 0 and checkHistogramFlat(histogram, index_neglect_bin, flat_criterion, low_cutoff)){
+				outputHistogram(dos,  histogram, emin, edelta, fstep);
+				final_mcsweep = i;
+				break;
+			}
+		}
+		f_end = std::chrono::system_clock::now();
+		auto f_sec = std::chrono::duration_cast<std::chrono::seconds>(f_end-f_start).count();
+		std::cout << " fstep = " << fstep << " " << f_sec << " seconds "<< final_mcsweep << " sweeps" << std::endl;
+		f_start = std::chrono::system_clock::now();
+		logfactor/=2.0;
+		++fstep;
+	}
 
 	auto end = std::chrono::system_clock::now();
 	auto sec = std::chrono::duration_cast<std::chrono::seconds>(end-start).count();

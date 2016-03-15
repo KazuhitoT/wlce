@@ -47,7 +47,12 @@ Parser::Parser (const char* f, const std::vector<int>& vindex) : filename(f) {
 
 ParseEcicar::ParseEcicar (const char* filename):Parser(filename) {
 	for(int i=0, imax=this->getContent().size(); i<imax; ++i){
-		ecicar[this->getContent(i,0)] = this->getContent(i,1);
+		std::vector<double> tmp;
+		for(const auto& j: this->getContent(i)){
+			tmp.push_back(j);
+		}
+		tmp.erase(tmp.begin()); /* delete index */
+		ecicar[this->getContent(i,0)] = tmp;
 		index.push_back(getContent(i,0));
 	}
 }

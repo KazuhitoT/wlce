@@ -33,7 +33,7 @@ class Parser{
 
 class ParseEcicar : public Parser{
 	private:
-		std::map<int /*index*/ , double /*eci*/> ecicar;
+		std::map<int /*index*/ ,std::vector<double> /*eci*/> ecicar;
 		std::vector<int> index;
 	public:
 		// ParseEcicar(){};
@@ -41,8 +41,8 @@ class ParseEcicar : public Parser{
 		~ParseEcicar(){};
 
 		std::vector<int>     getIndex() 			const {return index;};
-		int 			getEci(int index)	{return ecicar[index];};
-		std::map<int, double> 	getEci()			const {return ecicar;};
+		std::vector<double> 	getEci(int index)	{return ecicar[index];};
+		std::map<int, std::vector<double>> 	getEci()			const {return ecicar;};
 };
 
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;

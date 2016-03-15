@@ -3,11 +3,14 @@
 WLconf::WLconf(char* filename,
 	std::shared_ptr<Input> _in,
 	std::shared_ptr<allclusters> _pall_clusters,
-	std::map<int /*index*/ , double /*eci*/> ecicar,
+	const std::map<int /*index*/ , std::vector<double> /*eci*/>& _ecicar,
 	std::shared_ptr<basisfunc>   _pbasis_functions,
 	std::shared_ptr<indexorders> _pindex_orders,
-	bool is_exchange
-):Conf2corr(filename, _in, _pall_clusters, _pbasis_functions, _pindex_orders){
+	bool _is_exchange
+):Conf2corr(filename, _in, _pall_clusters, _pbasis_functions, _pindex_orders),
+	is_exchange(_is_exchange){
+
+	setEci(_ecicar);
 
 	_in->setData("EMIN", this->emin, true);
 	_in->setData("EMAX", this->emax, true);
@@ -57,7 +60,7 @@ void WLconf::dispInput(void){
 			std::cout << i << " ";
 		std::cout << std::endl;
 	}
-	
+
 	if( this->input_spin_filename.size()>0 )
 		std::cout << "SPININPUT      : " << input_spin_filename << std::endl;
 	if( this->setrandom>0 )
@@ -144,4 +147,60 @@ std::vector<int> WLconf::getNeglectBinIndex(){
 	}
 
 	return neglect_bin_index;
+}
+
+void WLconf::setEci(const std::map<int ,std::vector<double>>& ecicar){
+	if(this->eci.size() > 0) return ;
+	for(const auto& i : ecicar){
+		this->eci.push_back(std::pair<int, std::vector<double>>(i.first, i.second));
+	}
+}
+
+void WLconf::setTotalEnergy(){
+	totalEnergy = 0;
+	for(int i=0, imax=eci.size(); i<imax; ++i){
+		for(int j=0, jmax=eci[i].second.size(); j<jmax; ++j){
+			totalEnergy += this->getCorrelationFunctions(i,j) * eci[i].second[j];
+			// std:: cout << i <<" " << this->getCorrelationFunctions(i,j) << " " << eci[i].second[j] << " " << totalEnergy << std::endl;
+		}
+	}
+	/*  setCorrに組み込んだほうが早い  */
+	if( chemical_potential.size()>0 ){
+		std::vector<double> compositions;
+		std::vector<double> spins = this->getSpins();
+		for(const auto& spin : this->getSpinCE()){
+			 double composition = std::count(spins.begin(), spins.end(), spin) / double(spins.size());
+			 compositions.push_back(composition);
+		}
+		assert( compositions.size() == chemical_potential.size() );
+		for(int i=0; i<compositions.size(); ++i){
+			totalEnergy -= chemical_potential[i] * compositions[i];
+		}
+	}
+}
+
+void WLconf::setNewConf(){
+	int count              = 0;
+	double Econf           = this->getTotalEnergy();
+	this->setIndex();
+	int index_conf         = this->getIndex();
+	const int index_before = index_conf;
+	double m_distance_before = 0;
+	double m_distance_after  = 0;
+	while(index_conf == index_before || Econf > this->emax || Econf < this->emin){
+		this->setCorrelationFunction();
+		this->setTotalEnergy();
+		// std::cout << this->getTotalEnergy() << std::endl;
+		this->setIndex();
+		Econf = this->getTotalEnergy();
+		index_conf  = this->getIndex();
+
+		if( index_conf != index_before and Econf <= this->emax and Econf >= this->emin )
+			break;
+
+		if( Econf > this->emax || Econf < this->emin ) {
+			this->Memento();
+		}
+
+	}
 }

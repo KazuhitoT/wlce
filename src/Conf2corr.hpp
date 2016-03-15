@@ -76,10 +76,30 @@ class Conf2corr {
 
 		void setInitialCorrelationFunction();
 		void setCorrelationFunction_flip();
+		void setCorrelationFunction_exchange();
+
+		virtual void setMemento()
+		{
+			this->spins_before = this->spins;
+			this->correlation_functions_before = this->correlation_functions;
+		};
+
+		virtual void Memento()
+		{
+			this->spins = this->spins_before;
+			this->correlation_functions = this->correlation_functions_before;
+		};
 
 		void dispCorr();
 
+		int RandN(){return rnd_int_N();};
+		double RandReal(){ return rnd_real();};
+
 		std::vector<double> getSpins(){ return spins; };
+		std::vector<double> getSpinCE(){ return spince; };
+		std::vector<std::vector<double>> getCorrelationFunctions(){ return correlation_functions; };
+		double getCorrelationFunctions(int i, int j){ return correlation_functions[i][j]; };
+
 
   	// Conf2corr &operator=(const Conf2corr&);    // 代入演算子
 };
