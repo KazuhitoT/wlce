@@ -41,3 +41,10 @@ add_executable(wang-landau
 	./src/conf2corr.cpp
 	./src/wlconf.cpp
 )
+
+add_executable(corrdump
+	./src/corrdump.cpp
+	./src/parser.cpp
+	./src/parsePoscar.cpp
+	./src/conf2corr.cpp
+)

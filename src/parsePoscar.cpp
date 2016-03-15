@@ -52,7 +52,6 @@ ParsePoscar::ParsePoscar(const char *filename){
 		int num_atom_type;
 		std::string a;
 		input >> a;
-		std::cout << a << std::endl;
 		try {
 			num_atom_type = std::stoi(a);
 		} catch (std::invalid_argument e) {

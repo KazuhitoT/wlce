@@ -51,6 +51,7 @@ class ParseMultiplicityIn : public Parser{
 		std::map<int /* = index */, std::pair<int /* = numPoints */, int /* = numClusters */> > multiplicity;
 	public:
 		// ParseMultiplicityIn(){};
+		ParseMultiplicityIn(const char*);
 		ParseMultiplicityIn(const char*, const std::vector<int>&);
 		~ParseMultiplicityIn(){};
 		std::pair<int, int> getMultiplicityIn(int index) const {return multiplicity.at(index);};
@@ -63,6 +64,7 @@ class ParseClusterIn : public Parser{
 		std::shared_ptr<allclusters> pclusters;
 		std::vector<int> index;
 	public:
+		ParseClusterIn(const char*, const std::map<int , std::pair<int, int> >& multiplicity);
 		ParseClusterIn(const char*, const std::vector<int>&, const std::map<int , std::pair<int, int> >&);
 		std::shared_ptr<allclusters> getCluster() const {return pclusters;};
 

@@ -79,7 +79,7 @@ void Conf2corr::setIndexOrders(){
 			max_num_cluster = i[0][0].size()+1;
 	}
 
-	std::cout << "max_num_cluster  " << max_num_cluster << std::endl;
+	// std::cout << "max_num_cluster  " << max_num_cluster << std::endl;
 
 	std::vector<std::vector<std::vector<int>>> tmp;
 	for(int n=1; n<=max_num_cluster; ++n){
@@ -116,11 +116,11 @@ void Conf2corr::setIndexOrders(){
 		for( auto data : base_combination){
 			std::vector<std::vector<int>> tmp;
 		  do{
-		    std::cout << "[ " << data[0];
-		    for(unsigned int i=1; i<data.size(); ++i){
-		      std::cout << ", " << data[i];
-		    }
-		    std::cout << " ]" << std::endl;
+		    // std::cout << "[ " << data[0];
+		    // for(unsigned int i=1; i<data.size(); ++i){
+		    //   std::cout << ", " << data[i];
+		    // }
+		    // std::cout << " ]" << std::endl;
 				tmp.push_back(data);
 		  }while(next_permutation(data.begin(), data.end()));
 			combination.push_back(tmp);
