@@ -23,7 +23,7 @@ Eigen::Vector3d validCoordinate(Eigen::Vector3d lhs){
 	return lhs;
 };
 
-std::vector<std::vector<double>> getAllTriplets(const std::vector<Eigen::Vector3d>& points, const Eigen::Matrix3d& lattice, double maxd){
+std::vector<std::vector<double>> getAllTriplets(const std::vector<Eigen::Vector3d>& points, const Eigen::Matrix3d& lattice, double maxd, const std::vector<double>& distances){
 	std::vector<std::vector<double>> result;
 	for(int i=0; i<points.size(); ++i){
 		for(int j=(i+1); j<points.size(); ++j){
@@ -33,7 +33,20 @@ std::vector<std::vector<double>> getAllTriplets(const std::vector<Eigen::Vector3
 				double distance3 = ( lattice * validCoordinate(points[k], points[i]) ).norm();
 				if( distance1 > maxd or distance2 > maxd or distance3 > maxd
 						or distance1 < 0.00001 or distance2 < 0.00001  or distance3 < 0.00001) continue;
-				std::vector<double> lines = {distance1, distance2, distance3};
+				auto it1 = find_if(distances.begin(), distances.end(), [distance1](const double d){
+					if( std::abs(distance1-d) < 0.00001 ) return true;
+					else return false;
+				});
+				auto it2 = find_if(distances.begin(), distances.end(), [distance2](const double d){
+					if( std::abs(distance2-d) < 0.00001 ) return true;
+					else return false;
+				});
+				auto it3 = find_if(distances.begin(), distances.end(), [distance3](const double d){
+					if( std::abs(distance3-d) < 0.00001 ) return true;
+					else return false;
+				});
+				if( it1==distances.end() or it2==distances.end() or it3==distances.end()) continue;
+				std::vector<double> lines = {*it1, *it2, *it3};
 				sort(lines.begin(), lines.end());
 				result.push_back(lines);
 			}

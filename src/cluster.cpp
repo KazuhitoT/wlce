@@ -103,31 +103,32 @@ int main(int argc, char* argv[]){
 
 	double lattice[3][3];
 	double lattice_unit[3][3];
+	Eigen::Matrix3d lattice_eigen = poscar.getLatticeBasis();
 	Eigen::Map<Eigen::Matrix3d>(&(lattice[0][0]), 3, 3)      = poscar.getLatticeBasis();
 	Eigen::Map<Eigen::Matrix3d>(&(lattice_unit[0][0]), 3, 3) = poscar.getLatticeBasis();
 
 	double position[N][3];
+	std::vector<Eigen::Vector3d> position_eigen;
 	double position_unit[N][3];
 	const auto atoms = poscar.getAtoms();
 	for( int i=0; i<N; ++i ){
+		Eigen::Vector3d tmp;
 		for( int j=0; j<3; ++j ){
 			position[i][j]      = atoms[i].second[j];
 			position_unit[i][j] = position[i][j];
 		}
+		tmp << position[i][0], position[i][1], position[i][2];
+		position_eigen.push_back(tmp);
  	}
 
 	int types[N];
 	for( int i=0; i<N; ++i )	types[i] = 1;
 
-	// int type = 1;
-	// int count = 0;
 	std::vector<double> spins;
 	for(int i=0; i<poscar.getAtomTypes().size(); ++i) {
 		for(int j=0; j<poscar.getAtomTypes()[i]; ++j){
 			spins.push_back(spins_poscar[i]);
-			// types[count++] = type;
 		}
-		// ++type;
 	}
 
 	int N_unit = N;
@@ -136,34 +137,50 @@ int main(int argc, char* argv[]){
 	int expand_z = 1;
 	Eigen::Matrix3d lattice_unit_matrix;
 	if( noexpand ){
+		Eigen::Vector3d unit_x, unit_y, unit_z;
+		unit_x << 1, 0, 0;
+		unit_y << 0, 1, 0;
+		unit_z << 0, 0, 1;
+		double length_x = (poscar.getLatticeBasis() * unit_x).norm();
+		double length_y = (poscar.getLatticeBasis() * unit_y).norm();
+		double length_z = (poscar.getLatticeBasis() * unit_z).norm();
+		if( length_x <= (d2*2.)
+		or length_y <= (d2*2.)
+		or length_z <= (d2*2.) ){
+			std::cerr << "-d=* is too small for poscar.in." << std::endl;
+			std::cerr << "-d=* should be less than a half of minimum one side of the cell." << std::endl;
+			exit(1);
+		}
+
 		lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice[0][0]);
 	} else if( !noexpand ){
 		N_unit = spg_standardize_cell(lattice_unit, position_unit, types, N, 0, 0, 0.00001);
 		outputPoscar(lattice_unit, position_unit, N_unit, "unit");
-
 		lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice_unit[0][0]);
 
-		{
-			Eigen::Vector3d unit_x, unit_y, unit_z;
-			unit_x << 1, 0, 0;
-			unit_y << 0, 1, 0;
-			unit_z << 0, 0, 1;
-			double unit_length_x = (lattice_unit_matrix * unit_x).norm();
-			double unit_length_y = (lattice_unit_matrix * unit_y).norm();
-			double unit_length_z = (lattice_unit_matrix * unit_z).norm();
-			while( unit_length_x <= (d2*2.) ){
-				unit_x[0] = ++expand_x;
-				unit_length_x = (lattice_unit_matrix * unit_x).norm();
-			}
-			while( unit_length_y <= (d2*2.) ){
-				unit_y[1] = ++expand_y;
-				unit_length_y = (lattice_unit_matrix * unit_y).norm();
-			}
-			while( unit_length_z <= (d2*2.) ){
-				unit_z[2] = ++expand_z;
-				unit_length_z = (lattice_unit_matrix * unit_z).norm();
-			}
+		Eigen::Vector3d unit_x, unit_y, unit_z;
+		unit_x << 1, 0, 0;
+		unit_y << 0, 1, 0;
+		unit_z << 0, 0, 1;
+		double unit_length_x = (lattice_unit_matrix * unit_x).norm();
+		double unit_length_y = (lattice_unit_matrix * unit_y).norm();
+		double unit_length_z = (lattice_unit_matrix * unit_z).norm();
+		double length_x = (poscar.getLatticeBasis() * unit_x).norm();
+		double length_y = (poscar.getLatticeBasis() * unit_y).norm();
+		double length_z = (poscar.getLatticeBasis() * unit_z).norm();
+		while( unit_length_x <= (d2*2.) or unit_length_x < length_x){
+			unit_x[0] = ++expand_x;
+			unit_length_x = (lattice_unit_matrix * unit_x).norm();
 		}
+		while( unit_length_y <= (d2*2.) or unit_length_y < length_y){
+			unit_y[1] = ++expand_y;
+			unit_length_y = (lattice_unit_matrix * unit_y).norm();
+		}
+		while( unit_length_z <= (d2*2.) or unit_length_z < length_z){
+			unit_z[2] = ++expand_z;
+			unit_length_z = (lattice_unit_matrix * unit_z).norm();
+		}
+
 		std::cout << " poscar.expand = ";
 		std::cout << expand_x << " * " << expand_y << " * " << expand_z << "  ";
 		std::cout << "poscar.unit" << std::endl;
@@ -175,6 +192,15 @@ int main(int argc, char* argv[]){
 	double lattice_ex_arr[3][3];
 	double position_ex_arr[N_unit*expand_x*expand_y*expand_z][3];
 	{
+		Eigen::Matrix3d max_ex_mat;
+		max_ex_mat << expand_x,0,0, 0,expand_y,0, 0,0,expand_z;
+		lattice_ex = max_ex_mat * lattice_unit_matrix;
+		for(int i=0; i<3; ++i){
+			for(int j=0; j<3; ++j){
+				lattice_ex_arr[i][j] = lattice_ex(i,j);
+			}
+		}
+
 		Eigen::Matrix3d div_mat;
 		div_mat << 1./double(expand_x),0,0,
 							 0,1./double(expand_y),0,
@@ -190,20 +216,21 @@ int main(int argc, char* argv[]){
 					Eigen::Vector3d block_vec;
 					block_vec << double(x)/double(expand_x), double(y)/double(expand_y), double(z)/double(expand_z);
 					for(int i=0; i<N_unit; ++i){
+						auto tmp_position = block_vec + position_unit_vec[i];
 						for(int ii=0; ii<3; ++ii){
-							position_ex_arr[position_ex.size()][ii] = block_vec[ii] + position_unit_vec[i](ii);
+							position_ex_arr[position_ex.size()][ii] = tmp_position[ii];
 						}
-						position_ex.push_back( block_vec + position_unit_vec[i]);
+						position_ex.push_back( tmp_position );
+						auto it = find_if(position_eigen.begin(), position_eigen.end(), [&lattice_ex, &lattice_eigen, &tmp_position, prec](const Eigen::Vector3d& obj){
+							if ( ( lattice_ex*tmp_position - lattice_eigen*obj ).norm() < prec ) return true;
+							else return false;
+						});
+						if( it != position_eigen.end() ){
+							spins_ex.push_back(1);
+							// std::cout << (*it).transpose() << std::endl;
+						}
 					}
 				}
-			}
-		}
-		Eigen::Matrix3d max_ex_mat;
-		max_ex_mat << expand_x,0,0, 0,expand_y,0, 0,0,expand_z;
-		lattice_ex = max_ex_mat * lattice_unit_matrix;
-		for(int i=0; i<3; ++i){
-			for(int j=0; j<3; ++j){
-				lattice_ex_arr[i][j] = lattice_ex(i,j);
 			}
 		}
 	}
@@ -268,6 +295,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
+	std::vector<double> distances;
 	std::unordered_map<double, std::vector<std::vector<int>>> distance_site_to_sites;
 	{
 		for( const auto& d_a : distance_atom ){
@@ -287,6 +315,7 @@ int main(int argc, char* argv[]){
 				a_d_a.push_back(vec_a);
 			}
 			distance_site_to_sites[d_a.first] = a_d_a;
+			distances.push_back(d_a.first);
 		}
 	}
 
@@ -426,7 +455,7 @@ int main(int argc, char* argv[]){
 						triplet_cluster[index][i][0],
 						triplet_cluster[index][i][1],
 						linked_site->getCoordinate()
-					}, lattice_ex , d2);
+					}, lattice_ex , d2, distances);
 					if( all_triplets.size() != 4 ) continue;
 
 					std::vector<Eigen::Vector3d> relative_coords = {
@@ -529,9 +558,10 @@ int main(int argc, char* argv[]){
 	clusters_out.close();
 	multiplicity_out.close();
 
-	for(int i=0; i<position_ex.size(); ++i) spins_ex.push_back(-1);
+	// for(int i=0; i<position_ex.size(); ++i) spins_ex.push_back(-1);
 	// for(int i=0; i<position_ex.size()/2; ++i) spins_ex.push_back(-1);
 	// for(int i=0; i<position_ex.size()/2; ++i) spins_ex.push_back(1);
+	std::cout << spins_ex.size() << std::endl;
 
 	Conf2corr test(spins_ex, std::vector<double>{-1,1}, std::vector<double>{-1,1}, pall_clusters);
 	test.dispCorr();
