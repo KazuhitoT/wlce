@@ -158,7 +158,7 @@ int main(int argc, char* argv[]){
 			}
 		}
 	}
-	outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
+	// outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
 
 	std::vector<std::shared_ptr<Site>> site_vec;
 	for(int i=0; i<position_ex.size(); ++i) {

@@ -5,7 +5,10 @@
 
 class WLconf : public Conf2corr{
 	private:
-		double emin, emax, edelta;
+		double emin, emax, edelta, logfactor, logflimit, flat_criterion;
+		int mcstep, flatcheck_step, setrandom;
+		std::string input_spin_filename;
+
 		int bin, index;
 
 		std::vector<double> chemical_potential;
@@ -31,7 +34,10 @@ class WLconf : public Conf2corr{
 			bool is_exchange = false
 		);
 
+		void dispInput();
 
+		bool setSpinsFromDat();
+		std::vector<int> getNeglectBinIndex();
 
 		// WLconf(char* filename,
 		// 	 vector<double> _spinposcar = vector<double>(),

@@ -66,6 +66,9 @@ class Conf2corr {
 		~Conf2corr(){};
 
 		void setSpins(char* filename);
+		void setSpins(std::vector<double> _spins){ this->spins = _spins; }
+		void setSpins(int i, double spin){ this->spins.at(i) = spin; }
+		void setSpinsBefore(std::vector<double> _spins){ this->spins_before = _spins;}
 
 		void setBasisCoefficient();
 		void setIndexOrders();
@@ -75,6 +78,8 @@ class Conf2corr {
 		void setCorrelationFunction_flip();
 
 		void dispCorr();
+
+		std::vector<double> getSpins(){ return spins; };
 
   	// Conf2corr &operator=(const Conf2corr&);    // 代入演算子
 };

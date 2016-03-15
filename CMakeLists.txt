@@ -39,4 +39,5 @@ add_executable(wang-landau
 	./src/parser.cpp
 	./src/parsePoscar.cpp
 	./src/conf2corr.cpp
+	./src/wlconf.cpp
 )
