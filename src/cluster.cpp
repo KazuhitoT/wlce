@@ -86,7 +86,6 @@ void outputPoscar(Eigen::Matrix3d lattice, std::vector<Eigen::Vector3d> position
 	ofs << "Direct" << std::endl;
 	for(int i=0; i<spince.size(); ++i){
 		for(int j=0; j<position.size(); ++j){
-			std::cout << spince[i] << " " << spins[j] << std::endl;
 			if( spince[i]==spins[j] ){
 				for(int k=0; k<3; ++k){
 					ofs << position[j](k) << " ";
