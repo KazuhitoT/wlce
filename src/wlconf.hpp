@@ -1,7 +1,7 @@
 #ifndef WLCONF_HPP
 #define WLCONF_HPP
 
-#include "./Conf2corr.hpp"
+#include "./conf2corr.hpp"
 
 class WLconf : public Conf2corr{
 	private:

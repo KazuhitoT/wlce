@@ -5,9 +5,9 @@
 #include <random>
 #include <chrono>
 
-#include "./Parser.hpp"
-#include "./Input.hpp"
-#include "./WLconf.hpp"
+#include "./parser.hpp"
+#include "./input.hpp"
+#include "./wlconf.hpp"
 
 int main(){
 	const ParseMultiplicityIn multiplicity_in("./multiplicity.in");

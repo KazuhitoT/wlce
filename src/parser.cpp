@@ -1,4 +1,4 @@
-#include "./Parser.hpp"
+#include "./parser.hpp"
 
 Parser::Parser (const char* f):filename(f) {
 	ifs.open(filename);

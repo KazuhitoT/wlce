@@ -1,4 +1,4 @@
-#include "./Conf2corr.hpp"
+#include "./conf2corr.hpp"
 
 Conf2corr::Conf2corr(char* filename,
 	 std::vector<double> _spinposcar,
