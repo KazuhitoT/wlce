@@ -108,7 +108,7 @@ bool WLconf::setSpinsFromDat(){
 	}
 
 	this->setSpinsBefore(this->getSpins());
-
+	return true;
 }
 
 std::vector<int> WLconf::getNeglectBinIndex(){

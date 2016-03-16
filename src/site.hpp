@@ -95,6 +95,8 @@ private :
 	// std::vector<std::pair<Eigen::Vector3d, std::shared_ptr<Site>>> site_relative;
 	std::unordered_map<Eigen::Vector3d, std::shared_ptr<Site>, hash_vec3d> site_relative;
 
+	const static std::shared_ptr<Site> not_found;
+
 public :
 	Site(int _n, const Eigen::Vector3d& _c):site_num(_n), coordinate(_c) {};
 
@@ -152,7 +154,7 @@ public :
 		if( it != linked_site.at(distance).end() )
 			return *it;
 		else
-			return nullptr;
+			return not_found;
 	};
 
 	const std::vector<std::shared_ptr<Site>>& getLinkedSiteviaDisncace(const double distance) const {
@@ -191,5 +193,7 @@ public :
 		return true;
 	}
 };
+
+const std::shared_ptr<Site> Site::not_found;
 
 #endif
