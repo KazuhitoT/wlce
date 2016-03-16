@@ -4,9 +4,9 @@
 #include <random>
 #include <chrono>
 
-#include "./Parser.hpp"
-#include "./Input.hpp"
-#include "./WLconf.hpp"
+#include "./parser.hpp"
+#include "./input.hpp"
+#include "./wlconf.hpp"
 
 bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, double low_cutoff=0.5){
 	double ave = accumulate(histogram.begin(), histogram.end(), 0) / (double)histogram.size();
