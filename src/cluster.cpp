@@ -102,14 +102,11 @@ int main(int argc, char* argv[]){
 	double prec = 0.00001;
 	bool noexpand = false;
 
-	std::regex re("(-d|-d2|-d3|-d4)\\=(\\d+(\\.\\d+)?)?");
-	std::smatch match;
 	for(int i=1; i<argc; i++) {
 		std::string str(argv[i]);
-		if(regex_match(str, match, re)){
-			if( match[1] == "-d" ) d2=std::stod(match[2]);
-		} else if( str == "-noexpand" ){
-			noexpand = true;
+		if( str.substr(0, 3) == "-d=" ) {
+			str.erase(str.begin(), str.begin() + 3);
+			d2=std::stod(str);
 		} else {
 			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
 			exit(1);
