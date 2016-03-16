@@ -68,6 +68,7 @@ void outputPoscar(Eigen::Matrix3d lattice, std::vector<Eigen::Vector3d> position
 int main(int argc, char* argv[]){
 	double d2 = -1;
 	double prec = 0.00001;
+	bool noexpand = false;
 
 	std::regex re("(-d|-d2|-d3|-d4)\\=(\\d+(\\.\\d+)?)?");
 	std::smatch match;
@@ -75,6 +76,8 @@ int main(int argc, char* argv[]){
 		std::string str(argv[i]);
 		if(regex_match(str, match, re)){
 			if( match[1] == "-d" ) d2=std::stod(match[2]);
+		} else if( str == "-noexpand" ){
+			noexpand = true;
 		} else {
 			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
 			exit(1);
@@ -117,24 +120,53 @@ int main(int argc, char* argv[]){
 	int expand_x = 1;
 	int expand_y = 1;
 	int expand_z = 1;
-	Eigen::Matrix3d lattice_unit_matrix;
-	lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice[0][0]);
-	Eigen::Vector3d unit_x, unit_y, unit_z;
-	unit_x << 1, 0, 0;
-	unit_y << 0, 1, 0;
-	unit_z << 0, 0, 1;
-	double length_x = (poscar.getLatticeBasis() * unit_x).norm();
-	double length_y = (poscar.getLatticeBasis() * unit_y).norm();
-	double length_z = (poscar.getLatticeBasis() * unit_z).norm();
-	if( length_x <= (d2*2.)
-	or length_y <= (d2*2.)
-	or length_z <= (d2*2.) ){
-		std::cerr << "-d=* is too small for poscar.in." << std::endl;
-		std::cerr << "-d=* should be less than a half of minimum one side of the cell." << std::endl;
-		exit(1);
-	}
+	Eigen::Matrix3d lattice_unit_matrix =  Eigen::Map<Eigen::Matrix3d>(&lattice[0][0]);
+	if( noexpand ){
+		Eigen::Vector3d unit_x, unit_y, unit_z;
+		unit_x << 1, 0, 0;
+		unit_y << 0, 1, 0;
+		unit_z << 0, 0, 1;
+		double length_x = (poscar.getLatticeBasis() * unit_x).norm();
+		double length_y = (poscar.getLatticeBasis() * unit_y).norm();
+		double length_z = (poscar.getLatticeBasis() * unit_z).norm();
+		if( length_x <= (d2*2.)
+		or length_y <= (d2*2.)
+		or length_z <= (d2*2.) ){
+			std::cerr << "-d=* is too small for poscar.in." << std::endl;
+			std::cerr << "-d=* should be less than a half of minimum one side of the cell." << std::endl;
+			exit(1);
+		}
 
-	lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice[0][0]);
+	} else if( !noexpand ){
+		// N_unit = spg_standardize_cell(lattice_unit, position_unit, types, N, 0, 0, 0.00001);
+		// outputPoscar(lattice_unit, position_unit, N_unit, "unit");
+		lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice_unit[0][0]);
+
+		Eigen::Vector3d unit_x, unit_y, unit_z;
+		unit_x << 1, 0, 0;
+		unit_y << 0, 1, 0;
+		unit_z << 0, 0, 1;
+
+		double unit_length_x = (poscar.getLatticeBasis() * unit_x).norm();
+		double unit_length_y = (poscar.getLatticeBasis() * unit_y).norm();
+		double unit_length_z = (poscar.getLatticeBasis() * unit_z).norm();
+		while( unit_length_x <= (d2*2.) ){
+			unit_x[0] = ++expand_x;
+			unit_length_x = (lattice_unit_matrix * unit_x).norm();
+		}
+		while( unit_length_y <= (d2*2.) ){
+			unit_y[1] = ++expand_y;
+			unit_length_y = (lattice_unit_matrix * unit_y).norm();
+		}
+		while( unit_length_z <= (d2*2.) ){
+			unit_z[2] = ++expand_z;
+			unit_length_z = (lattice_unit_matrix * unit_z).norm();
+		}
+
+		std::cout << " poscar.expand = ";
+		std::cout << expand_x << " * " << expand_y << " * " << expand_z << "  ";
+		std::cout << "poscar.in" << std::endl;
+	}
 
 	std::vector<double> spins_ex;
 	std::vector<Eigen::Vector3d> position_ex;
@@ -177,7 +209,9 @@ int main(int argc, char* argv[]){
 		}
 
 	}
-	// outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
+	if( !noexpand ) {
+		outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
+	}
 
 	std::vector<std::shared_ptr<Site>> site_vec;
 	for(int i=0; i<position_ex.size(); ++i) {
