@@ -60,6 +60,43 @@ void outputPoscar(Eigen::Matrix3d lattice, std::vector<Eigen::Vector3d> position
 	}
 };
 
+/* spins */
+void outputPoscar(Eigen::Matrix3d lattice, std::vector<Eigen::Vector3d> position, const std::vector<double>& spins, const std::vector<double>& spince, std::string prefix){
+	std::ofstream ofs("poscar."+prefix);
+	ofs << "POSCAR" << std::endl;
+	ofs << "1.0" << std::endl;
+	ofs.setf(std::ios::right, std::ios::adjustfield);
+	ofs.setf(std::ios_base::fixed, std::ios_base::floatfield);
+	ofs << std::setprecision(15);
+	ofs << std::setw(20);
+
+	for(int i=0; i<3; ++i){
+		for(int j=0; j<3; ++j){
+			ofs << lattice(i,j) << " ";
+		}
+		ofs << std::endl;
+	}
+
+	for(const auto& spin : spince){
+		 double composition = std::count(spins.begin(), spins.end(), spin);
+		 ofs << composition << " ";
+	}
+	ofs << std::endl;
+
+	ofs << "Direct" << std::endl;
+	for(int i=0; i<spince.size(); ++i){
+		for(int j=0; j<position.size(); ++j){
+			std::cout << spince[i] << " " << spins[j] << std::endl;
+			if( spince[i]==spins[j] ){
+				for(int k=0; k<3; ++k){
+					ofs << position[j](k) << " ";
+				}
+				ofs << std::endl;
+			}
+		}
+	}
+};
+
 int main(int argc, char* argv[]){
 	double d2 = -1;
 	double prec = 0.00001;
@@ -87,7 +124,6 @@ int main(int argc, char* argv[]){
 
 	ParsePoscar poscar("poscar.in");
 	const int N = poscar.getAtoms().size();
-	std::vector<double> spins_poscar = {-1, 1};
 
 	double lattice[3][3];
 	double lattice_unit[3][3];
@@ -105,9 +141,13 @@ int main(int argc, char* argv[]){
  	}
 
 	std::vector<double> spins;
+	std::vector<double> spince;
+	int spin_type = 1;
 	for(int i=0; i<poscar.getAtomTypes().size(); ++i) {
+		spince.push_back(spin_type);
+		++spin_type;
 		for(int j=0; j<poscar.getAtomTypes()[i]; ++j){
-			spins.push_back(spins_poscar[i]);
+			spins.push_back(spince[i]);
 		}
 	}
 
@@ -197,6 +237,7 @@ int main(int argc, char* argv[]){
 						for(int ii=0; ii<3; ++ii){
 							position_ex_arr[position_ex.size()][ii] = tmp_position[ii];
 						}
+						spins_ex.push_back(spins[i]);
 						position_ex.push_back( tmp_position );
 					}
 				}
@@ -206,6 +247,7 @@ int main(int argc, char* argv[]){
 	}
 	if( !noexpand ) {
 		outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
+		outputPoscar(lattice_ex, position_ex, spins_ex, spince, "expand.spin");
 	}
 
 	std::vector<std::shared_ptr<Site>> site_vec;
