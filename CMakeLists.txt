@@ -1,13 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 include(CheckCXXCompilerFlag)
 
-add_definitions("-g")
-add_definitions("-DNDEBUG")
-
-# link_directories(~/gitkawailab/cluster-expand/spglib/src/.libs)
-
 # set(CMAKE_CXX_COMPILER icpc)
 # set(CMAKE_CXX_COMPILER_ID Intel)
+
+add_definitions("-g -DNDEBUG -Wno-write-strings")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # using Clang

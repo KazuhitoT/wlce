@@ -1,7 +1,3 @@
-// read poscar.in
-// command line argument -2=10 -3=11
-
-// requiremnt Eigen boost
 #include <unordered_map>
 #include <memory>
 #include <iterator>
@@ -10,7 +6,6 @@
 #include <Eigen/LU>
 #include "./parsePoscar.hpp"
 #include "./site.hpp"
-#include "./conf2corr.hpp"
 
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
 
@@ -274,18 +269,6 @@ int main(int argc, char* argv[]){
 		for(const auto& site2 : linked_site.second ){
 			for(const auto& linked_site2 : site2->getLinkedSite() ){
 				for(const auto& site3 : linked_site2.second ){
-
-					/* reject line cluster */
-					// Eigen::Matrix3d triplet;
-					// auto vector_02 = validCoordinate(site_vec[0]->getCoordinate(), site2->getCoordinate());
-					// auto vector_03 = validCoordinate(site_vec[0]->getCoordinate(), site3->getCoordinate());
-					// triplet << vector_02[0], vector_02[1], vector_02[2],
-					// 	 vector_03[0], vector_03[1], vector_03[2],
-					// 		1, 1, 1;
-					// double triplet_area  = triplet.determinant();
-					// if( triplet_area < prec ) {
-					// 	continue;
-					// }
 
 					Eigen::Vector3d valid_ditance = validCoordinate(site3->getCoordinate(), site_vec[0]->getCoordinate());
 					double distance = (lattice_ex * valid_ditance).norm();
