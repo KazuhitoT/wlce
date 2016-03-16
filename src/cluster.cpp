@@ -342,34 +342,38 @@ int main(int argc, char* argv[]){
 			for(const auto& linked_site2 : site2->getLinkedSite() ){
 				for(const auto& site3 : linked_site2.second ){
 
-					Eigen::Vector3d valid_ditance = validCoordinate(site3->getCoordinate(), site_vec[0]->getCoordinate());
-					double distance = (lattice_ex * valid_ditance).norm();
-					distance = site3->getDistance(distance);
-					if( distance > 0 and site3->getLinkedSite(distance, 0) ){
-						std::vector<double> d_vec = {linked_site.first, linked_site2.first, distance};
-						std::vector<Eigen::Vector3d> relative_coords = {
-							validCoordinate(site2->getCoordinate(), site_vec[0]->getCoordinate()),
-							validCoordinate(site3->getCoordinate(), site_vec[0]->getCoordinate())
-						};
-						for(int i=2; i>=0; --i){
-							stable_sort(relative_coords.begin(), relative_coords.end(), [i](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){ return lhs[i] < rhs[i]; });
-						}
-						sort(d_vec.begin(), d_vec.end());
-						auto it = find( d_b3_index.begin(), d_b3_index.end(), d_vec );
-						if( it == d_b3_index.end() ){
-							d_b3_index.push_back(d_vec);
-							triplet_cluster[d_vec].push_back(relative_coords);
-						} else {
-							auto it2 = find_if( triplet_cluster[d_vec].begin(), triplet_cluster[d_vec].end(),
-							[relative_coords, prec](const std::vector<Eigen::Vector3d>& obj){
-								for(int i=0; i<2; ++i){
-									if( (relative_coords[i]-obj[i]).norm() > prec ) return false;
-								}
-								return true;;
-							});
-							if( it2 == triplet_cluster[d_vec].end() ){
-								triplet_cluster[d_vec].push_back(relative_coords);
+					auto all_triplets = getAllTriplets( std::vector<Eigen::Vector3d>{
+						site_vec[0]->getCoordinate(),
+						site2->getCoordinate(),
+						site3->getCoordinate(),
+					}, lattice_ex , d2, distances);
+					if( all_triplets.size() != 1 ) continue;
+
+					std::vector<double> d_vec = all_triplets[0];
+					std::vector<Eigen::Vector3d> relative_coords = {
+						validCoordinate(site2->getCoordinate(), site_vec[0]->getCoordinate()),
+						validCoordinate(site3->getCoordinate(), site_vec[0]->getCoordinate())
+					};
+
+					for(int i=2; i>=0; --i){
+						stable_sort(relative_coords.begin(), relative_coords.end(), [i](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){ return lhs[i] < rhs[i]; });
+					}
+
+					sort(d_vec.begin(), d_vec.end());
+					auto it = find( d_b3_index.begin(), d_b3_index.end(), d_vec );
+					if( it == d_b3_index.end() ){
+						d_b3_index.push_back(d_vec);
+						triplet_cluster[d_vec].push_back(relative_coords);
+					} else {
+						auto it2 = find_if( triplet_cluster[d_vec].begin(), triplet_cluster[d_vec].end(),
+						[relative_coords, prec](const std::vector<Eigen::Vector3d>& obj){
+							for(int i=0; i<2; ++i){
+								if( (relative_coords[i]-obj[i]).norm() > prec ) return false;
 							}
+							return true;;
+						});
+						if( it2 == triplet_cluster[d_vec].end() ){
+							triplet_cluster[d_vec].push_back(relative_coords);
 						}
 					}
 				}

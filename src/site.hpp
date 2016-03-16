@@ -28,9 +28,12 @@ std::vector<std::vector<double>> getAllTriplets(const std::vector<Eigen::Vector3
 	for(int i=0; i<points.size(); ++i){
 		for(int j=(i+1); j<points.size(); ++j){
 			for(int k=(j+1); k<points.size(); ++k){
-				double distance1 = ( lattice * validCoordinate(points[i], points[j]) ).norm();
-				double distance2 = ( lattice * validCoordinate(points[j], points[k]) ).norm();
-				double distance3 = ( lattice * validCoordinate(points[k], points[i]) ).norm();
+				auto coord_ij = validCoordinate(points[i], points[j]);
+				auto coord_jk = validCoordinate(points[j], points[k]);
+				auto coord_ki = coord_ij + coord_jk ;
+				double distance1 = ( lattice * coord_ij ).norm();
+				double distance2 = ( lattice * coord_jk ).norm();
+				double distance3 = ( lattice * coord_ki ).norm();
 				if( distance1 > maxd or distance2 > maxd or distance3 > maxd
 						or distance1 < 0.00001 or distance2 < 0.00001  or distance3 < 0.00001) continue;
 				auto it1 = find_if(distances.begin(), distances.end(), [distance1](const double d){
