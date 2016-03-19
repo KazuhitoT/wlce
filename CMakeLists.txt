@@ -43,3 +43,13 @@ add_executable(corrdump
 	./src/parser.cpp
 	./src/conf2corr.cpp
 )
+
+
+add_executable(test-main
+	source/test-main.cpp
+	source/test-cluster.cpp
+)
+
+target_link_libraries(test-main
+	boost_unit_test_framework-mt
+)

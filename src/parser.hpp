@@ -51,7 +51,7 @@ class ParseEcicar : public Parser{
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
 class ParseMultiplicityIn : public Parser{
 	private:
-		std::map<int /* = index */, std::pair<int /* = numPoints */, int /* = numClusters */> > multiplicity;
+		std::map<int /* = index */, std::pair<int /* = numPointsInBody */, int /* = numClusters */> > multiplicity;
 	public:
 		// ParseMultiplicityIn(){};
 		ParseMultiplicityIn(const char*);
