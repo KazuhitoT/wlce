@@ -27,14 +27,13 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 
 add_executable(cluster
-	./src/parsePoscar.cpp
+	./src/parser.cpp
 	./src/cluster.cpp
 )
 
 add_executable(wang-landau
 	./src/wang-landau.cpp
 	./src/parser.cpp
-	./src/parsePoscar.cpp
 	./src/conf2corr.cpp
 	./src/wlconf.cpp
 )
@@ -42,6 +41,5 @@ add_executable(wang-landau
 add_executable(corrdump
 	./src/corrdump.cpp
 	./src/parser.cpp
-	./src/parsePoscar.cpp
 	./src/conf2corr.cpp
 )

@@ -4,7 +4,7 @@
 #include <regex>
 #include <Eigen/Core>
 #include <Eigen/LU>
-#include "./parsePoscar.hpp"
+#include "./parser.hpp"
 #include "./site.hpp"
 
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;

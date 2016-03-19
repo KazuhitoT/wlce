@@ -10,7 +10,10 @@
 #include <iostream>
 #include <vector>
 #include <boost/algorithm/string.hpp>
+#include <Eigen/Core>
 #include <memory>
+#include <random>
+#include <iomanip>
 
 // #define DEBUG
 
@@ -68,8 +71,31 @@ class ParseClusterIn : public Parser{
 		ParseClusterIn(const char*, const std::vector<int>&, const std::map<int , std::pair<int, int> >&);
 		std::shared_ptr<allclusters> getCluster() const {return pclusters;};
 
- 		/* ちゃんとパースできてるかの確認*/
+ 		/* for Confirm */
 		void checkClusterIn();
+};
+
+
+void outputPoscar(double lattice[3][3], double position[][3], int N, std::string prefix);
+
+class ParsePoscar {
+private:
+	std::string comment;
+	double unit;
+	Eigen::Matrix3d lattice_basis;
+	std::vector<int> atom_types;
+	std::vector<std::pair<int, Eigen::Vector3d>> atoms;
+	std::string coordinate_type;
+
+public:
+	ParsePoscar(){};
+	ParsePoscar(const char*);
+
+	Eigen::Matrix3d getLatticeBasis();
+	std::vector<int> getAtomTypes();
+	std::vector<std::pair<int, Eigen::Vector3d>> getAtoms();
+	std::string getComment() const {return comment;}
+	std::string getCoordinateType() const {return coordinate_type;}
 };
 
 #endif
