@@ -16,7 +16,7 @@
 #include <memory>
 #include <cfloat>
 
-#include "./parsePoscar.hpp"
+#include "./parser.hpp"
 #include "./input.hpp"
 
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;

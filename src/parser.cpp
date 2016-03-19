@@ -170,3 +170,93 @@ void ParseClusterIn::checkClusterIn(){
 		}
 	}
 }
+
+void outputPoscar(double lattice[3][3], double position[][3], int N, std::string prefix){
+	std::ofstream ofs("poscar."+prefix);
+	ofs << "POSCAR" << std::endl;
+	ofs << "1.0" << std::endl;
+	ofs.setf(std::ios::right, std::ios::adjustfield);
+	ofs.setf(std::ios_base::fixed, std::ios_base::floatfield);
+	ofs << std::setprecision(15);
+	ofs << std::setw(20);
+
+	for(int i=0; i<3; ++i){
+		for(int j=0; j<3; ++j){
+			ofs << lattice[i][j] << " ";
+		}
+		ofs << std::endl;
+	}
+	ofs << N << std::endl;
+	ofs << "Direct" << std::endl;
+	for(int i=0; i<N; ++i){
+		for(int j=0; j<3; ++j){
+			ofs << position[i][j] << " ";
+		}
+		ofs << std::endl;
+	}
+};
+
+
+ParsePoscar::ParsePoscar(const char *filename){
+  std::ifstream ifs(filename);
+
+	if ( !ifs ){
+		std::cout << "ERROR : flle [" << filename << "] does not exist." << std::endl;
+		exit(1);
+	}
+
+	std::string tmp_str;
+	std::getline(ifs, this->comment);
+	std::getline(ifs, tmp_str);
+	this->unit = std::stod(tmp_str);
+
+	for (int i=0; i<3; ++i){
+		double a,b,c;
+		ifs >> a >> b >> c;
+		lattice_basis.col(i) << a, b, c;
+		std::getline(ifs, tmp_str);
+	}
+	lattice_basis *= this->unit;
+
+	std::string buf_num_atom_type;
+	std::vector<std::string> vec_num_atom_type;
+	std::getline( ifs, buf_num_atom_type);
+	boost::algorithm::trim(buf_num_atom_type);
+	boost::algorithm::split(vec_num_atom_type, buf_num_atom_type, boost::is_space());
+
+	for (int i=0; i<vec_num_atom_type.size(); ++i){
+		int num_atom_type;
+		if( vec_num_atom_type[i].size() == 0 ) continue; /* through space */
+		try {
+			num_atom_type = std::stoi(vec_num_atom_type[i]);
+		} catch (std::invalid_argument e) {
+			break;
+		}
+		atom_types.push_back(num_atom_type);
+	}
+
+	std::getline(ifs, coordinate_type);
+
+	int num_all_atoms = std::accumulate(atom_types.begin(), atom_types.end(), 0);
+
+	for( int i=0; i<num_all_atoms; ++i ){
+		double a,b,c;
+		ifs >> a >> b >> c;
+		std::pair<int, Eigen::Vector3d> atom(i, Eigen::Vector3d(a, b, c));
+		atoms.push_back(atom);
+		std::getline(ifs, tmp_str);
+	}
+
+}
+
+Eigen::Matrix3d ParsePoscar::getLatticeBasis(){
+	return lattice_basis;
+};
+
+std::vector<int> ParsePoscar::getAtomTypes(){
+	return atom_types;
+};
+
+std::vector<std::pair<int, Eigen::Vector3d>> ParsePoscar::getAtoms(){
+	return atoms;
+};
