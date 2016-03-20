@@ -5,10 +5,8 @@ WLconf::WLconf(char* filename,
 	std::shared_ptr<allclusters> _pall_clusters,
 	const std::map<int /*index*/ , std::vector<double> /*eci*/>& _ecicar,
 	std::shared_ptr<basisfunc>   _pbasis_functions,
-	std::shared_ptr<indexorders> _pindex_orders,
-	bool _is_exchange
-):Conf2corr(filename, _in, _pall_clusters, _pbasis_functions, _pindex_orders),
-	is_exchange(_is_exchange){
+	std::shared_ptr<indexorders> _pindex_orders
+):Conf2corr(filename, _in, _pall_clusters, _pbasis_functions, _pindex_orders){
 
 	setEci(_ecicar);
 
@@ -161,10 +159,9 @@ void WLconf::setTotalEnergy(){
 	for(int i=0, imax=eci.size(); i<imax; ++i){
 		for(int j=0, jmax=eci[i].second.size(); j<jmax; ++j){
 			totalEnergy += this->getCorrelationFunctions(i,j) * eci[i].second[j];
-			// std:: cout << i <<" " << this->getCorrelationFunctions(i,j) << " " << eci[i].second[j] << " " << totalEnergy << std::endl;
 		}
 	}
-	/*  setCorrに組み込んだほうが早い  */
+	/*  !! NOTE too slow  */
 	if( chemical_potential.size()>0 ){
 		std::vector<double> compositions;
 		std::vector<double> spins = this->getSpins();

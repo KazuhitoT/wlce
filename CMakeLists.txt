@@ -57,3 +57,14 @@ add_executable(totalene
 	./src/conf2corr.cpp
 	./src/wlconf.cpp
 )
+add_executable(test-main
+	tests/test-main.cpp
+	tests/test-wlconf.cpp
+	./src/parser.cpp
+	./src/conf2corr.cpp
+	./src/wlconf.cpp
+)
+
+target_link_libraries(test-main
+	boost_unit_test_framework-mt
+)

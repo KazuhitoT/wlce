@@ -83,7 +83,7 @@ int main(int argc, char* argv[]){
 	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
 	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
 
-	WLconf PoscarSpin("./poscar.spin", in, cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr, spin_exchange);
+	WLconf PoscarSpin("./poscar.spin", in, cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
 	PoscarSpin.dispCorr();
 
 	const int N = PoscarSpin.getSpins().size();
