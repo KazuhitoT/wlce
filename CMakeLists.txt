@@ -46,8 +46,11 @@ add_executable(corrdump
 
 
 add_executable(test-main
-	source/test-main.cpp
-	source/test-cluster.cpp
+	tests/test-main.cpp
+	tests/test-cluster.cpp
+	./src/parser.cpp
+	./src/conf2corr.cpp
+	./src/wlconf.cpp
 )
 
 target_link_libraries(test-main
