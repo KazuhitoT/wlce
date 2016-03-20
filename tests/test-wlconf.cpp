@@ -5,9 +5,9 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-BOOST_AUTO_TEST_SUITE(cluster)
+BOOST_AUTO_TEST_SUITE(wlconf)
 
-BOOST_AUTO_TEST_CASE(multiplicity)
+BOOST_AUTO_TEST_CASE(setcorr)
 {
 
 	const ParseEcicar ecicar("./ecicar.2dising");
@@ -31,17 +31,17 @@ BOOST_AUTO_TEST_CASE(multiplicity)
 		}
 	}
 
-	WLconf wl2dising_exchange("poscar.in.2dising", std::vector<double> {-1, 1}, std::vector<double> {-1, 1}, cluster_in_2dising.getCluster(), ecicar.getEci());
+	WLconf wl2dising_exchange("poscar.in.2dising", std::vector<double> {-1, 1}, std::vector<double> {-1, 1}, cluster_in_2dising.getCluster(), ecicar.getEci(), nullptr, nullptr, std::vector<double> {0, 0});
 
-	wl2dising_exchange.dispCorr();
+	// wl2dising_exchange.dispCorr();
 	for( int i=0; i<10000; ++i ){
 		wl2dising_exchange.setCorrelationFunction();
 	}
 	auto corr_2dising_exchange  = wl2dising_exchange.getCorrelationFunctions();
-	wl2dising_exchange.dispCorr();
+	// wl2dising_exchange.dispCorr();
 	wl2dising_exchange.setInitialCorrelationFunction();
 	auto _corr_2dising_exchange = wl2dising_exchange.getCorrelationFunctions();
-	wl2dising_exchange.dispCorr();
+	// wl2dising_exchange.dispCorr();
 
 	for( int i=0; i<corr_2dising_exchange.size(); ++i){
 		for( int j=0; j<corr_2dising_exchange[i].size(); ++j){

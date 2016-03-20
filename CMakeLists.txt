@@ -47,7 +47,7 @@ add_executable(corrdump
 
 add_executable(test-main
 	tests/test-main.cpp
-	tests/test-cluster.cpp
+	tests/test-wlconf.cpp
 	./src/parser.cpp
 	./src/conf2corr.cpp
 	./src/wlconf.cpp
