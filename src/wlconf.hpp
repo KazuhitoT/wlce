@@ -48,7 +48,7 @@ class WLconf : public Conf2corr{
 		void setNewConf();
 		void setCorrelationFunction(){
 			setMemento();
-			if(is_exchange) this->setCorrelationFunction_flip();
+			if( is_exchange or this->chemical_potential.size()>0 ) this->setCorrelationFunction_flip();
 			else this->setCorrelationFunction_exchange();
 		};
 
