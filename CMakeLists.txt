@@ -44,7 +44,6 @@ add_executable(corrdump
 	./src/conf2corr.cpp
 )
 
-
 add_executable(test-main
 	tests/test-main.cpp
 	tests/test-wlconf.cpp

@@ -159,10 +159,9 @@ void WLconf::setTotalEnergy(){
 	for(int i=0, imax=eci.size(); i<imax; ++i){
 		for(int j=0, jmax=eci[i].second.size(); j<jmax; ++j){
 			totalEnergy += this->getCorrelationFunctions(i,j) * eci[i].second[j];
-			// std:: cout << i <<" " << this->getCorrelationFunctions(i,j) << " " << eci[i].second[j] << " " << totalEnergy << std::endl;
 		}
 	}
-	/*  setCorrに組み込んだほうが早い  */
+	/*  !! NOTE too slow  */
 	if( chemical_potential.size()>0 ){
 		std::vector<double> compositions;
 		std::vector<double> spins = this->getSpins();
