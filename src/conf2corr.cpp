@@ -251,28 +251,39 @@ void Conf2corr::setCorrelationFunction_exchange(){
 			continue;
 		}
 
+		if( num_in_cluster==1 ) continue;
+
 		int count_index_order = 0;
 		for(const auto& index_order : (*pindex_orders)[num_in_cluster-1] ){
 			double delta_corr_averaged_same_index = 0;
 			// index_order == [[1112], [1121], [1211],...]
 			//  orders == [1112]
 			for(const auto& orders : index_order ){
-				double delta_average_spin_prod = 0;
+				double delta_average_spin_prod_after  = 0;
+				double delta_average_spin_prod_before = 0;
+				bool another_site = false;
+				int count = 0;
 				for(const auto& exchanged_site : exchanged_spins ) {
-					bool another_site = false;
 					for(const auto& site_clusters : (*pall_clusters)[i][exchanged_site] ) {
-						double delta_spin_prod = getBasisFunction(orders[0], spins[exchanged_site]) - getBasisFunction(orders[0], spins_before[exchanged_site]);
-						for(int k=0; k<site_clusters.size(); ++k){
-							if( another_site and site_clusters[k] == exchanged_spins[0] ) continue;
-							delta_spin_prod *= getBasisFunction(orders[k+1], spins[site_clusters[k]]);
+						if( another_site ) {
+							auto it = find(site_clusters.begin(), site_clusters.end(), exchanged_spins[0]);
+							if( it != site_clusters.end() ) continue;
 						}
-						delta_average_spin_prod += delta_spin_prod;
-						another_site = true;
+						double delta_spin_prod_after  = getBasisFunction(orders[0], spins[exchanged_site]);
+						double delta_spin_prod_before = getBasisFunction(orders[0], spins_before[exchanged_site]);
+						for(int k=0; k<site_clusters.size(); ++k){
+							delta_spin_prod_after  *= getBasisFunction(orders[k+1], spins[site_clusters[k]]);
+							delta_spin_prod_before *= getBasisFunction(orders[k+1], spins_before[site_clusters[k]]);
+						}
+						delta_average_spin_prod_after  += delta_spin_prod_after;
+						delta_average_spin_prod_before += delta_spin_prod_before;
 					}
-					delta_corr_averaged_same_index += delta_average_spin_prod;
+					another_site = true;
 				}
+				delta_corr_averaged_same_index += delta_average_spin_prod_after - delta_average_spin_prod_before;
 			}
-			delta_corr_averaged_same_index /= (double)index_order.size() * (double)spins.size() * (double)num_of_cluster / (double)num_in_cluster;
+
+			delta_corr_averaged_same_index /= (double)index_order.size() * (double)num_of_cluster * (double)spins.size() / (double)num_in_cluster;
 			this->correlation_functions[i+1][count_index_order] += delta_corr_averaged_same_index;
 			++count_index_order;
 		}
