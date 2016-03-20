@@ -24,10 +24,8 @@ class WLconf : public Conf2corr{
 			 std::map<int /*index*/ , std::vector<double> /*eci*/> ecicar,
 			 std::shared_ptr<basisfunc>   _pbasis_functions = nullptr,
 			 std::shared_ptr<indexorders> _pindex_orders = nullptr,
-			 bool _is_exchange = false,
 			 std::vector<double> _chemical_potential = std::vector<double>()
 		 ):Conf2corr(filename, _spinposcar, _spince, _pall_clusters, _pbasis_functions, _pindex_orders),
-		 is_exchange(_is_exchange),
 		 chemical_potential(_chemical_potential){
 			 setEci(ecicar);
 		 }
@@ -37,8 +35,7 @@ class WLconf : public Conf2corr{
 			std::shared_ptr<allclusters> _pall_clusters,
 			const std::map<int /*index*/ , std::vector<double> /*eci*/>& ecicar,
 			std::shared_ptr<basisfunc>   _pbasis_functions = nullptr,
-			std::shared_ptr<indexorders> _pindex_orders = nullptr,
-			bool is_exchange = false
+			std::shared_ptr<indexorders> _pindex_orders = nullptr
 		);
 
 		void dispInput();
@@ -52,8 +49,10 @@ class WLconf : public Conf2corr{
 		void setNewConf();
 		void setCorrelationFunction(){
 			setMemento();
-			if( is_exchange or this->chemical_potential.size()>0 ) this->setCorrelationFunction_flip();
-			else this->setCorrelationFunction_exchange();
+			if( this->chemical_potential.size()>0 )
+				 this->setCorrelationFunction_flip();
+			else
+				this->setCorrelationFunction_exchange();
 		};
 
 		void setIndex(){
