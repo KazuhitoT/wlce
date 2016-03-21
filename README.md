@@ -3,6 +3,7 @@
 Wang-Landau sampling with Cluster Expansion
 
 ## Description
+version 0.5
 
 ***DEMO for two-dimentional square lattice Ising spin:***
 
