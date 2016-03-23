@@ -30,12 +30,11 @@ add_executable(cluster
 	./src/parser.cpp
 	./src/cluster.cpp
 )
-
-add_executable(cluster_corr
-	./src/parsePoscar.cpp
-	./src/cluster_corr.cpp
-	./src/conf2corr.cpp
-)
+# 
+# add_executable(cluster_corr
+# 	./src/cluster_corr.cpp
+# 	./src/conf2corr.cpp
+# )
 
 add_executable(wang-landau
 	./src/wang-landau.cpp
@@ -53,7 +52,6 @@ add_executable(corrdump
 add_executable(totalene
 	./src/totalene.cpp
 	./src/parser.cpp
-	./src/parsePoscar.cpp
 	./src/conf2corr.cpp
 	./src/wlconf.cpp
 )

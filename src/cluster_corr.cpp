@@ -4,7 +4,7 @@
 #include <regex>
 #include <Eigen/Core>
 #include <Eigen/LU>
-#include "./parsePoscar.hpp"
+#include "./parser.hpp"
 #include "./site.hpp"
 #include "./conf2corr.hpp"
 
@@ -552,10 +552,10 @@ int main(int argc, char* argv[]){
 	// std::cout << spins_ex.size() << std::endl;
 	// for(auto& i : spins_ex)std::cout << i << " ";
 	// std::cout << std::endl;
-
-	Conf2corr test("./poscar.expand.spin", std::vector<double>{-1,1}, std::vector<double>{-1,1}, pall_clusters);
-	test.setSpins(spins_ex);
-	test.setInitialCorrelationFunction();
-	test.dispCorr();
+	// const ParseLabels labels_in("./labels.in");
+	// Conf2corr test("./poscar.expand.spin", std::vector<double>{-1,1}, std::vector<double>{-1,1}, pall_clusters);
+	// test.setSpins(spins_ex);
+	// test.setInitialCorrelationFunction();
+	// test.dispCorr();
 
 }
