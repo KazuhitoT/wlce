@@ -173,10 +173,14 @@ int main(int argc, char* argv[]){
 	}
 	// outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
 
+	std::ofstream labels_out( "labels.out", std::ios::out );
 	std::vector<std::shared_ptr<Site>> site_vec;
 	for(int i=0; i<position_ex.size(); ++i) {
 		site_vec.push_back( std::shared_ptr<Site>( new Site(i, position_ex[i])) );
+		labels_out << i << " " <<  position_ex[i].transpose() << std::endl;
 	}
+	labels_out.close();
+
 	for( const auto& site : site_vec){
 		site->setRelativeSite(site_vec);
 		assert( site->getSiteRelative().size() == site_vec.size() );

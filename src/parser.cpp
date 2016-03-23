@@ -260,3 +260,24 @@ std::vector<int> ParsePoscar::getAtomTypes(){
 std::vector<std::pair<int, Eigen::Vector3d>> ParsePoscar::getAtoms(){
 	return atoms;
 };
+
+ParseLabels::ParseLabels(const char* filename) : plabels(new labels())
+{
+	std::ifstream ifs(filename);
+	std::string buf;
+
+	if ( !ifs ){
+		std::cout << "ERROR : flle [" << filename << "] does not exist." << std::endl;
+		exit(1);
+	}
+
+	do{
+		int label;
+		ifs >> label;
+		double a,b,c;
+		ifs >> a >> b >> c;
+		// std::cout << label << " " << a << " " << " " << b << " " << c << std::endl;
+		std::pair<int, Eigen::Vector3d> tmp(label, Eigen::Vector3d(a, b, c));
+		this->plabels->push_back(tmp);
+	}while(ifs && getline(ifs, buf));
+};
