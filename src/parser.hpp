@@ -78,6 +78,7 @@ class ParseClusterIn : public Parser{
 
 void outputPoscar(double lattice[3][3], double position[][3], int N, std::string prefix);
 
+using labels = std::vector<std::pair<int, Eigen::Vector3d>>;
 class ParsePoscar {
 private:
 	std::string comment;
@@ -98,4 +99,13 @@ public:
 	std::string getCoordinateType() const {return coordinate_type;}
 };
 
+class ParseLabels {
+private:
+	std::shared_ptr<labels> plabels;
+
+public:
+	ParseLabels(const char*);
+	const std::shared_ptr<labels> getLabels() const {return plabels;}
+
+};
 #endif

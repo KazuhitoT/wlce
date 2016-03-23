@@ -53,19 +53,21 @@ class Conf2corr {
 		Conf2corr(char* filename,
 			std::vector<double> _spinposcar,
 			std::vector<double> _spince,
+			std::shared_ptr<labels> _plabels,
 			std::shared_ptr<allclusters> _pall_clusters,
 			std::shared_ptr<basisfunc>   _pbasis_functions = nullptr,
 			std::shared_ptr<indexorders> _pindex_orders = nullptr
 		);
 		Conf2corr(char* filename,
 			std::shared_ptr<Input> _in,
+			std::shared_ptr<labels> _plabels,
 			std::shared_ptr<allclusters> _pall_clusters,
 			std::shared_ptr<basisfunc>   _pbasis_functions = nullptr,
 			std::shared_ptr<indexorders> _pindex_orders = nullptr
 		);
 		~Conf2corr(){};
 
-		void setSpins(char* filename);
+		void setSpins(char* filename, std::shared_ptr<labels> plabels);
 		void setSpins(std::vector<double> _spins){ this->spins = _spins; }
 		void setSpins(int i, double spin){ this->spins.at(i) = spin; }
 		void setSpinsBefore(std::vector<double> _spins){ this->spins_before = _spins;}

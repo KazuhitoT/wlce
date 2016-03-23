@@ -79,11 +79,12 @@ int main(int argc, char* argv[]){
 		}
 	}
 
+	const ParseLabels label("./labels.out");
 	const ParseEcicar ecicar("./ecicar");
 	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
 	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
 
-	WLconf PoscarSpin("./poscar.spin", in, cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
+	WLconf PoscarSpin("./poscar.spin", in, label.getLabels(), cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
 	PoscarSpin.dispCorr();
 
 	const int N = PoscarSpin.getSpins().size();

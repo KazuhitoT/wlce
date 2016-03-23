@@ -3,6 +3,7 @@
 Conf2corr::Conf2corr(char* filename,
 	 std::vector<double> _spinposcar,
 	 std::vector<double> _spince,
+	 std::shared_ptr<labels> _plabels,
 	 std::shared_ptr<allclusters> _ptr,
 	 std::shared_ptr<basisfunc>   _pbasis_functions,
 	 std::shared_ptr<indexorders> _pindex_orders
@@ -12,7 +13,7 @@ Conf2corr::Conf2corr(char* filename,
 	spince = _spince;
 	pall_clusters = _ptr;
 
-	this->setSpins(filename);
+	this->setSpins(filename, _plabels);
 
 	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
 	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
@@ -27,6 +28,7 @@ Conf2corr::Conf2corr(char* filename,
 
 Conf2corr::Conf2corr(char* filename,
 	std::shared_ptr<Input> _in,
+	std::shared_ptr<labels> _plabels,
 	std::shared_ptr<allclusters> _pall_clusters,
 	std::shared_ptr<basisfunc>   _pbasis_functions,
 	std::shared_ptr<indexorders> _pindex_orders
@@ -35,7 +37,7 @@ Conf2corr::Conf2corr(char* filename,
 	_in->setData("SPINPOSCAR", spinposcar, true);
 	pall_clusters = _pall_clusters;
 
-	this->setSpins(filename);
+	this->setSpins(filename, _plabels);
 
 	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
 	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
@@ -48,21 +50,27 @@ Conf2corr::Conf2corr(char* filename,
 	this->setInitialCorrelationFunction();
 };
 
-void Conf2corr::setSpins(char* filename){
+void Conf2corr::setSpins(char* filename, std::shared_ptr<labels> plabels){
 	ParsePoscar poscarSpin(filename);
-	std::vector<std::pair<int, Eigen::Vector3d>> poscar_spin = poscarSpin.getAtoms();
-
+	const std::vector<std::pair<int, Eigen::Vector3d>> atoms_spin = poscarSpin.getAtoms();
 	std::vector<int> atom_types = poscarSpin.getAtomTypes();
-	int type = 0;
-	for(const auto& num_types : atom_types ){
-		for(int i=0; i<num_types; ++i){
-			spins.push_back(spinposcar[type]);
+
+	this->spins.resize(atoms_spin.size());
+	for(int i=0, imax=atoms_spin.size(); i<imax; ++i){
+		auto it = find_if(plabels->begin(), plabels->end(), [i, &atoms_spin](const std::pair<int, Eigen::Vector3d>& obj){
+			if( (obj.second - atoms_spin[i].second).norm() < 0.00001 ) return true;
+			else return false;
+		});
+		int count=-1;
+		for(int index=i; index>=0; index-=atom_types[count]){
+			count++;
 		}
-		++type;
+		this->spins[it->first] = spinposcar[count];
 	}
 
-	if( poscar_spin.size() != spins.size() ){
-		std::cerr<< "ERROR : the number of atoms in [poscar.in] != total spins in [poscar.in]" << std::endl;
+	if( atoms_spin.size() != spins.size() ){
+		std::cerr << "ERROR : the number of atoms in [poscar.in]  != total spins in [poscar.in]" << std::endl;
+		std::cerr << atoms_spin.size() << " " << spins.size() << std::endl;
 		exit(1);
 	}
 
