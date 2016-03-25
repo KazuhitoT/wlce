@@ -14,6 +14,7 @@ Conf2corr::Conf2corr(char* filename,
 	pall_clusters = _ptr;
 
 	this->setSpins(filename, _plabels);
+	this->setCompositions();
 
 	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
 	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
@@ -38,6 +39,7 @@ Conf2corr::Conf2corr(char* filename,
 	pall_clusters = _pall_clusters;
 
 	this->setSpins(filename, _plabels);
+	this->setCompositions();
 
 	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
 	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
@@ -75,6 +77,14 @@ void Conf2corr::setSpins(char* filename, std::shared_ptr<labels> plabels){
 	}
 
 	this->spins_before = this->spins;
+}
+
+void Conf2corr::setCompositions(){
+	for(const auto& spin : this->spince ){
+		 double composition = std::count(spins.begin(), spins.end(), spin) / double(spins.size());
+		 compositions.push_back(composition);
+	}
+	compositions_before = compositions;
 }
 
 void Conf2corr::setIndexOrders(){
@@ -192,11 +202,20 @@ void Conf2corr::setCorrelationFunction_flip(){
 	auto before_spin = this->spins[lattice_point];
 	auto after_spin  = before_spin;
 	auto tmp_spins = this->spince;
+	// NOTE : should shuffle!
 	while( before_spin == after_spin ){
 		after_spin = tmp_spins[0];
 		tmp_spins.erase(tmp_spins.begin());
 	}
 	this->spins[lattice_point] = after_spin;
+
+	int index_before_spin = 0;
+	int index_after_spin = 0;
+	while( spince[index_before_spin] != before_spin ) ++index_before_spin;
+	while( spince[index_after_spin]  != after_spin  ) ++index_after_spin;
+
+	this->compositions[index_before_spin] -= 1/(double)this->spins.size();
+	this->compositions[index_after_spin]  += 1/(double)this->spins.size();
 
 	for(int i=0, imax=(*pall_clusters).size(); i<imax; ++i){  // i == cluster index
 		int num_of_cluster = 1;

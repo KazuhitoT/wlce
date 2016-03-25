@@ -164,15 +164,8 @@ void WLconf::setTotalEnergy(){
 	}
 	/*  !! NOTE too slow  */
 	if( chemical_potential.size()>0 ){
-		std::vector<double> compositions;
-		std::vector<double> spins = this->getSpins();
-		for(const auto& spin : this->getSpinCE()){
-			 double composition = std::count(spins.begin(), spins.end(), spin) / double(spins.size());
-			 compositions.push_back(composition);
-		}
-		assert( compositions.size() == chemical_potential.size() );
-		for(int i=0; i<compositions.size(); ++i){
-			totalEnergy -= chemical_potential[i] * compositions[i];
+		for(int i=0; i<this->getCompositions().size(); ++i){
+			totalEnergy -= chemical_potential[i] * this->getCompositions(i);
 		}
 	}
 }
