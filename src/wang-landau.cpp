@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
 
 	int mcstep, bin, flatcheck_step, minstep=0;
 	double logfactor, logflimit, emin, emax, edelta, flat_criterion;
-	double low_cutoff = 0.5;
+	double low_cutoff = 1.0;
 	std::string filename_spin_input;
 
 	in->setData("BIN",  bin, true);
