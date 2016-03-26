@@ -9,7 +9,7 @@
 #include "./wlconf.hpp"
 
 bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, int minstep, double low_cutoff=1){
-	double ave = accumulate(histogram.begin(), histogram.end(), 0) / (double)histogram.size();
+	double ave = accumulate(histogram.begin(), histogram.end(), 0) / (double)(histogram.size()-index_neglect_bin.size());
 	double limit = ave * lflat ;
 	for(int i=0, imax=histogram.size(); i<imax; ++i){
 
@@ -142,10 +142,10 @@ int main(int argc, char* argv[]){
 				int index = PoscarSpin.getIndex();
 
 				if( dos[index] == 0 ){
-					dos[index] = dos[PoscarSpin.getBeforeIndex()];
-					histogram[index] = histogram[PoscarSpin.getBeforeIndex()];
 					auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , index);
 					if( it != index_neglect_bin.end() ){
+						dos[index] = dos[PoscarSpin.getBeforeIndex()];
+						histogram[index] = histogram[PoscarSpin.getBeforeIndex()];
 						index_neglect_bin.erase(it);
 						PoscarSpin.outputEnergySpin(index, filename_rep_macrostate);
 					}
