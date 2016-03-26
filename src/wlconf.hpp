@@ -81,7 +81,11 @@ class WLconf : public Conf2corr{
 		};
 
 		int getIndex(){ return index; }
+		int getBeforeIndex(){ return index_before; }
 		double getTotalEnergy(){ return totalEnergy;}
+
+		void outputEnergySpin(int, std::string);
+
 		// WLconf(char* filename,
 		// 	 vector<double> _spinposcar = vector<double>(),
 		// 	 vector<double> _spince = vector<double>(),

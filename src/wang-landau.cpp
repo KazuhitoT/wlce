@@ -55,6 +55,7 @@ int main(int argc, char* argv[]){
 	int mcstep, bin, flatcheck_step;
 	double logfactor, logflimit, emin, emax, edelta, flat_criterion;
 	double low_cutoff = 0.5;
+	std::string filename_spin_input;
 
 	in->setData("BIN",  bin, true);
 	in->setData("MCSTEP", mcstep, true);
@@ -68,16 +69,18 @@ int main(int argc, char* argv[]){
 	in->setData("LOGFLIMIT", logflimit, true);
 	in->setData("FLATCRITERION", flat_criterion, true);
 
-	bool spin_exchange = false;
-	for(int i=1; i<argc; i++) {
-		std::string str(argv[i]);
-		if( str == "-exchange" ){
-			spin_exchange = true;
-		} else {
-			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
-			exit(1);
-		}
-	}
+	in->setData("SPININPUT", filename_spin_input);
+
+	// bool spin_exchange = false;
+	// for(int i=1; i<argc; i++) {
+	// 	std::string str(argv[i]);
+	// 	if( str == "-exchange" ){
+	// 		spin_exchange = true;
+	// 	} else {
+	// 		std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
+	// 		exit(1);
+	// 	}
+	// }
 
 	const ParseLabels label("./labels.out");
 	const ParseEcicar ecicar("./ecicar");
@@ -99,7 +102,7 @@ int main(int argc, char* argv[]){
 	std::cout << "----------  Information about [wang-landau.ini]" << std::endl;
 	PoscarSpin.dispInput();
 
-	if( index_neglect_bin.size() ){
+	if( index_neglect_bin.size() and  filename_spin_input.size() ){
 		std::cout << "NEGLECT BIN INDEX :" << std::endl;
 		std::cout << " ";
 		for(auto i : index_neglect_bin) std::cout << i << " ";
@@ -115,6 +118,10 @@ int main(int argc, char* argv[]){
 
 	std::vector<double>  dos(bin, 0);
 
+	std::string filename_rep_macrostate = "macrostate.out";
+	std::ofstream ofs_macrostate(filename_rep_macrostate);
+	ofs_macrostate.setf(std::ios_base::fixed, std::ios_base::floatfield);
+	ofs_macrostate.close();
 
 	unsigned int fstep = 0;
 	unsigned int tstep = 0;
@@ -139,6 +146,17 @@ int main(int argc, char* argv[]){
 				wl_step(PoscarSpin, dos);
 				PoscarSpin.setIndex();
 				int index = PoscarSpin.getIndex();
+
+				if( dos[index] == 0 ){
+					dos[index] = dos[PoscarSpin.getBeforeIndex()];
+					histogram[index] = histogram[PoscarSpin.getBeforeIndex()];
+					auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , index);
+					if( it != index_neglect_bin.end() ){
+						index_neglect_bin.erase(it);
+						PoscarSpin.outputEnergySpin(index, filename_rep_macrostate);
+					}
+				}
+
 				dos.at(index) += logfactor;
 				histogram.at(index) += 1;
 

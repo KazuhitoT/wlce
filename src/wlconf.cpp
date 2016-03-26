@@ -111,7 +111,11 @@ bool WLconf::setSpinsFromDat(){
 }
 
 std::vector<int> WLconf::getNeglectBinIndex(){
-	if( input_spin_filename.size() == 0 ) return std::vector<int>();
+	if( input_spin_filename.size() == 0 ) {
+		std::vector<int> result;
+		for(int i=0; i<this->bin; ++i) result.push_back(i);
+		return result;
+	}
 
 	std::vector<double> e_vec;
 	std::vector<bool>   is_bin_exist_vec(this->bin, false);
@@ -194,4 +198,14 @@ void WLconf::setNewConf(){
 		}
 
 	}
+}
+
+void WLconf::outputEnergySpin(int index, std::string filename){
+	std::ofstream ofs(filename, std::ios::app);
+	ofs << index << " ";
+	ofs.precision(10);
+	ofs << this->getTotalEnergy() << " ";
+	for( auto j : this->getSpins() )  ofs << j << " ";
+	ofs << std::endl;
+	ofs.close();
 }
