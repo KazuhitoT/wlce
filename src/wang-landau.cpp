@@ -8,13 +8,15 @@
 #include "./input.hpp"
 #include "./wlconf.hpp"
 
-bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, double low_cutoff=0.5){
-	double ave = accumulate(histogram.begin(), histogram.end(), 0) / (double)histogram.size();
+bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, int minstep, double low_cutoff=1){
+	double ave = accumulate(histogram.begin(), histogram.end(), 0) / (double)(histogram.size()-index_neglect_bin.size());
 	double limit = ave * lflat ;
 	for(int i=0, imax=histogram.size(); i<imax; ++i){
 
 		auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , i);
 		if( it != index_neglect_bin.end() ) continue;
+
+		if( minstep>0 and histogram.at(i)<minstep ) return false;
 
 		if(histogram.at(i) < (ave*(1.0-low_cutoff))) continue;
 		else if(histogram.at(i) < limit) return false;
@@ -52,9 +54,10 @@ double wl_step(WLconf& conf, const std::vector<double>& dos){
 int main(int argc, char* argv[]){
 	std::shared_ptr<Input> in(new Input("wang-landau.ini"));
 
-	int mcstep, bin, flatcheck_step;
+	int mcstep, bin, flatcheck_step, minstep=0;
 	double logfactor, logflimit, emin, emax, edelta, flat_criterion;
-	double low_cutoff = 0.5;
+	double low_cutoff = 1.0;
+	std::string filename_spin_input;
 
 	in->setData("BIN",  bin, true);
 	in->setData("MCSTEP", mcstep, true);
@@ -68,24 +71,18 @@ int main(int argc, char* argv[]){
 	in->setData("LOGFLIMIT", logflimit, true);
 	in->setData("FLATCRITERION", flat_criterion, true);
 
-	bool spin_exchange = false;
-	for(int i=1; i<argc; i++) {
-		std::string str(argv[i]);
-		if( str == "-exchange" ){
-			spin_exchange = true;
-		} else {
-			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
-			exit(1);
-		}
-	}
+	in->setData("SPININPUT", filename_spin_input);
 
-	const ParseLabels label("./labels.out");
+	in->setData("MINSTEP",   minstep);
+	in->setData("LOWCUTOFF", low_cutoff);
+
+
+	const ParseLabels label("./labels.in");
 	const ParseEcicar ecicar("./ecicar");
 	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
 	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
 
 	WLconf PoscarSpin("./poscar.spin", in, label.getLabels(), cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
-	PoscarSpin.dispCorr();
 
 	const int N = PoscarSpin.getSpins().size();
 
@@ -99,7 +96,7 @@ int main(int argc, char* argv[]){
 	std::cout << "----------  Information about [wang-landau.ini]" << std::endl;
 	PoscarSpin.dispInput();
 
-	if( index_neglect_bin.size() ){
+	if( index_neglect_bin.size() and  filename_spin_input.size() ){
 		std::cout << "NEGLECT BIN INDEX :" << std::endl;
 		std::cout << " ";
 		for(auto i : index_neglect_bin) std::cout << i << " ";
@@ -115,6 +112,10 @@ int main(int argc, char* argv[]){
 
 	std::vector<double>  dos(bin, 0);
 
+	std::string filename_rep_macrostate = "macrostate.out";
+	std::ofstream ofs_macrostate(filename_rep_macrostate);
+	ofs_macrostate.setf(std::ios_base::fixed, std::ios_base::floatfield);
+	ofs_macrostate.close();
 
 	unsigned int fstep = 0;
 	unsigned int tstep = 0;
@@ -139,6 +140,17 @@ int main(int argc, char* argv[]){
 				wl_step(PoscarSpin, dos);
 				PoscarSpin.setIndex();
 				int index = PoscarSpin.getIndex();
+
+				if( dos[index] == 0 ){
+					auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , index);
+					if( it != index_neglect_bin.end() ){
+						dos[index] = dos[PoscarSpin.getBeforeIndex()];
+						histogram[index] = histogram[PoscarSpin.getBeforeIndex()];
+						index_neglect_bin.erase(it);
+						PoscarSpin.outputEnergySpin(index, filename_rep_macrostate);
+					}
+				}
+
 				dos.at(index) += logfactor;
 				histogram.at(index) += 1;
 
@@ -148,7 +160,7 @@ int main(int argc, char* argv[]){
 				outputHistogram(dos,  histogram, emin, edelta, fstep);
 				std::cout << i << "sweep done " << std::endl;
 			}
-			if((i % flatcheck_step) == 0 and checkHistogramFlat(histogram, index_neglect_bin, flat_criterion, low_cutoff)){
+			if((i % flatcheck_step) == 0 and checkHistogramFlat(histogram, index_neglect_bin, flat_criterion, minstep, low_cutoff)){
 				outputHistogram(dos,  histogram, emin, edelta, fstep);
 				final_mcsweep = i;
 				break;

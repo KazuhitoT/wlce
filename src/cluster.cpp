@@ -101,11 +101,16 @@ int main(int argc, char* argv[]){
 	double prec = 0.00001;
 	bool noexpand = false;
 
+	std::string filename_poscar_in = "poscar.in";
+
 	for(int i=1; i<argc; i++) {
 		std::string str(argv[i]);
 		if( str.substr(0, 3) == "-d=" ) {
 			str.erase(str.begin(), str.begin() + 3);
 			d2=std::stod(str);
+		} else if( str.substr(0, 3) == "-p=" ){
+			str.erase(str.begin(), str.begin() + 3);
+			filename_poscar_in = str;
 		} else {
 			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
 			exit(1);
@@ -118,7 +123,7 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 
-	ParsePoscar poscar("poscar.in");
+	ParsePoscar poscar(filename_poscar_in.c_str());
 	const int N = poscar.getAtoms().size();
 
 	double lattice[3][3];

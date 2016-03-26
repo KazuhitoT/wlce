@@ -25,6 +25,8 @@ using basisfunc   = std::vector<std::vector<double>>;
 
 class Conf2corr {
 	private:
+		std::vector<double> compositions;
+		std::vector<double> compositions_before;
 		std::vector<double> spins;
 		std::vector<double> spins_before;
 		std::vector<std::vector<double>> correlation_functions;
@@ -71,6 +73,12 @@ class Conf2corr {
 		void setSpins(std::vector<double> _spins){ this->spins = _spins; }
 		void setSpins(int i, double spin){ this->spins.at(i) = spin; }
 		void setSpinsBefore(std::vector<double> _spins){ this->spins_before = _spins;}
+		void setSpinsRandom(){
+			std::random_shuffle(this->spins.begin(), this->spins.end());
+			this->spins_before = this->spins;
+			this->setInitialCorrelationFunction();
+		}
+		void setCompositions();
 
 		void setBasisCoefficient();
 		void setIndexOrders();
@@ -84,12 +92,14 @@ class Conf2corr {
 		{
 			this->spins_before = this->spins;
 			this->correlation_functions_before = this->correlation_functions;
+			this->compositions_before = this->compositions;
 		};
 
 		virtual void Memento()
 		{
 			this->spins = this->spins_before;
 			this->correlation_functions = this->correlation_functions_before;
+			this->compositions = this->compositions_before;
 		};
 
 		void dispCorr();
@@ -98,6 +108,8 @@ class Conf2corr {
 		double RandReal(){ return rnd_real();};
 
 		std::vector<double> getSpins(){ return spins; };
+		std::vector<double> getCompositions(){ return compositions; };
+		double getCompositions(int i){ return compositions[i]; };
 		std::vector<double> getSpinCE(){ return spince; };
 		std::vector<std::vector<double>> getCorrelationFunctions(){ return correlation_functions; };
 		double getCorrelationFunctions(int i, int j){ return correlation_functions[i][j]; };
