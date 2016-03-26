@@ -8,13 +8,15 @@
 #include "./input.hpp"
 #include "./wlconf.hpp"
 
-bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, double low_cutoff=1){
+bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, int minstep, double low_cutoff=1){
 	double ave = accumulate(histogram.begin(), histogram.end(), 0) / (double)histogram.size();
 	double limit = ave * lflat ;
 	for(int i=0, imax=histogram.size(); i<imax; ++i){
 
 		auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , i);
 		if( it != index_neglect_bin.end() ) continue;
+
+		if( minstep>0 and histogram.at(i)<minstep ) return false;
 
 		if(histogram.at(i) < (ave*(1.0-low_cutoff))) continue;
 		else if(histogram.at(i) < limit) return false;
@@ -52,7 +54,7 @@ double wl_step(WLconf& conf, const std::vector<double>& dos){
 int main(int argc, char* argv[]){
 	std::shared_ptr<Input> in(new Input("wang-landau.ini"));
 
-	int mcstep, bin, flatcheck_step;
+	int mcstep, bin, flatcheck_step, minstep=0;
 	double logfactor, logflimit, emin, emax, edelta, flat_criterion;
 	double low_cutoff = 0.5;
 	std::string filename_spin_input;
@@ -71,6 +73,7 @@ int main(int argc, char* argv[]){
 
 	in->setData("SPININPUT", filename_spin_input);
 
+	in->setData("MINSTEP",   minstep);
 	in->setData("LOWCUTOFF", low_cutoff);
 
 
@@ -157,7 +160,7 @@ int main(int argc, char* argv[]){
 				outputHistogram(dos,  histogram, emin, edelta, fstep);
 				std::cout << i << "sweep done " << std::endl;
 			}
-			if((i % flatcheck_step) == 0 and checkHistogramFlat(histogram, index_neglect_bin, flat_criterion, low_cutoff)){
+			if((i % flatcheck_step) == 0 and checkHistogramFlat(histogram, index_neglect_bin, flat_criterion, minstep, low_cutoff)){
 				outputHistogram(dos,  histogram, emin, edelta, fstep);
 				final_mcsweep = i;
 				break;
