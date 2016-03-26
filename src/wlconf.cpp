@@ -7,7 +7,12 @@ WLconf::WLconf(char* filename,
 	const std::map<int /*index*/ , std::vector<double> /*eci*/>& _ecicar,
 	std::shared_ptr<basisfunc>   _pbasis_functions,
 	std::shared_ptr<indexorders> _pindex_orders
-):Conf2corr(filename, _in, _plabels, _pall_clusters, _pbasis_functions, _pindex_orders){
+):
+	Conf2corr(filename, _in, _plabels, _pall_clusters, _pbasis_functions, _pindex_orders),
+	chemical_potential(std::vector<double>()),
+	input_spin_filename(""),
+	setrandom(-1)
+	{
 
 	setEci(_ecicar);
 
@@ -22,7 +27,6 @@ WLconf::WLconf(char* filename,
 	_in->setData("FLATCRITERION", flat_criterion, true);
 
 	_in->setData("CHEMIPOT", this->chemical_potential);
-
 	_in->setData("SPININPUT", input_spin_filename);
 	_in->setData("SETRANDOM", setrandom);
 
@@ -34,11 +38,10 @@ WLconf::WLconf(char* filename,
 	if( input_spin_filename.size()>0 ){
 		this->setSpinsFromDat();
 		this->setInitialCorrelationFunction();
-		// index_neglect_bin = PoscarSpin.getNeglectBinIndex();
+	}	else if( setrandom>0 ){
+		this->setSpinsRandom();
+		this->setInitialCorrelationFunction();
 	}
-	// else if( setrandom>0 ){
-	// 	this->setSpinsRandom();
-	// }
 
 	this->edelta = (emax - emin) / (double)bin;
 }
@@ -61,9 +64,9 @@ void WLconf::dispInput(void){
 	}
 
 	if( this->input_spin_filename.size()>0 )
-		std::cout << "SPININPUT      : " << input_spin_filename << std::endl;
+		std::cout << "SPININPUT     : " << input_spin_filename << std::endl;
 	if( this->setrandom>0 )
-		std::cout << "SETRANDOM      : " << setrandom << std::endl;
+		std::cout << "SETRANDOM     : " << "YES" << std::endl;
 
 }
 

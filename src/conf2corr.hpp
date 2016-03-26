@@ -73,6 +73,11 @@ class Conf2corr {
 		void setSpins(std::vector<double> _spins){ this->spins = _spins; }
 		void setSpins(int i, double spin){ this->spins.at(i) = spin; }
 		void setSpinsBefore(std::vector<double> _spins){ this->spins_before = _spins;}
+		void setSpinsRandom(){
+			std::random_shuffle(this->spins.begin(), this->spins.end());
+			this->spins_before = this->spins;
+			this->setInitialCorrelationFunction();
+		}
 		void setCompositions();
 
 		void setBasisCoefficient();

@@ -8,7 +8,7 @@
 #include "./input.hpp"
 #include "./wlconf.hpp"
 
-bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, double low_cutoff=0.5){
+bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, double low_cutoff=1){
 	double ave = accumulate(histogram.begin(), histogram.end(), 0) / (double)histogram.size();
 	double limit = ave * lflat ;
 	for(int i=0, imax=histogram.size(); i<imax; ++i){
@@ -71,24 +71,15 @@ int main(int argc, char* argv[]){
 
 	in->setData("SPININPUT", filename_spin_input);
 
-	// bool spin_exchange = false;
-	// for(int i=1; i<argc; i++) {
-	// 	std::string str(argv[i]);
-	// 	if( str == "-exchange" ){
-	// 		spin_exchange = true;
-	// 	} else {
-	// 		std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
-	// 		exit(1);
-	// 	}
-	// }
+	in->setData("LOWCUTOFF", low_cutoff);
 
-	const ParseLabels label("./labels.out");
+
+	const ParseLabels label("./labels.in");
 	const ParseEcicar ecicar("./ecicar");
 	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
 	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
 
 	WLconf PoscarSpin("./poscar.spin", in, label.getLabels(), cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
-	PoscarSpin.dispCorr();
 
 	const int N = PoscarSpin.getSpins().size();
 
