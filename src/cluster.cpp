@@ -173,7 +173,7 @@ int main(int argc, char* argv[]){
 			exit(1);
 		}
 
-	} else if( !noexpand ){
+	} else {
 		// N_unit = spg_standardize_cell(lattice_unit, position_unit, types, N, 0, 0, 0.00001);
 		// outputPoscar(lattice_unit, position_unit, N_unit, "unit");
 		lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice_unit[0][0]);
@@ -207,12 +207,14 @@ int main(int argc, char* argv[]){
 	std::vector<double> spins_ex;
 	std::vector<Eigen::Vector3d> position_ex;
 	Eigen::Matrix3d lattice_ex;
+	Eigen::Matrix3d lattice_ex_poscar;
 	double lattice_ex_arr[3][3];
 	double position_ex_arr[N_unit*expand_x*expand_y*expand_z][3];
 	{
 		Eigen::Matrix3d max_ex_mat;
 		max_ex_mat << expand_x,0,0, 0,expand_y,0, 0,0,expand_z;
-		lattice_ex = max_ex_mat * lattice_unit_matrix;
+		lattice_ex        = (max_ex_mat * lattice_unit_matrix.transpose()).transpose();
+		lattice_ex_poscar = max_ex_mat * lattice_unit_matrix.transpose();
 		for(int i=0; i<3; ++i){
 			for(int j=0; j<3; ++j){
 				lattice_ex_arr[i][j] = lattice_ex(i,j);
@@ -247,8 +249,8 @@ int main(int argc, char* argv[]){
 
 	}
 	if( !noexpand ) {
-		outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
-		outputPoscar(lattice_ex, position_ex, spins_ex, spince, "expand.spin");
+		outputPoscar(lattice_ex_poscar, position_ex, position_ex.size(), "expand");
+		outputPoscar(lattice_ex_poscar, position_ex, spins_ex, spince, "expand.spin");
 	}
 
 	std::ofstream labels_out( "labels.out", std::ios::out );

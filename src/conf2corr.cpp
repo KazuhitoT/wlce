@@ -165,6 +165,11 @@ void Conf2corr::setInitialCorrelationFunction(){
 			num_in_cluster = 1;
 		}
 
+		if(num_of_cluster==0 and num_in_cluster==1){
+			num_of_cluster = 1;
+			num_in_cluster = 1;
+		}
+
 		for(const auto& index_order : (*pindex_orders)[num_in_cluster-1] ){
 			double corr_averaged_same_index = 0;
 			// index_order == [[1112], [1121], [1211],...]

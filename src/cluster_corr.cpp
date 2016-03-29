@@ -7,6 +7,7 @@
 #include "./parser.hpp"
 #include "./site.hpp"
 #include "./conf2corr.hpp"
+#include "./wlconf.hpp"
 
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
 
@@ -102,16 +103,21 @@ int main(int argc, char* argv[]){
 	double prec = 0.00001;
 	bool noexpand = false;
 
+	std::string filename_poscar_in = "poscar.in";
+
 	for(int i=1; i<argc; i++) {
 		std::string str(argv[i]);
 		if( str.substr(0, 3) == "-d=" ) {
 			str.erase(str.begin(), str.begin() + 3);
 			d2=std::stod(str);
+		} else if( str.substr(0, 3) == "-p=" ){
+			str.erase(str.begin(), str.begin() + 3);
+			filename_poscar_in = str;
 		} else {
 			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
 			exit(1);
 		}
-		std::cout << std::endl;
+		// std::cout << std::endl;
 	}
 
 	if( argc == 1 or d2==-1 ){
@@ -204,12 +210,14 @@ int main(int argc, char* argv[]){
 	std::vector<double> spins_ex;
 	std::vector<Eigen::Vector3d> position_ex;
 	Eigen::Matrix3d lattice_ex;
+	Eigen::Matrix3d lattice_ex_poscar;
 	double lattice_ex_arr[3][3];
 	double position_ex_arr[N_unit*expand_x*expand_y*expand_z][3];
 	{
 		Eigen::Matrix3d max_ex_mat;
 		max_ex_mat << expand_x,0,0, 0,expand_y,0, 0,0,expand_z;
-		lattice_ex = max_ex_mat * lattice_unit_matrix;
+		lattice_ex        = (max_ex_mat * lattice_unit_matrix.transpose()).transpose();
+		lattice_ex_poscar = max_ex_mat * lattice_unit_matrix.transpose();
 		for(int i=0; i<3; ++i){
 			for(int j=0; j<3; ++j){
 				lattice_ex_arr[i][j] = lattice_ex(i,j);
@@ -244,8 +252,8 @@ int main(int argc, char* argv[]){
 
 	}
 	if( !noexpand ) {
-		outputPoscar(lattice_ex, position_ex, position_ex.size(), "expand");
-		outputPoscar(lattice_ex, position_ex, spins_ex, spince, "expand.spin");
+		outputPoscar(lattice_ex_poscar, position_ex, position_ex.size(), "expand");
+		outputPoscar(lattice_ex_poscar, position_ex, spins_ex, spince, "expand.spin");
 	}
 
 	std::vector<std::shared_ptr<Site>> site_vec;
@@ -549,13 +557,48 @@ int main(int argc, char* argv[]){
 	// clusters_out.close();
 	multiplicity_out.close();
 
-	// std::cout << spins_ex.size() << std::endl;
-	// for(auto& i : spins_ex)std::cout << i << " ";
-	// std::cout << std::endl;
-	// const ParseLabels labels_in("./labels.in");
-	// Conf2corr test("./poscar.expand.spin", std::vector<double>{-1,1}, std::vector<double>{-1,1}, pall_clusters);
-	// test.setSpins(spins_ex);
-	// test.setInitialCorrelationFunction();
-	// test.dispCorr();
+	// std::vector<std::shared_ptr<Site>> site_vec;
+	// for(int i=0; i<position_ex.size(); ++i) {
+	// 	site_vec.push_back( std::shared_ptr<Site>( new Site(i, position_ex[i])) );
+	// 	labels_out << i << " " <<  position_ex[i].transpose() << std::endl;
+	// }
+	//
+
+	// using labels = std::vector<std::pair<int, Eigen::Vector3d>>;
+	std::shared_ptr<labels> plabels(new labels);
+	for(int i=0; i<position_ex.size(); ++i) {
+		plabels->push_back( std::pair<int, Eigen::Vector3d>(i, position_ex[i]) );
+	}
+
+
+	const ParseEcicar ecicar("./ecicar");
+
+	// std::cout << ecicar.getEci().size() << " " << (*pall_clusters).size() << std::endl;
+	auto eci_index = ecicar.getIndex();
+	for(int i=(*pall_clusters).size()-1; i>=0; --i){
+		// std::cout << eci_index[i] << std::endl;
+		auto it = find(eci_index.begin(), eci_index.end(), i);
+		if( it == eci_index.end() ) {
+			(*pall_clusters).erase((*pall_clusters).begin()+i);
+		} // else {
+			// std::cout << i << std::endl;
+		// }
+	}
+	//
+	// for( const auto i : (*pall_clusters)[0] ){
+	// 	std::cout << "--" << i.size() << std::endl;
+	// 	for( auto j : i ){
+	// 		std::cout << j.size() << " ";
+	// 	}
+	// }
+
+	// std::cout << ecicar.getEci().size() << " " << (*pall_clusters).size() << std::endl;
+	std::shared_ptr<Input> in(new Input("wang-landau.ini"));
+	WLconf PoscarSpin("./poscar.expand.spin", in, plabels, pall_clusters, ecicar.getEci(), nullptr, nullptr);
+	PoscarSpin.setTotalEnergy();
+	auto compositions = PoscarSpin.getCompositions();
+	for(const auto c : compositions) std::cout << c << " ";
+	std::cout << PoscarSpin.getTotalEnergy() << std::endl;
+
 
 }

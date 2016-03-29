@@ -30,11 +30,13 @@ add_executable(cluster
 	./src/parser.cpp
 	./src/cluster.cpp
 )
-# 
-# add_executable(cluster_corr
-# 	./src/cluster_corr.cpp
-# 	./src/conf2corr.cpp
-# )
+#
+add_executable(cluster_corr
+	./src/cluster_corr.cpp
+	./src/parser.cpp
+	./src/conf2corr.cpp
+	./src/wlconf.cpp
+)
 
 add_executable(wang-landau
 	./src/wang-landau.cpp
