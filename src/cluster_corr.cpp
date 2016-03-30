@@ -125,7 +125,7 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 
-	ParsePoscar poscar("poscar.in");
+	ParsePoscar poscar(filename_poscar_in.c_str());
 	const int N = poscar.getAtoms().size();
 
 	double lattice[3][3];
