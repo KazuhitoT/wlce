@@ -575,11 +575,11 @@ int main(int argc, char* argv[]){
 
 	// std::cout << ecicar.getEci().size() << " " << (*pall_clusters).size() << std::endl;
 	auto eci_index = ecicar.getIndex();
-	for(int i=(*pall_clusters).size()-1; i>=0; --i){
+	for(int i=(*pall_clusters).size(); i>=1; --i){
 		// std::cout << eci_index[i] << std::endl;
 		auto it = find(eci_index.begin(), eci_index.end(), i);
 		if( it == eci_index.end() ) {
-			(*pall_clusters).erase((*pall_clusters).begin()+i);
+			(*pall_clusters).erase((*pall_clusters).begin()+(i-1));
 		} // else {
 			// std::cout << i << std::endl;
 		// }
