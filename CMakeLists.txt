@@ -65,6 +65,8 @@ add_executable(test-main
 	./src/wlconf.cpp
 )
 
+# find_package(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
+
 target_link_libraries(test-main
 	boost_unit_test_framework-mt
 )

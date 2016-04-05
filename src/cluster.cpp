@@ -249,8 +249,8 @@ int main(int argc, char* argv[]){
 
 	}
 	if( !noexpand ) {
-		outputPoscar(lattice_ex_poscar, position_ex, position_ex.size(), "expand");
-		outputPoscar(lattice_ex_poscar, position_ex, spins_ex, spince, "expand.spin");
+		// outputPoscar(lattice_ex_poscar, position_ex, position_ex.size(), "expand");
+		outputPoscar(lattice_ex_poscar, position_ex, spins_ex, spince, "expand");
 	}
 
 	std::ofstream labels_out( "labels.out", std::ios::out );
