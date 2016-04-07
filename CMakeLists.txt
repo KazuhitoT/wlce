@@ -30,6 +30,13 @@ add_executable(cluster
 	./src/parser.cpp
 	./src/cluster.cpp
 )
+#
+add_executable(cluster_corr
+	./src/cluster_corr.cpp
+	./src/parser.cpp
+	./src/conf2corr.cpp
+	./src/wlconf.cpp
+)
 
 add_executable(wang-landau
 	./src/wang-landau.cpp
@@ -52,6 +59,12 @@ add_executable(corrdump
 	./src/conf2corr.cpp
 )
 
+add_executable(totalene
+	./src/totalene.cpp
+	./src/parser.cpp
+	./src/conf2corr.cpp
+	./src/wlconf.cpp
+)
 add_executable(test-main
 	tests/test-main.cpp
 	tests/test-wlconf.cpp
@@ -60,6 +73,8 @@ add_executable(test-main
 	./src/metroconf.cpp
 	./src/wlconf.cpp
 )
+
+# find_package(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
 
 target_link_libraries(test-main
 	boost_unit_test_framework-mt

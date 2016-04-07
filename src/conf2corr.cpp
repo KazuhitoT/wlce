@@ -104,7 +104,7 @@ void Conf2corr::setIndexOrders(){
 		std::vector<std::vector<int>> permutation;
 		std::vector<int> tmp(n, 1);
 		std::function<void(int, int, std::vector<int>&)> get_permutation;
-		get_permutation = [&get_permutation, tmp, num_composition, &permutation](int max, int i, std::vector<int>& tmp) -> void
+		get_permutation = [&get_permutation, &tmp, num_composition, &permutation](int max, int i, std::vector<int>& tmp) -> void
 		{
 			if( i==tmp.size() ){
 				permutation.push_back(tmp);
@@ -161,6 +161,11 @@ void Conf2corr::setInitialCorrelationFunction(){
 				num_in_cluster = (*pall_clusters)[i][0][0].size()+1;
 			}
 		} else {
+			num_of_cluster = 1;
+			num_in_cluster = 1;
+		}
+
+		if(num_of_cluster==0 and num_in_cluster==1){
 			num_of_cluster = 1;
 			num_in_cluster = 1;
 		}

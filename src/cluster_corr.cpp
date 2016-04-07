@@ -6,6 +6,8 @@
 #include <Eigen/LU>
 #include "./parser.hpp"
 #include "./site.hpp"
+#include "./conf2corr.hpp"
+#include "./wlconf.hpp"
 
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
 
@@ -115,7 +117,7 @@ int main(int argc, char* argv[]){
 			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
 			exit(1);
 		}
-		std::cout << std::endl;
+		// std::cout << std::endl;
 	}
 
 	if( argc == 1 or d2==-1 ){
@@ -143,9 +145,10 @@ int main(int argc, char* argv[]){
 
 	std::vector<double> spins;
 	std::vector<double> spince;
-	int spin_type = 1;
+	int spin_type = -1;
 	for(int i=0; i<poscar.getAtomTypes().size(); ++i) {
 		spince.push_back(spin_type);
+		++spin_type;
 		++spin_type;
 		for(int j=0; j<poscar.getAtomTypes()[i]; ++j){
 			spins.push_back(spince[i]);
@@ -173,7 +176,7 @@ int main(int argc, char* argv[]){
 			exit(1);
 		}
 
-	} else {
+	} else if( !noexpand ){
 		// N_unit = spg_standardize_cell(lattice_unit, position_unit, types, N, 0, 0, 0.00001);
 		// outputPoscar(lattice_unit, position_unit, N_unit, "unit");
 		lattice_unit_matrix = Eigen::Map<Eigen::Matrix3d>(&lattice_unit[0][0]);
@@ -199,9 +202,9 @@ int main(int argc, char* argv[]){
 			unit_length_z = (lattice_unit_matrix * unit_z).norm();
 		}
 
-		std::cout << " poscar.expand = ";
-		std::cout << expand_x << " * " << expand_y << " * " << expand_z << "  ";
-		std::cout << "poscar.in" << std::endl;
+		// std::cout << " poscar.expand = ";
+		// std::cout << expand_x << " * " << expand_y << " * " << expand_z << "  ";
+		// std::cout << "poscar.in" << std::endl;
 	}
 
 	std::vector<double> spins_ex;
@@ -249,39 +252,37 @@ int main(int argc, char* argv[]){
 
 	}
 	if( !noexpand ) {
-		// outputPoscar(lattice_ex_poscar, position_ex, position_ex.size(), "expand");
-		outputPoscar(lattice_ex_poscar, position_ex, spins_ex, spince, "expand");
+		outputPoscar(lattice_ex_poscar, position_ex, position_ex.size(), "expand");
+		outputPoscar(lattice_ex_poscar, position_ex, spins_ex, spince, "expand.spin");
 	}
 
-	std::ofstream labels_out( "labels.out", std::ios::out );
 	std::vector<std::shared_ptr<Site>> site_vec;
 	for(int i=0; i<position_ex.size(); ++i) {
 		site_vec.push_back( std::shared_ptr<Site>( new Site(i, position_ex[i])) );
-		labels_out << i << " " <<  position_ex[i].transpose() << std::endl;
 	}
-	labels_out.close();
-
 	for( const auto& site : site_vec){
 		site->setRelativeSite(site_vec);
 		assert( site->getSiteRelative().size() == site_vec.size() );
 	}
 
-	std::ofstream clusters_out( "clusters.out", std::ios::out );
+	// std::ofstream clusters_out( "clusters.out", std::ios::out );
 	std::ofstream multiplicity_out( "multiplicity.out", std::ios::out );
+	std::shared_ptr<allclusters> pall_clusters( new allclusters());
 
 	/*  set nbody = 1 */
-	std::cout << " -- point cluster" << std::endl;
-	std::cout << "0  0" << std::endl;
+	// std::cout << " -- point cluster" << std::endl;
+	// std::cout << "0  0" << std::endl;
 	std::vector<std::vector<std::vector<int>>> point_clusters;
 	for( int i=0; i<position_ex.size(); ++i){
-		clusters_out << i << " ";
+		// clusters_out << i << " ";
 		point_clusters.push_back(std::vector<std::vector<int>>());
 	}
-	clusters_out << std::endl;
+	// clusters_out << std::endl;
 	multiplicity_out << "1 " << position_ex.size() << std::endl;
+	pall_clusters->push_back(point_clusters);
 
 	/*  set nbody = 2 */
-	std::cout << " -- 2 body cluster" << std::endl;
+	// std::cout << " -- 2 body cluster" << std::endl;
 	std::unordered_map<double, Eigen::Vector3d> distance_atom;
 	for( int i=1; i<position_ex.size(); ++i ){
 		Eigen::Vector3d d_vec = validCoordinate(position_ex[i], position_ex[0]);
@@ -326,21 +327,25 @@ int main(int argc, char* argv[]){
 	sort(distances.begin(), distances.end());
 
 	for( const auto& distance : distances ){
-		std::cout << distance << " " << distance_site_to_sites[distance][0].size() << std::endl;
+		std::vector<std::vector<std::vector<int>>> pair_clusters;
+		// std::cout << distance << " " << distance_site_to_sites[distance][0].size() << std::endl;
 		multiplicity_out << "2 " << distance_site_to_sites[distance][0].size()*position_ex.size()/2  << std::endl;
 		for( int j=0; j<distance_site_to_sites[distance].size(); ++j) {
 			std::vector<std::vector<int>> site_clusters;
 			assert( distance_site_to_sites[distance][j].size() == distance_site_to_sites[distance][0].size() );
 			for( const auto& k : distance_site_to_sites[distance][j] ){
-				clusters_out << j << " " << k << " ";
+				// clusters_out << j << " " << k << " ";
+				site_clusters.push_back(std::vector<int>{k});
 			}
+			pair_clusters.push_back(site_clusters);
 		}
-		clusters_out << std::endl;
+		// clusters_out << std::endl;
+		pall_clusters->push_back(pair_clusters);
 	}
 
 
 	/*  set nbody = 3 */
-	std::cout << " -- 3 body cluster" << std::endl;
+	// std::cout << " -- 3 body cluster" << std::endl;
 	/*
 	 *	triplet_cluster;
 	 *	key: All lines of the 3body cluster
@@ -397,17 +402,18 @@ int main(int argc, char* argv[]){
 	}
 
 	for(const auto& index : d_b3_index){
-		std::cout << "multiplicity = " << triplet_cluster[index].size() << std::endl;
+		// std::cout << "multiplicity = " << triplet_cluster[index].size() << std::endl;
 		multiplicity_out << "3 " << triplet_cluster[index].size()*position_ex.size()/3 << std::endl;
-		std::cout << index[0] << " " << index[1] << " " << index[2] << std::endl;
-		std::cout << " -- relative_coords -- "<< std::endl;
-		std::cout << site_vec[0]->getCoordinate().transpose() << std::endl;
-		std::cout << triplet_cluster[index][0][0].transpose() << std::endl;
-		std::cout << triplet_cluster[index][0][1].transpose() << std::endl;
-		std::cout << std::endl;
+		// std::cout << index[0] << " " << index[1] << " " << index[2] << std::endl;
+		// std::cout << " -- relative_coords -- "<< std::endl;
+		// std::cout << site_vec[0]->getCoordinate().transpose() << std::endl;
+		// std::cout << triplet_cluster[index][0][0].transpose() << std::endl;
+		// std::cout << triplet_cluster[index][0][1].transpose() << std::endl;
+		// std::cout << std::endl;
 	}
 
 	for(const auto& index : d_b3_index){
+		std::vector<std::vector<std::vector<int>>> triplet_clusters;
 		for(const auto& site : site_vec ){
 			std::vector<std::vector<int>> site_clusters;
 			for(const auto& two_relative_coord : triplet_cluster[index]){
@@ -417,17 +423,20 @@ int main(int argc, char* argv[]){
 				auto site2 = site->getRelativeSite(two_relative_coord[0]);
 				auto site3 = site->getRelativeSite(two_relative_coord[1]);
 				if( site2 and site3 ) {
-					clusters_out << site->getSiteNum() << " ";
-					clusters_out << site2->getSiteNum() << " ";
-					clusters_out << site3->getSiteNum() << " ";
+					// clusters_out << site->getSiteNum() << " ";
+					// clusters_out << site2->getSiteNum() << " ";
+					// clusters_out << site3->getSiteNum() << " ";
+					site_clusters.push_back(std::vector<int>{site2->getSiteNum(), site3->getSiteNum()});
 				}
 			}
+			triplet_clusters.push_back(site_clusters);
 		}
-		clusters_out << std::endl;
+		// clusters_out << std::endl;
+		pall_clusters->push_back(triplet_clusters);
 	}
 
 	// /*  set nbody = 4 */
-	std::cout << " -- 4 body cluster" << std::endl;
+	// std::cout << " -- 4 body cluster" << std::endl;
 	std::vector<std::vector<std::vector<double>>> d_b4_index;
 	std::unordered_map<std::vector<std::vector<double>>, std::vector<std::vector<Eigen::Vector3d>>, hash_vec2d> quadlet_cluster;
 	for( const auto& index : d_b3_index ){
@@ -502,45 +511,94 @@ int main(int argc, char* argv[]){
 	}
 
 	for(const auto& index : d_b4_index){
-		std::cout << "multiplicity = " << quadlet_cluster[index].size() << std::endl;
+		// std::cout << "multiplicity = " << quadlet_cluster[index].size() << std::endl;
 		multiplicity_out << "4 " << quadlet_cluster[index].size()*position_ex.size()/4 << std::endl;
-		std::cout << " -- relative_coords -- "<< std::endl;
-		std::cout << site_vec[0]->getCoordinate().transpose() << std::endl;
-		std::cout << quadlet_cluster[index][0][0].transpose() << std::endl;
-		std::cout << quadlet_cluster[index][0][1].transpose() << std::endl;
-		std::cout << quadlet_cluster[index][0][2].transpose() << std::endl;
-		std::cout << std::endl;
-
-		std::cout << " -- all triangles  -- "<< std::endl;
-		for(const auto& i : index){
-			std::cout << "[";
-			for(const auto& j : i){
-				std::cout << j << ",";
-			}
-			std::cout << "]" << std::endl;
-		}
-		std::cout << std::endl;
-		std::cout << std::endl;
+		// std::cout << " -- relative_coords -- "<< std::endl;
+		// std::cout << site_vec[0]->getCoordinate().transpose() << std::endl;
+		// std::cout << quadlet_cluster[index][0][0].transpose() << std::endl;
+		// std::cout << quadlet_cluster[index][0][1].transpose() << std::endl;
+		// std::cout << quadlet_cluster[index][0][2].transpose() << std::endl;
+		// std::cout << std::endl;
+		//
+		// std::cout << " -- all triangles  -- "<< std::endl;
+		// for(const auto& i : index){
+		// 	std::cout << "[";
+		// 	for(const auto& j : i){
+		// 		std::cout << j << ",";
+		// 	}
+		// 	std::cout << "]" << std::endl;
+		// }
+		// std::cout << std::endl;
+		// std::cout << std::endl;
 	}
 
 	for(const auto& index : d_b4_index){
+		std::vector<std::vector<std::vector<int>>> quadlet_clusters;
 		for(const auto& site : site_vec ){
+			std::vector<std::vector<int>> site_clusters;
 			for(const auto& three_relative_coord : quadlet_cluster[index]){
 				auto site2 = site->getRelativeSite(three_relative_coord[0]);
 				auto site3 = site->getRelativeSite(three_relative_coord[1]);
 				auto site4 = site->getRelativeSite(three_relative_coord[2]);
 				if( site2 and site3 and site4 ) {
-					clusters_out << site->getSiteNum() << " ";
-					clusters_out << site2->getSiteNum() << " ";
-					clusters_out << site3->getSiteNum() << " ";
-					clusters_out << site4->getSiteNum() << " ";
+					// clusters_out << site->getSiteNum() << " ";
+					// clusters_out << site2->getSiteNum() << " ";
+					// clusters_out << site3->getSiteNum() << " ";
+					// clusters_out << site4->getSiteNum() << " ";
+					site_clusters.push_back(std::vector<int>{site2->getSiteNum(), site3->getSiteNum(), site4->getSiteNum()});
 				}
 			}
+			quadlet_clusters.push_back(site_clusters);
 		}
-		clusters_out << std::endl;
+		// clusters_out << std::endl;
+		pall_clusters->push_back(quadlet_clusters);
 	}
 
-	clusters_out.close();
+	// clusters_out.close();
 	multiplicity_out.close();
+
+	// std::vector<std::shared_ptr<Site>> site_vec;
+	// for(int i=0; i<position_ex.size(); ++i) {
+	// 	site_vec.push_back( std::shared_ptr<Site>( new Site(i, position_ex[i])) );
+	// 	labels_out << i << " " <<  position_ex[i].transpose() << std::endl;
+	// }
+	//
+
+	// using labels = std::vector<std::pair<int, Eigen::Vector3d>>;
+	std::shared_ptr<labels> plabels(new labels);
+	for(int i=0; i<position_ex.size(); ++i) {
+		plabels->push_back( std::pair<int, Eigen::Vector3d>(i, position_ex[i]) );
+	}
+
+
+	const ParseEcicar ecicar("./ecicar");
+
+	// std::cout << ecicar.getEci().size() << " " << (*pall_clusters).size() << std::endl;
+	auto eci_index = ecicar.getIndex();
+	for(int i=(*pall_clusters).size(); i>=1; --i){
+		// std::cout << eci_index[i] << std::endl;
+		auto it = find(eci_index.begin(), eci_index.end(), i);
+		if( it == eci_index.end() ) {
+			(*pall_clusters).erase((*pall_clusters).begin()+(i-1));
+		} // else {
+			// std::cout << i << std::endl;
+		// }
+	}
+	//
+	// for( const auto i : (*pall_clusters)[0] ){
+	// 	std::cout << "--" << i.size() << std::endl;
+	// 	for( auto j : i ){
+	// 		std::cout << j.size() << " ";
+	// 	}
+	// }
+
+	// std::cout << ecicar.getEci().size() << " " << (*pall_clusters).size() << std::endl;
+	std::shared_ptr<Input> in(new Input("wang-landau.ini"));
+	WLconf PoscarSpin("./poscar.expand", in, plabels, pall_clusters, ecicar.getEci(), nullptr, nullptr);
+	PoscarSpin.setTotalEnergy();
+	auto compositions = PoscarSpin.getCompositions();
+	for(const auto c : compositions) std::cout << c << " ";
+	std::cout << PoscarSpin.getTotalEnergy() << std::endl;
+
 
 }

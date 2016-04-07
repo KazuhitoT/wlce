@@ -52,6 +52,7 @@ output file
 
 command line option
 - -d=[truncation distance]
+- -p=[filename for poscar.in]
 
 ### corrdump
 input file

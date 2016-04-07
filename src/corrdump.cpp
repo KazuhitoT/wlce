@@ -1,4 +1,3 @@
-
 #include <iomanip>
 #include <iterator>
 #include <numeric>
