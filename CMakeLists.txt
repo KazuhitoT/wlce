@@ -38,6 +38,13 @@ add_executable(wang-landau
 	./src/wlconf.cpp
 )
 
+add_executable(metropolis
+	./src/metropolis.cpp
+	./src/parser.cpp
+	./src/conf2corr.cpp
+	./src/metroconf.cpp
+)
+
 add_executable(corrdump
 	./src/corrdump.cpp
 	./src/parser.cpp
