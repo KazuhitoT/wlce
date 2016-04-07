@@ -3,7 +3,7 @@
 Wang-Landau sampling with Cluster Expansion
 
 ## Description
-version 0.5
+version 0.6
 
 ***DEMO for two-dimentional square lattice Ising spin:***
 
@@ -12,13 +12,14 @@ cd 2dising
 ../bin/cluster -d=1.0
 cp multiplicity.out multiplicity.in
 cp clusters.out clusters.in
+cp labels.out labels.in
 ../bin/wang-landau
 ```
 
 ## Features
-
-- Canonical ensemble sampling via double spins exchange
-- Semi-Grand-Canonical ensemble sampling  via single spin flip
+- Canonical Metropolis sampling
+- Canonical Wang-Landau sampling
+- Semi-Grand-Canonical  Wang-Landau sampling
 
 ## Requirement
 
@@ -47,7 +48,7 @@ input file
 - poscar.in
 
 output file
-- clusters.out, multiplicity.out
+- clusters.out, multiplicity.out, labels.out
 
 command line option
 - -d=[truncation distance]
@@ -55,7 +56,7 @@ command line option
 
 ### corrdump
 input file
-- corrdump.ini, clusters.out, multiplicity.out
+- corrdump.ini, clusters.in, multiplicity.in, labels.in
 
 output file
 - none
@@ -66,12 +67,31 @@ corrdump.ini
 SPINCE = -1 1
 ```
 
-### wang-landau
+### metropolis
 input file
--   wang-landau.ini, poscar.spin, ecicar, poscar.in(same with cluster), clusters.in(output by cluster), multiplicity.in(output by cluster)
+- metropolis.ini, clusters.in, multiplicity.in, labels.in, ecicar
 
 output file
-- out-wl*.dat
+- metropolis.out
+
+corrdump.ini
+```
+[INPUT]
+SPINCE        = -1 1
+SPINPOSCAR    = -1 1
+MCSTEP        = 10
+SAMPLESTEP    = 10
+TEMPERATURE   = 700
+or TEMPERATURE   = 900 100 100
+or TEMPERATURE   = 100 100 900
+```
+
+### wang-landau
+input file
+-   wang-landau.ini, poscar.spin, ecicar, poscar.in(same with cluster), clusters.in(output by cluster), multiplicity.in(output by cluster), labels.in, ecicar
+
+output file
+- out-wl*.dat, macrostate.out
 
 wang-landau.ini
 ```
