@@ -40,16 +40,16 @@ int main(int argc, char* argv[]){
 	if( temperature_input.size() == 1 ){
 		vec_temperature = temperature_input;
 	} else if ( temperature_input.size() == 3 ) {
-		if( temperature_input[0] > temperature_input[1] ){
+		if( temperature_input[0] > temperature_input[2] ){ // 900 100 100
 			for( double iniT=temperature_input[0]; iniT>temperature_input[2]; iniT-=temperature_input[1]){
 				vec_temperature.push_back(iniT);
 			}
-		} else if( temperature_input[1] > temperature_input[0] ){
+		} else if( temperature_input[0] < temperature_input[2] ){  // 100 100 900
 			for( double iniT=temperature_input[0]; iniT<temperature_input[2]; iniT+=temperature_input[1]){
 				vec_temperature.push_back(iniT);
 			}
 		} else {
-			vec_temperature = temperature_input;
+			vec_temperature.push_back(temperature_input[0]);
 		}
 	} else {
 		std::cerr << " ERROR : TEMPERATURE in metropolis.ini must be 1 or 3 arguments." << std::endl;
