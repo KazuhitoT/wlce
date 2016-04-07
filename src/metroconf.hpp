@@ -37,7 +37,6 @@ class Metroconf : public Conf2corr{
 		void setEci(const std::map<int, std::vector<double>>& ecicar);
 		void setTotalEnergy();
 		void setCorrelationFunction(){
-			setMemento();
 			if( this->chemical_potential.size()>0 )
 				 this->setCorrelationFunction_flip();
 			else
@@ -55,6 +54,7 @@ class Metroconf : public Conf2corr{
 		}
 
 		double getTotalEnergy(){ return totalEnergy;}
+		std::vector<double> getChemicalPotential(){ return chemical_potential;}
 		void outputEnergySpin(int, std::string);
 
 };

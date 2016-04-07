@@ -8,13 +8,10 @@ WLconf::WLconf(char* filename,
 	std::shared_ptr<basisfunc>   _pbasis_functions,
 	std::shared_ptr<indexorders> _pindex_orders
 ):
-	Conf2corr(filename, _in, _plabels, _pall_clusters, _pbasis_functions, _pindex_orders),
-	chemical_potential(std::vector<double>()),
+	Metroconf(filename, _in, _plabels, _pall_clusters, _ecicar, _pbasis_functions, _pindex_orders),
 	input_spin_filename(""),
 	setrandom(-1)
 	{
-
-	setEci(_ecicar);
 
 	_in->setData("EMIN", this->emin, true);
 	_in->setData("EMAX", this->emax, true);
@@ -26,7 +23,6 @@ WLconf::WLconf(char* filename,
 	_in->setData("LOGFLIMIT", logflimit, true);
 	_in->setData("FLATCRITERION", flat_criterion, true);
 
-	_in->setData("CHEMIPOT", this->chemical_potential);
 	_in->setData("SPININPUT", input_spin_filename);
 	_in->setData("SETRANDOM", setrandom);
 
@@ -56,9 +52,9 @@ void WLconf::dispInput(void){
 	std::cout << "LOGFACTOR     : " << logfactor       << std::endl;
 	std::cout << "FLATCRITERION : " << flat_criterion       << std::endl;
 
-	if( this->chemical_potential.size()>0 ) {
+	if( this->getChemicalPotential().size()>0 ) {
 		std::cout << "CHEMIPOT      : ";
-		for(auto i : this->chemical_potential )
+		for(auto i : this->getChemicalPotential() )
 			std::cout << i << " ";
 		std::cout << std::endl;
 	}
@@ -155,29 +151,8 @@ std::vector<int> WLconf::getNeglectBinIndex(){
 	return neglect_bin_index;
 }
 
-void WLconf::setEci(const std::map<int ,std::vector<double>>& ecicar){
-	if(this->eci.size() > 0) return ;
-	for(const auto& i : ecicar){
-		this->eci.push_back(std::pair<int, std::vector<double>>(i.first, i.second));
-	}
-}
-
-void WLconf::setTotalEnergy(){
-	totalEnergy = 0;
-	for(int i=0, imax=eci.size(); i<imax; ++i){
-		for(int j=0, jmax=eci[i].second.size(); j<jmax; ++j){
-			totalEnergy += this->getCorrelationFunctions(i,j) * eci[i].second[j];
-		}
-	}
-	/*  !! NOTE too slow  */
-	if( chemical_potential.size()>0 ){
-		for(int i=0; i<this->getCompositions().size(); ++i){
-			totalEnergy -= chemical_potential[i] * this->getCompositions(i);
-		}
-	}
-}
-
 void WLconf::setNewConf(){
+
 	int count              = 0;
 	double Econf           = this->getTotalEnergy();
 	this->setIndex();
@@ -186,9 +161,9 @@ void WLconf::setNewConf(){
 	double m_distance_before = 0;
 	double m_distance_after  = 0;
 	while(index_conf == index_before || Econf > this->emax || Econf < this->emin){
+		this->setMemento();
 		this->setCorrelationFunction();
 		this->setTotalEnergy();
-		// std::cout << this->getTotalEnergy() << std::endl;
 		this->setIndex();
 		Econf = this->getTotalEnergy();
 		index_conf  = this->getIndex();

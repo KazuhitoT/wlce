@@ -56,7 +56,6 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 
-
 	const ParseLabels label("./labels.in");
 	const ParseEcicar ecicar("./ecicar");
 	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());

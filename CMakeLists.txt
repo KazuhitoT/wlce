@@ -35,6 +35,7 @@ add_executable(wang-landau
 	./src/wang-landau.cpp
 	./src/parser.cpp
 	./src/conf2corr.cpp
+	./src/metroconf.cpp
 	./src/wlconf.cpp
 )
 
@@ -56,6 +57,7 @@ add_executable(test-main
 	tests/test-wlconf.cpp
 	./src/parser.cpp
 	./src/conf2corr.cpp
+	./src/metroconf.cpp
 	./src/wlconf.cpp
 )
 

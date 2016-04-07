@@ -8,7 +8,8 @@ Metroconf::Metroconf(char* filename,
 	std::shared_ptr<basisfunc>   _pbasis_functions,
 	std::shared_ptr<indexorders> _pindex_orders
 ):
-	Conf2corr(filename, _in, _plabels, _pall_clusters, _pbasis_functions, _pindex_orders)
+	Conf2corr(filename, _in, _plabels, _pall_clusters, _pbasis_functions, _pindex_orders),
+	chemical_potential(std::vector<double>())
 	{
 
 	setEci(_ecicar);
@@ -47,6 +48,7 @@ void Metroconf::setTotalEnergy(){
 }
 
 void Metroconf::setNewConf(){
+	this->setMemento();
 	this->setCorrelationFunction();
 	this->setTotalEnergy();
 }
