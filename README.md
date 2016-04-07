@@ -12,11 +12,12 @@ cd 2dising
 ../bin/cluster -d=1.0
 cp multiplicity.out multiplicity.in
 cp clusters.out clusters.in
+cp labels.out labels.in
 ../bin/wang-landau
 ```
 
 ## Features
-- Canonical Metropolis algorithm
+- Canonical Metropolis sampling
 - Canonical Wang-Landau sampling
 - Semi-Grand-Canonical  Wang-Landau sampling
 
