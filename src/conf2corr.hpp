@@ -45,7 +45,6 @@ class Conf2corr {
 		std::shared_ptr<allclusters> pall_clusters;
 		/* ------------------------------------------------- */
 
-		std::random_device rd;
 		std::mt19937 mt;
 		std::function<int ()> rnd_int_N;
 		std::function<double ()> rnd_real;
