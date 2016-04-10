@@ -6,6 +6,9 @@ include(CheckCXXCompilerFlag)
 
 add_definitions("-g -DNDEBUG -Wno-write-strings")
 
+# seed fix
+# add_definitions("-DSEED")
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # using Clang
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
