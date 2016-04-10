@@ -16,6 +16,11 @@ Conf2corr::Conf2corr(char* filename,
 	this->setSpins(filename, _plabels);
 	this->setCompositions();
 
+	#ifndef SEED
+	std::random_device rnd;
+	mt.seed(rnd());
+	#endif
+
 	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
 	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
 
@@ -40,6 +45,11 @@ Conf2corr::Conf2corr(char* filename,
 
 	this->setSpins(filename, _plabels);
 	this->setCompositions();
+
+	#ifndef SEED
+	std::random_device rnd;
+	mt.seed(rnd());
+	#endif
 
 	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
 	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
