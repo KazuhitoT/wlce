@@ -217,7 +217,7 @@ void Conf2corr::setCorrelationFunction_flip(){
 	auto before_spin = this->spins[lattice_point];
 	auto after_spin  = before_spin;
 	auto tmp_spins = this->spince;
-	std::random_shuffle(tmp_spins.begin(), tmp_spins.end());
+	std::shuffle(tmp_spins.begin(), tmp_spins.end(), mt);
 	while( before_spin == after_spin ){
 		after_spin = tmp_spins[0];
 		tmp_spins.erase(tmp_spins.begin());
