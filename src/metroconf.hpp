@@ -38,7 +38,7 @@ class Metroconf : public Conf2corr{
 		void setTotalEnergy();
 		void setCorrelationFunction(){
 			if( this->chemical_potential.size()>0 )
-				 this->setCorrelationFunction_flip();
+				this->setCorrelationFunction_flip();
 			else
 				this->setCorrelationFunction_exchange();
 		};

@@ -276,7 +276,6 @@ void Conf2corr::setCorrelationFunction_exchange(){
 
 	exchanged_spins[0] = rnd_int_N();
 	exchanged_spins[1] = rnd_int_N();
-
 	while( spins[exchanged_spins[0]] == spins[exchanged_spins[1]] )
 		exchanged_spins[1] = rnd_int_N();
 	std::swap(spins[exchanged_spins[0]], spins[exchanged_spins[1]]);
