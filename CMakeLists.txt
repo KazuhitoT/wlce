@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 include(CheckCXXCompilerFlag)
+SET(BUILD_SHARED_LIBS ON)
+project(wlce)
 
-# set(CMAKE_CXX_COMPILER icpc)
-# set(CMAKE_CXX_COMPILER_ID Intel)
-
-add_definitions("-g -DNDEBUG -Wno-write-strings")
+set (WLCE_VERSION_MAJOR 0)
+set (WLCE_VERSION_MINOR 6)
 
 # seed fix
 # add_definitions("-DSEED")
@@ -28,17 +28,18 @@ else()
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
+add_definitions("-g -DNDEBUG -Wno-write-strings")
 
 add_executable(cluster
 	./src/parser.cpp
 	./src/cluster.cpp
 )
 #
-add_executable(cluster_corr
-	./src/cluster_corr.cpp
+add_executable(getconf
+	./src/getconf.cpp
 	./src/parser.cpp
 	./src/conf2corr.cpp
-	./src/wlconf.cpp
+	./src/metroconf.cpp
 )
 
 add_executable(wang-landau
@@ -56,29 +57,21 @@ add_executable(metropolis
 	./src/metroconf.cpp
 )
 
-add_executable(corrdump
-	./src/corrdump.cpp
-	./src/parser.cpp
-	./src/conf2corr.cpp
-)
-
-add_executable(totalene
-	./src/totalene.cpp
-	./src/parser.cpp
-	./src/conf2corr.cpp
-	./src/wlconf.cpp
-)
-add_executable(test-main
-	tests/test-main.cpp
-	tests/test-wlconf.cpp
-	./src/parser.cpp
-	./src/conf2corr.cpp
-	./src/metroconf.cpp
-	./src/wlconf.cpp
-)
-
-# find_package(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
-
-target_link_libraries(test-main
-	boost_unit_test_framework-mt
-)
+find_package(Boost 1.41.0 COMPONENTS unit_test_framework-mt)
+if(Boost_FOUND)
+	add_executable(test-main
+		tests/test-main.cpp
+		tests/test-conf2corr.cpp
+		./src/parser.cpp
+		./src/conf2corr.cpp
+	)
+	target_link_libraries(test-main
+		boost_unit_test_framework-mt
+	)
+	enable_testing()
+	add_test(
+		NAME MyTest
+		COMMAND $<TARGET_FILE:test-main>
+		WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/tests
+	)
+endif()

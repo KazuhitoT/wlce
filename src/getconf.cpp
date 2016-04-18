@@ -594,7 +594,7 @@ int main(int argc, char* argv[]){
 
 	// std::cout << ecicar.getEci().size() << " " << (*pall_clusters).size() << std::endl;
 	std::shared_ptr<Input> in(new Input("wang-landau.ini"));
-	WLconf PoscarSpin("./poscar.expand", in, plabels, pall_clusters, ecicar.getEci(), nullptr, nullptr);
+	Metroconf PoscarSpin("./poscar.expand", in, plabels, pall_clusters, ecicar.getEci(), nullptr, nullptr);
 	PoscarSpin.setTotalEnergy();
 	auto compositions = PoscarSpin.getCompositions();
 	for(const auto c : compositions) std::cout << c << " ";
