@@ -102,6 +102,7 @@ int main(int argc, char* argv[]){
 	double d2 = -1;
 	double prec = 0.00001;
 	bool noexpand = false;
+	bool is_corrdump = false;
 
 	std::string filename_poscar_in = "poscar.in";
 
@@ -113,6 +114,8 @@ int main(int argc, char* argv[]){
 		} else if( str.substr(0, 3) == "-p=" ){
 			str.erase(str.begin(), str.begin() + 3);
 			filename_poscar_in = str;
+		} else if( str.substr(0, 3) == "-c" ){
+			is_corrdump = true;
 		} else {
 			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
 			exit(1);
@@ -585,20 +588,16 @@ int main(int argc, char* argv[]){
 		// }
 	}
 	//
-	// for( const auto i : (*pall_clusters)[0] ){
-	// 	std::cout << "--" << i.size() << std::endl;
-	// 	for( auto j : i ){
-	// 		std::cout << j.size() << " ";
-	// 	}
-	// }
 
-	// std::cout << ecicar.getEci().size() << " " << (*pall_clusters).size() << std::endl;
-	std::shared_ptr<Input> in(new Input("wang-landau.ini"));
+	std::shared_ptr<Input> in(new Input("getconf.ini"));
 	Metroconf PoscarSpin("./poscar.expand", in, plabels, pall_clusters, ecicar.getEci(), nullptr, nullptr);
-	PoscarSpin.setTotalEnergy();
-	auto compositions = PoscarSpin.getCompositions();
-	for(const auto c : compositions) std::cout << c << " ";
-	std::cout << PoscarSpin.getTotalEnergy() << std::endl;
-
+	if( is_corrdump ){
+		PoscarSpin.dispCorr();
+	} else {
+		PoscarSpin.setTotalEnergy();
+		auto compositions = PoscarSpin.getCompositions();
+		for(const auto c : compositions) std::cout << c << " ";
+		std::cout << PoscarSpin.getTotalEnergy() << std::endl;
+	}
 
 }

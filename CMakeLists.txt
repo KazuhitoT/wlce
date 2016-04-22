@@ -4,7 +4,7 @@ SET(BUILD_SHARED_LIBS ON)
 project(wlce)
 
 set (WLCE_VERSION_MAJOR 0)
-set (WLCE_VERSION_MINOR 6)
+set (WLCE_VERSION_MINOR 7)
 
 # seed fix
 # add_definitions("-DSEED")
