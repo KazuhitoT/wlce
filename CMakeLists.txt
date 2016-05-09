@@ -57,7 +57,7 @@ add_executable(metropolis
 	./src/metroconf.cpp
 )
 
-find_package(Boost 1.41.0 COMPONENTS unit_test_framework-mt)
+find_package(Boost 1.4 COMPONENTS unit_test_framework-mt)
 if(Boost_FOUND)
 	add_executable(test-main
 		tests/test-main.cpp
@@ -75,3 +75,11 @@ if(Boost_FOUND)
 		WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/tests
 	)
 endif()
+
+set(CMAKE_CXX_COMPILER mpic++)
+add_executable(remc
+	./src/remc.cpp
+	./src/parser.cpp
+	./src/conf2corr.cpp
+	./src/metroconf.cpp
+)

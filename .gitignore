@@ -4,6 +4,7 @@ spglib/
 tmp/
 bin/
 cuau/
+remc/
 Testing/
 2dising/*out*
 2dising/clusters.in
