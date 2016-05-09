@@ -66,16 +66,13 @@ ParseMultiplicityIn::ParseMultiplicityIn (const char* filename):Parser(filename)
 
 ParseMultiplicityIn::ParseMultiplicityIn (const char* filename, const std::vector<int>& index):Parser(filename) {
 	multiplicity[0] = std::pair<int, int>(1, this->getContent(0,1));
-	int j = 1;  /* for empty cluster */
-	for(int i=0, imax=this->getContent().size(); i<imax; ++i){
-		if( index[j] > imax ){
+	for(int i=1; i<index.size(); ++i){
+		if( (index[i]-1) > this->getContent().size() ){
 			std::cerr << "ERROR : indices does not correspond to those of [" << filename  << "]" << std::endl;
-			std::cerr << "        index " << index[j] << " in ecicar does not exit." << std::endl;
+			std::cerr << "        index " << index[i]-1 << " in ecicar does not exit." << std::endl;
 			exit(1);
 		}
-		if( (index[j] -1 )!=i ) continue;
-		multiplicity[index[j]] = std::pair<int, int>(this->getContent(i,0), this->getContent(i,1));
-		j++;
+		multiplicity[index[i]] = std::pair<int, int>(this->getContent(index[i]-1,0), this->getContent(index[i]-1,1));
 	}
 }
 
@@ -90,6 +87,7 @@ ParseClusterIn::ParseClusterIn (const char* filename, const std::map<int , std::
 		std::vector<int> a;
 		int num_in_cluster = multiplicity.at(index[j]).first;
 		/* ここのnum_of_clusterだけ配位数を意味している */
+		/* NOTE :: multiplicity.at(0).secondを原子数として代用している */
 		int num_of_cluster = multiplicity.at(index[j]).second / multiplicity.at(0).second * num_in_cluster;
 
 		/* NOTE: kmaxも含めないと最後まで含まれない*/

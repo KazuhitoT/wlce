@@ -33,8 +33,7 @@ class Conf2corr {
 		std::vector<std::vector<double>> correlation_functions_before;
 
 		/* vec[basis][degree] vec[basis]->polynomials */
-		std::shared_ptr<std::vector<std::vector<double>>> pbasis_functions;
-		std::shared_ptr<basisfunc> pbasis_clusters;
+		std::shared_ptr<basisfunc> pbasis_functions;
 		/* vec[num_in_cluster][index][combinations][order] */
 		std::shared_ptr<indexorders> pindex_orders;
 
@@ -50,7 +49,6 @@ class Conf2corr {
 		std::function<double ()> rnd_real;
 
 	public:
-		Conf2corr(){};
 		Conf2corr(char* filename,
 			std::vector<double> _spinposcar,
 			std::vector<double> _spince,
@@ -110,11 +108,20 @@ class Conf2corr {
 		std::vector<double> getCompositions(){ return compositions; };
 		double getCompositions(int i){ return compositions[i]; };
 		std::vector<double> getSpinCE(){ return spince; };
+		std::vector<double> getSpinPoscar(){ return spinposcar; };
 		std::vector<std::vector<double>> getCorrelationFunctions(){ return correlation_functions; };
 		double getCorrelationFunctions(int i, int j){ return correlation_functions[i][j]; };
 
+		std::vector<double> getBeforeCompositions(){ return compositions_before; };
+		std::vector<double> getBeforeSpins(){ return spins_before; };
+		std::vector<std::vector<double>> getBeforeCorrelationFunctions(){ return correlation_functions; };
+		std::shared_ptr<basisfunc> getBasisFunc(){ return pbasis_functions;}
+		std::shared_ptr<indexorders> getIndexOrders(){ return pindex_orders;}
+		std::shared_ptr<allclusters> getAllClusters(){ return pall_clusters;}
+		std::mt19937 getMt(){ return mt;}
+		std::function<int ()> getRndIntN(){ return rnd_int_N;}
+		std::function<double ()> getRndReal(){ return rnd_real;}
 
-  	// Conf2corr &operator=(const Conf2corr&);    // 代入演算子
 };
 
 #endif
