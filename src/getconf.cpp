@@ -454,15 +454,15 @@ int main(int argc, char* argv[]){
 
 					auto all_triplets = getAllTriplets( std::vector<Eigen::Vector3d>{
 						site_vec[0]->getCoordinate(),
-						triplet_cluster[index][i][0],
-						triplet_cluster[index][i][1],
+						validCoordinate( site_vec[0]->getCoordinate() + triplet_cluster[index][i][0] ),
+						validCoordinate( site_vec[0]->getCoordinate() + triplet_cluster[index][i][1] ),
 						linked_site->getCoordinate()
 					}, lattice_ex , d2, distances);
 					if( all_triplets.size() != 4 ) continue;
 
 					std::vector<Eigen::Vector3d> relative_coords = {
-						validCoordinate(triplet_cluster[index][i][0], site_vec[0]->getCoordinate()),
-						validCoordinate(triplet_cluster[index][i][1], site_vec[0]->getCoordinate()),
+						triplet_cluster[index][i][0],
+						triplet_cluster[index][i][1],
 						validCoordinate(linked_site->getCoordinate(), site_vec[0]->getCoordinate())
 					};
 
@@ -472,13 +472,13 @@ int main(int argc, char* argv[]){
 
 					// auto it = find(d_b4_index.begin(), d_b4_index.end(), all_triplets);
 					auto it = find_if( d_b4_index.begin(), d_b4_index.end(),
-						[all_triplets, prec](const std::vector<std::vector<double>>& obj){
+						[&all_triplets, prec](const std::vector<std::vector<double>>& obj){
 							for(int i=0; i<obj.size(); ++i){
 								double norm = 0;
 								for(int j=0; j<obj[i].size(); ++j){
 									norm += std::pow(all_triplets[i][j]-obj[i][j], 2.);
 								}
-								if( std::sqrt(norm) > 0.001 ){
+								if( norm > prec ){
 									return false;
 								}
 							}
