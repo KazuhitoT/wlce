@@ -30,12 +30,12 @@ std::vector<std::vector<double>> getAllTriplets(const std::vector<Eigen::Vector3
 			for(int k=(j+1); k<points.size(); ++k){
 				auto coord_ij = validCoordinate(points[i], points[j]);
 				auto coord_jk = validCoordinate(points[j], points[k]);
-				auto coord_ki = coord_ij + coord_jk ;
+				auto coord_ki = coord_ij + coord_jk;
 				double distance1 = ( lattice * coord_ij ).norm();
 				double distance2 = ( lattice * coord_jk ).norm();
 				double distance3 = ( lattice * coord_ki ).norm();
 				if( distance1 > maxd or distance2 > maxd or distance3 > maxd
-						or distance1 < 0.00001 or distance2 < 0.00001  or distance3 < 0.00001) continue;
+						or distance1 < 0.00001 or distance2 < 0.00001  or distance3 < 0.00001) return std::vector<std::vector<double>>{};
 				auto it1 = find_if(distances.begin(), distances.end(), [distance1](const double d){
 					if( std::abs(distance1-d) < 0.00001 ) return true;
 					else return false;
@@ -48,7 +48,7 @@ std::vector<std::vector<double>> getAllTriplets(const std::vector<Eigen::Vector3
 					if( std::abs(distance3-d) < 0.00001 ) return true;
 					else return false;
 				});
-				if( it1==distances.end() or it2==distances.end() or it3==distances.end()) continue;
+				if( it1==distances.end() or it2==distances.end() or it3==distances.end()) return std::vector<std::vector<double>>{};
 				std::vector<double> lines = {*it1, *it2, *it3};
 				sort(lines.begin(), lines.end());
 				result.push_back(lines);
@@ -63,7 +63,7 @@ std::vector<std::vector<double>> getAllTriplets(const std::vector<Eigen::Vector3
 			else return lhs[i] < rhs[i];
 		});
 	}
-
+	//
 	// for(const auto& i : result) {
 	// 	std::cout  << "[ ";
 	// 	for(const auto& j : i){
