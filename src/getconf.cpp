@@ -590,7 +590,7 @@ int main(int argc, char* argv[]){
 	//
 
 	std::shared_ptr<Input> in(new Input("getconf.ini"));
-	Metroconf PoscarSpin("./poscar.expand", in, plabels, pall_clusters, ecicar.getEci(), nullptr, nullptr);
+	Metroconf PoscarSpin("./poscar.expand.spin", in, plabels, pall_clusters, ecicar.getEci(), nullptr, nullptr);
 	if( is_corrdump ){
 		PoscarSpin.dispCorr();
 	} else {
