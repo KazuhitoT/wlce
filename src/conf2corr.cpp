@@ -112,21 +112,26 @@ void Conf2corr::setIndexOrders(){
 	std::vector<std::vector<std::vector<int>>> tmp;
 	for(int n=1; n<=max_num_cluster; ++n){
 		std::vector<std::vector<int>> permutation;
-		std::vector<int> tmp(n, 1);
-		std::function<void(int, int, std::vector<int>&)> get_permutation;
-		get_permutation = [&get_permutation, &tmp, num_composition, &permutation](int max, int i, std::vector<int>& tmp) -> void
-		{
-			if( i==tmp.size() ){
-				permutation.push_back(tmp);
-			} else {
-				for(int j = 1; j < num_composition; ++j){
-					tmp[i] = j;
-					get_permutation(max, i+1, tmp);
-				}
+		for(int i=0; i<std::pow(double(num_composition), double(n)); ++i){
+			int ten_ans = i;
+			int n_ans = 0;
+			for (int j=0; ten_ans>0 ; j++)
+			{
+					n_ans = n_ans+(ten_ans%num_composition)*std::pow(10.0, double(j));
+					ten_ans = ten_ans/num_composition;
 			}
- 		};
-		get_permutation(n, 1, tmp);
-		permutation.push_back( std::vector<int>(n, num_composition-1) );
+			std::ostringstream sout;
+			sout << std::setfill('0') << std::setw(n) << n_ans;
+			std::string s = sout.str();
+			std::vector<int> tmp;
+			for(int j=0; j<s.size(); ++j){
+				tmp.push_back((int)(s[j]-'0'));
+			}
+			std::sort(tmp.begin(), tmp.end());
+			if( tmp[0] != 0 ) permutation.push_back(tmp);
+		}
+		std::sort(permutation.begin(), permutation.end());
+		permutation.erase(std::unique(permutation.begin(), permutation.end()), permutation.end());
 
 		auto base_combination = permutation;
 		for(auto& i : base_combination) std::sort(i.begin(), i.end());
