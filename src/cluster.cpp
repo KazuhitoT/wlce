@@ -401,7 +401,7 @@ int main(int argc, char* argv[]){
 		multiplicity_out << "3 " << triplet_cluster[index].size()*position_ex.size()/3 << std::endl;
 		std::cout << index[0] << " " << index[1] << " " << index[2] << std::endl;
 		std::cout << " -- relative_coords -- "<< std::endl;
-		std::cout << site_vec[0]->getCoordinate().transpose() << std::endl;
+		std::cout << "0 0 0 " << std::endl;
 		std::cout << triplet_cluster[index][0][0].transpose() << std::endl;
 		std::cout << triplet_cluster[index][0][1].transpose() << std::endl;
 		std::cout << std::endl;
@@ -442,15 +442,15 @@ int main(int argc, char* argv[]){
 
 					auto all_triplets = getAllTriplets( std::vector<Eigen::Vector3d>{
 						site_vec[0]->getCoordinate(),
-						triplet_cluster[index][i][0],
-						triplet_cluster[index][i][1],
+						validCoordinate( site_vec[0]->getCoordinate() + triplet_cluster[index][i][0] ),
+						validCoordinate( site_vec[0]->getCoordinate() + triplet_cluster[index][i][1] ),
 						linked_site->getCoordinate()
 					}, lattice_ex , d2, distances);
 					if( all_triplets.size() != 4 ) continue;
 
 					std::vector<Eigen::Vector3d> relative_coords = {
-						validCoordinate(triplet_cluster[index][i][0], site_vec[0]->getCoordinate()),
-						validCoordinate(triplet_cluster[index][i][1], site_vec[0]->getCoordinate()),
+						triplet_cluster[index][i][0],
+						triplet_cluster[index][i][1],
 						validCoordinate(linked_site->getCoordinate(), site_vec[0]->getCoordinate())
 					};
 
@@ -460,13 +460,13 @@ int main(int argc, char* argv[]){
 
 					// auto it = find(d_b4_index.begin(), d_b4_index.end(), all_triplets);
 					auto it = find_if( d_b4_index.begin(), d_b4_index.end(),
-						[all_triplets, prec](const std::vector<std::vector<double>>& obj){
+						[&all_triplets, prec](const std::vector<std::vector<double>>& obj){
 							for(int i=0; i<obj.size(); ++i){
 								double norm = 0;
 								for(int j=0; j<obj[i].size(); ++j){
 									norm += std::pow(all_triplets[i][j]-obj[i][j], 2.);
 								}
-								if( std::sqrt(norm) > 0.001 ){
+								if( norm > prec ){
 									return false;
 								}
 							}
@@ -479,7 +479,9 @@ int main(int argc, char* argv[]){
 						auto it2 = find_if( quadlet_cluster[(*it)].begin(), quadlet_cluster[(*it)].end(),
 						[relative_coords, prec](const std::vector<Eigen::Vector3d>& obj){
 							for(int i=0; i<3; ++i){
-								if( (relative_coords[i]-obj[i]).norm() > prec ) return false;
+								if( (relative_coords[i]-obj[i]).norm() > prec ) {
+									return false;
+								}
 							}
 							return true;
 						});
@@ -505,7 +507,7 @@ int main(int argc, char* argv[]){
 		std::cout << "multiplicity = " << quadlet_cluster[index].size() << std::endl;
 		multiplicity_out << "4 " << quadlet_cluster[index].size()*position_ex.size()/4 << std::endl;
 		std::cout << " -- relative_coords -- "<< std::endl;
-		std::cout << site_vec[0]->getCoordinate().transpose() << std::endl;
+		std::cout << " 0 0 0" << std::endl;
 		std::cout << quadlet_cluster[index][0][0].transpose() << std::endl;
 		std::cout << quadlet_cluster[index][0][1].transpose() << std::endl;
 		std::cout << quadlet_cluster[index][0][2].transpose() << std::endl;
