@@ -8,34 +8,9 @@
 #include "./site.hpp"
 #include "./conf2corr.hpp"
 #include "./wlconf.hpp"
+#include "./myhash.hpp"
 
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
-
-class hash_vecd {
-public:
-  double operator()(const std::vector<double> &x) const {
-    const int C = 997;
-    double result = 0;
-    for (int i=0; i<x.size(); ++i) {
-        result = result * C + x[i];
-    }
-    return result;
-  }
-};
-
-class hash_vec2d {
-public:
-  double operator()(const std::vector<std::vector<double>> &x) const {
-    const int C = 997;
-    double result = 0;
-		for (int i=0; i<x.size(); ++i) {
-			for (int j=0; j<x[i].size(); ++j) {
-        result = result * C + x[i][j];
-			}
-    }
-    return result;
-  }
-};
 
 void outputPoscar(Eigen::Matrix3d lattice, std::vector<Eigen::Vector3d> position, int N, std::string prefix){
 	std::ofstream ofs("poscar."+prefix);
