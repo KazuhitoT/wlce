@@ -8,34 +8,9 @@
 #include "./site.hpp"
 #include "./conf2corr.hpp"
 #include "./wlconf.hpp"
+#include "./myhash.hpp"
 
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
-
-class hash_vecd {
-public:
-  double operator()(const std::vector<double> &x) const {
-    const int C = 997;
-    double result = 0;
-    for (int i=0; i<x.size(); ++i) {
-        result = result * C + x[i];
-    }
-    return result;
-  }
-};
-
-class hash_vec2d {
-public:
-  double operator()(const std::vector<std::vector<double>> &x) const {
-    const int C = 997;
-    double result = 0;
-		for (int i=0; i<x.size(); ++i) {
-			for (int j=0; j<x[i].size(); ++j) {
-        result = result * C + x[i][j];
-			}
-    }
-    return result;
-  }
-};
 
 void outputPoscar(Eigen::Matrix3d lattice, std::vector<Eigen::Vector3d> position, int N, std::string prefix){
 	std::ofstream ofs("poscar."+prefix);
@@ -105,6 +80,7 @@ int main(int argc, char* argv[]){
 	bool is_corrdump = false;
 
 	std::string filename_poscar_in = "poscar.in";
+	std::shared_ptr<Input> in(new Input("getconf.ini"));
 
 	for(int i=1; i<argc; i++) {
 		std::string str(argv[i]);
@@ -574,26 +550,31 @@ int main(int argc, char* argv[]){
 	}
 
 
-	const ParseEcicar ecicar("./ecicar");
-
-	// std::cout << ecicar.getEci().size() << " " << (*pall_clusters).size() << std::endl;
-	auto eci_index = ecicar.getIndex();
-	for(int i=(*pall_clusters).size(); i>=1; --i){
-		// std::cout << eci_index[i] << std::endl;
-		auto it = find(eci_index.begin(), eci_index.end(), i);
-		if( it == eci_index.end() ) {
-			(*pall_clusters).erase((*pall_clusters).begin()+(i-1));
-		} // else {
-			// std::cout << i << std::endl;
-		// }
-	}
-	//
-
-	std::shared_ptr<Input> in(new Input("getconf.ini"));
-	Metroconf PoscarSpin("./poscar.expand.spin", in, plabels, pall_clusters, ecicar.getEci(), nullptr, nullptr);
 	if( is_corrdump ){
-		PoscarSpin.dispCorr();
+		std::map<int, std::vector<double>> dummy_ecicar;
+		for(int i=0; i<pall_clusters->size(); ++i){
+			dummy_ecicar[i] = std::vector<double>((*pall_clusters)[i].size(), 0);
+		}
+		Metroconf PoscarSpin("./poscar.expand.spin", in, plabels, pall_clusters, dummy_ecicar, nullptr, nullptr);
+		for(const auto& corrs : PoscarSpin.getCorrelationFunctions() ) {
+			for(const auto& corr : corrs){
+				std::cout << corr << " ";
+			}
+			std::cout << std::endl;
+		}
 	} else {
+		const ParseEcicar ecicar("./ecicar");
+		std::shared_ptr<allclusters> pall_clusters_dummy(new allclusters());
+		for(int i=0; i<pall_clusters->size(); ++i){
+			for(const auto eci : ecicar.getEci() ){
+				if( (i+1) == eci.first ) {
+					pall_clusters_dummy->push_back((*pall_clusters)[i]);
+					break;
+				}
+			}
+		}
+
+		Metroconf PoscarSpin("./poscar.expand.spin", in, plabels, pall_clusters_dummy, ecicar.getEci(), nullptr, nullptr);
 		PoscarSpin.setTotalEnergy();
 		auto compositions = PoscarSpin.getCompositions();
 		for(const auto c : compositions) std::cout << c << " ";
