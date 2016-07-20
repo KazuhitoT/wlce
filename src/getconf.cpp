@@ -564,7 +564,17 @@ int main(int argc, char* argv[]){
 		}
 	} else {
 		const ParseEcicar ecicar("./ecicar");
-		Metroconf PoscarSpin("./poscar.expand.spin", in, plabels, pall_clusters, ecicar.getEci(), nullptr, nullptr);
+		std::shared_ptr<allclusters> pall_clusters_dummy(new allclusters());
+		for(int i=0; i<pall_clusters->size(); ++i){
+			for(const auto eci : ecicar.getEci() ){
+				if( (i+1) == eci.first ) {
+					pall_clusters_dummy->push_back((*pall_clusters)[i]);
+					break;
+				}
+			}
+		}
+
+		Metroconf PoscarSpin("./poscar.expand.spin", in, plabels, pall_clusters_dummy, ecicar.getEci(), nullptr, nullptr);
 		PoscarSpin.setTotalEnergy();
 		auto compositions = PoscarSpin.getCompositions();
 		for(const auto c : compositions) std::cout << c << " ";
