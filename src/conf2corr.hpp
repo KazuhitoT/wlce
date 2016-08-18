@@ -85,6 +85,8 @@ class Conf2corr {
 		void setCorrelationFunction_flip();
 		void setCorrelationFunction_exchange();
 
+		double calcCorrelationFunctionNorm(double p);
+
 		virtual void setMemento()
 		{
 			this->spins_before = this->spins;
