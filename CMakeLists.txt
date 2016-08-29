@@ -84,3 +84,11 @@ add_executable(remc
 	./src/conf2corr.cpp
 	./src/metroconf.cpp
 )
+
+set(CMAKE_CXX_COMPILER mpic++)
+add_executable(remc-gs-search
+	./src/remc-gs-search.cpp
+	./src/parser.cpp
+	./src/conf2corr.cpp
+	./src/metroconf.cpp
+)

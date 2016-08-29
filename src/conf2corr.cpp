@@ -335,6 +335,17 @@ void Conf2corr::setCorrelationFunction_exchange(){
 	}
 }
 
+double Conf2corr::calcCorrelationFunctionNorm(double p){
+	double result = 0.0;
+	for(const auto& corr_index : this->correlation_functions ){
+		for(const auto& corr : corr_index){
+			result += std::pow(std::fabs(corr), p);
+		}
+	}
+	return std::pow(result, 1.0/p);
+}
+
+
 /* vec[basis][degree] vec[basis]->polynomials */
 double Conf2corr::getBasisFunction(/* order */  int order, /* spince_num */ int spin){
 	double result = 0;
