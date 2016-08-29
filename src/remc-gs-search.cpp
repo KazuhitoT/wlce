@@ -12,7 +12,6 @@
 constexpr double kb = 0.0000861733; // [eV/K]
 
 double metropolis_like_step(Metroconf& conf, double p){
-	conf.setCorrelationFunction();
 	double norm_before = conf.calcCorrelationFunctionNorm(p);
 
 	conf.setNewConf();
