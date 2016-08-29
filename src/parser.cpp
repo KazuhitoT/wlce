@@ -247,15 +247,15 @@ ParsePoscar::ParsePoscar(const char *filename){
 
 }
 
-Eigen::Matrix3d ParsePoscar::getLatticeBasis(){
+Eigen::Matrix3d ParsePoscar::getLatticeBasis() const{
 	return lattice_basis;
 };
 
-std::vector<int> ParsePoscar::getAtomTypes(){
+std::vector<int> ParsePoscar::getAtomTypes() const{
 	return atom_types;
 };
 
-std::vector<std::pair<int, Eigen::Vector3d>> ParsePoscar::getAtoms(){
+std::vector<std::pair<int, Eigen::Vector3d>> ParsePoscar::getAtoms() const{
 	return atoms;
 };
 

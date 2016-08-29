@@ -147,6 +147,7 @@ int main(int argc, char* argv[]){
 
 			if((i % mcstep) == 0){
 				WLconf::outputHistogram(dos,  histogram, emin, edelta, fstep);
+				PoscarSpin.outputPoscar("latest");
 				std::cout << i << "sweep done " << std::endl;
 			}
 			if((i % flatcheck_step) == 0 and WLconf::checkHistogramFlat(histogram, index_neglect_bin, flat_criterion, minstep, low_cutoff)){

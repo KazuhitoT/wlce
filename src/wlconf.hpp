@@ -70,8 +70,6 @@ namespace WLconf{
 			int getIndex(){ return index; }
 			int getBeforeIndex(){ return index_before; }
 
-			void outputEnergySpin(int, std::string);
-
 	};
 
 }

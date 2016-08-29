@@ -175,8 +175,6 @@ namespace WLconf{
 		this->setIndex();
 		int index_conf         = this->getIndex();
 		const int index_before = index_conf;
-		double m_distance_before = 0;
-		double m_distance_after  = 0;
 		while(index_conf == index_before || Econf > this->emax || Econf < this->emin){
 			this->setMemento();
 			this->setCorrelationFunction();
@@ -193,16 +191,6 @@ namespace WLconf{
 			}
 
 		}
-	}
-
-	void WLconf::outputEnergySpin(int index, std::string filename){
-		std::ofstream ofs(filename, std::ios::app);
-		ofs << index << " ";
-		ofs.precision(10);
-		ofs << this->getTotalEnergy() << " ";
-		for( auto j : this->getSpins() )  ofs << j << " ";
-		ofs << std::endl;
-		ofs.close();
 	}
 
 }

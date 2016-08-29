@@ -13,7 +13,7 @@ Conf2corr::Conf2corr(char* filename,
 	spince = _spince;
 	pall_clusters = _ptr;
 
-	this->setSpins(filename, _plabels);
+	this->setSpins(_plabels);
 	this->setCompositions();
 
 	#ifndef SEED
@@ -38,12 +38,12 @@ Conf2corr::Conf2corr(char* filename,
 	std::shared_ptr<allclusters> _pall_clusters,
 	std::shared_ptr<basisfunc>   _pbasis_functions,
 	std::shared_ptr<indexorders> _pindex_orders
-) : pbasis_functions(new basisfunc()), pindex_orders(new indexorders()){
+) : pbasis_functions(new basisfunc()), pindex_orders(new indexorders()), pposcar_spin(new ParsePoscar(filename)){
 	_in->setData("SPINCE", spince, true);
 	_in->setData("SPINPOSCAR", spinposcar, true);
 	pall_clusters = _pall_clusters;
 
-	this->setSpins(filename, _plabels);
+	this->setSpins(_plabels);
 	this->setCompositions();
 
 	#ifndef SEED
@@ -62,10 +62,9 @@ Conf2corr::Conf2corr(char* filename,
 	this->setInitialCorrelationFunction();
 };
 
-void Conf2corr::setSpins(char* filename, std::shared_ptr<labels> plabels){
-	ParsePoscar poscarSpin(filename);
-	const std::vector<std::pair<int, Eigen::Vector3d>> atoms_spin = poscarSpin.getAtoms();
-	std::vector<int> atom_types = poscarSpin.getAtomTypes();
+void Conf2corr::setSpins(std::shared_ptr<labels> plabels){
+	const std::vector<std::pair<int, Eigen::Vector3d>> atoms_spin = pposcar_spin->getAtoms();
+	std::vector<int> atom_types = pposcar_spin->getAtomTypes();
 
 	this->spins.resize(atoms_spin.size());
 	for(int i=0, imax=atoms_spin.size(); i<imax; ++i){
@@ -81,7 +80,7 @@ void Conf2corr::setSpins(char* filename, std::shared_ptr<labels> plabels){
 	}
 
 	if( atoms_spin.size() != spins.size() ){
-		std::cerr << "ERROR : the number of atoms in [poscar.in]  != total spins in [poscar.in]" << std::endl;
+		std::cerr << "ERROR : the number of atoms in [pposcar_spin->in]  != total spins in [pposcar_spin->in]" << std::endl;
 		std::cerr << atoms_spin.size() << " " << spins.size() << std::endl;
 		exit(1);
 	}
@@ -407,4 +406,50 @@ void Conf2corr::dispCorr(){
 			std::cout << j << " ";
 		std::cout << std::endl;
 	}
+}
+
+void Conf2corr::outputPoscar(std::string prefix){
+	std::ofstream ofs("poscar."+prefix);
+	ofs << "POSCAR" << std::endl;
+	ofs << "1.0" << std::endl;
+	ofs.setf(std::ios::right, std::ios::adjustfield);
+	ofs.setf(std::ios_base::fixed, std::ios_base::floatfield);
+	ofs << std::setprecision(15);
+	ofs << std::setw(20);
+
+	const auto lattice = pposcar_spin->getLatticeBasis();
+	for(int i=0; i<3; ++i){
+		for(int j=0; j<3; ++j){
+			ofs << lattice(i,j) << " ";
+		}
+		ofs << std::endl;
+	}
+
+	for(const auto& i : pposcar_spin->getAtomTypes() ){
+		ofs << i << " ";
+	}
+	ofs << std::endl;
+
+	ofs << "Direct" << std::endl;
+
+	/*  ここ治す  */
+	std::vector<std::vector<Eigen::Vector3d>> atom_types_coords(pposcar_spin->getAtomTypes().size());
+
+	const auto& atoms = pposcar_spin->getAtoms();
+	for( int i=0; i<atoms.size(); ++i ){
+		for( int j=0; j<this->spince.size(); ++j ){
+			if( this->spins[i] == this->spince[j] ){
+				atom_types_coords[j].push_back(atoms[i].second);
+				break;
+			}
+		}
+	}
+
+	for(const auto& atoms_coord: atom_types_coords){
+		for(const auto& atom_coord : atoms_coord){
+			ofs << atom_coord[0] << " " << atom_coord[1] << " " << atom_coord[2] << std::endl;
+		}
+	}
+
+	return;
 }

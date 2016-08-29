@@ -37,9 +37,11 @@ class Conf2corr {
 		/* vec[num_in_cluster][index][combinations][order] */
 		std::shared_ptr<indexorders> pindex_orders;
 
+		const std::shared_ptr<ParsePoscar> pposcar_spin;
+
 		/* --------- Input parameter for Conf2corr --------- */
 		std::vector<double> spinposcar;
-		std::vector<double> spince;
+		std::vector<double> spince;  // if 24 8 in poscar at line t, [0]-> -1 for 24 atoms and [1] -> 1 for 8 atoms
 		/*  allclusters index->site->multiplicity->clusters */
 		std::shared_ptr<allclusters> pall_clusters;
 		/* ------------------------------------------------- */
@@ -66,7 +68,7 @@ class Conf2corr {
 		);
 		~Conf2corr(){};
 
-		void setSpins(char* filename, std::shared_ptr<labels> plabels);
+		void setSpins(std::shared_ptr<labels> plabels);
 		void setSpins(std::vector<double> _spins){ this->spins = _spins; }
 		void setSpins(int i, double spin){ this->spins.at(i) = spin; }
 		void setSpinsBefore(std::vector<double> _spins){ this->spins_before = _spins;}
@@ -100,6 +102,7 @@ class Conf2corr {
 		};
 
 		void dispCorr();
+		void outputPoscar(std::string prefix="out");
 
 		int RandN(){return rnd_int_N();};
 		double RandReal(){ return rnd_real();};
