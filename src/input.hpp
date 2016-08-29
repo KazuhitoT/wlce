@@ -51,10 +51,4 @@ template<typename T> void Input::setData(std::string data_key, std::vector<T> &d
 	}
 }
 
-std::string Input::getDataByString(std::string data_key, std::string label){
-	if( boost::optional<std::string> value = pt.get_optional<std::string>(label+"."+data_key) ) {
-		return value.get();
-	}
-}
-
 #endif

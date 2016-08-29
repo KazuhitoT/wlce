@@ -48,6 +48,7 @@ add_executable(wang-landau
 	./src/conf2corr.cpp
 	./src/metroconf.cpp
 	./src/wlconf.cpp
+	./src/input.cpp
 )
 
 add_executable(metropolis
