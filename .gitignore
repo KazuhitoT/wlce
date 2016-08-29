@@ -5,6 +5,7 @@ tmp/
 bin/
 cuau/
 remc/
+remc-gs/
 Testing/
 2dising/*out*
 2dising/clusters.in
