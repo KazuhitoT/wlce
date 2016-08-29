@@ -51,6 +51,15 @@ add_executable(wang-landau
 	./src/input.cpp
 )
 
+add_executable(directZ
+	./src/directZ.cpp
+	./src/parser.cpp
+	./src/conf2corr.cpp
+	./src/metroconf.cpp
+	./src/wlconfT.cpp
+	./src/input.cpp
+)
+
 add_executable(metropolis
 	./src/metropolis.cpp
 	./src/parser.cpp
