@@ -75,9 +75,6 @@ class ParseClusterIn : public Parser{
 		void checkClusterIn();
 };
 
-
-void outputPoscar(double lattice[3][3], double position[][3], int N, std::string prefix);
-
 class ParsePoscar {
 private:
 	std::string comment;
@@ -91,9 +88,9 @@ public:
 	ParsePoscar(){};
 	ParsePoscar(const char*);
 
-	Eigen::Matrix3d getLatticeBasis();
-	std::vector<int> getAtomTypes();
-	std::vector<std::pair<int, Eigen::Vector3d>> getAtoms();
+	Eigen::Matrix3d getLatticeBasis() const;
+	std::vector<int> getAtomTypes() const;
+	std::vector<std::pair<int, Eigen::Vector3d>> getAtoms() const;
 	std::string getComment() const {return comment;}
 	std::string getCoordinateType() const {return coordinate_type;}
 };

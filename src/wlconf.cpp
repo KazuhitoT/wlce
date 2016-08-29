@@ -1,189 +1,196 @@
 #include "./wlconf.hpp"
 
-WLconf::WLconf(char* filename,
-	std::shared_ptr<Input> _in,
-	std::shared_ptr<labels> _plabels,
-	std::shared_ptr<allclusters> _pall_clusters,
-	const std::map<int /*index*/ , std::vector<double> /*eci*/>& _ecicar,
-	std::shared_ptr<basisfunc>   _pbasis_functions,
-	std::shared_ptr<indexorders> _pindex_orders
-):
-	Metroconf(filename, _in, _plabels, _pall_clusters, _ecicar, _pbasis_functions, _pindex_orders),
-	input_spin_filename(""),
-	setrandom(-1)
-	{
+namespace WLconf{
 
-	_in->setData("EMIN", this->emin, true);
-	_in->setData("EMAX", this->emax, true);
-	_in->setData("BIN",  this->bin, true);
+	bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, int minstep, double low_cutoff){
+		double ave = accumulate(histogram.begin(), histogram.end(), 0) / (double)(histogram.size()-index_neglect_bin.size());
+		double limit = ave * lflat ;
+		for(int i=0, imax=histogram.size(); i<imax; ++i){
 
-	_in->setData("MCSTEP", mcstep, true);
-	_in->setData("FLATCHECKSTEP", flatcheck_step, true);
-	_in->setData("LOGFACTOR", logfactor, true);
-	_in->setData("LOGFLIMIT", logflimit, true);
-	_in->setData("FLATCRITERION", flat_criterion, true);
+			auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , i);
+			if( it != index_neglect_bin.end() ) continue;
 
-	_in->setData("SPININPUT", input_spin_filename);
-	_in->setData("SETRANDOM", setrandom);
+			if( minstep>0 and histogram.at(i)<minstep ) return false;
 
-	if( emin >= emax ){
-		std::cerr << "ERROR : input EMIN > EMAX " << std::endl;
-		exit(1);
+			if(histogram.at(i) < (ave*(1.0-low_cutoff))) continue;
+			else if(histogram.at(i) < limit) return false;
+		}
+		return true;
 	}
 
-	if( input_spin_filename.size()>0 ){
-		this->setSpinsFromDat();
-		this->setInitialCorrelationFunction();
-	}	else if( setrandom>0 ){
-		this->setSpinsRandom();
-		this->setInitialCorrelationFunction();
+	void outputHistogram(const std::vector<double>& dos, const std::vector<double>& histogram, double emin, double delta, int fstep, std::string prefix){
+			std::ofstream ofs("out-wl"+prefix+std::to_string(fstep)+".dat");
+			ofs.setf(std::ios_base::fixed, std::ios_base::floatfield);
+			for(int i=0, imax=dos.size(); i<imax; ++i){
+				ofs << i << " " << std::setprecision(10) << emin + i*delta << " " << emin + (i+1)*delta << " " <<
+				std::setprecision(10) << dos[i] << " " << histogram[i] << std::endl;
+			}
+			ofs.close();
 	}
 
-	this->edelta = (emax - emin) / (double)bin;
-}
+	WLconf::WLconf(char* filename,
+		std::shared_ptr<Input> _in,
+		std::shared_ptr<labels> _plabels,
+		std::shared_ptr<allclusters> _pall_clusters,
+		const std::map<int /*index*/ , std::vector<double> /*eci*/>& _ecicar,
+		std::shared_ptr<basisfunc>   _pbasis_functions,
+		std::shared_ptr<indexorders> _pindex_orders
+	):
+		Metroconf(filename, _in, _plabels, _pall_clusters, _ecicar, _pbasis_functions, _pindex_orders),
+		input_spin_filename(""),
+		setrandom(-1)
+		{
 
-void WLconf::dispInput(void){
-	std::cout << "EMIN          : " << emin       << std::endl;
-	std::cout << "EMAX          : " << emax       << std::endl;
-	std::cout << "BIN           : " << bin        << std::endl;
+		_in->setData("EMIN", this->emin, true);
+		_in->setData("EMAX", this->emax, true);
+		_in->setData("BIN",  this->bin, true);
 
-	std::cout << "MCSTEP        : " << mcstep       << std::endl;
-	std::cout << "FLATCHECKSTEP : " << flatcheck_step  << std::endl;
-	std::cout << "LOGFACTOR     : " << logfactor       << std::endl;
-	std::cout << "FLATCRITERION : " << flat_criterion       << std::endl;
+		_in->setData("SPININPUT", input_spin_filename);
+		_in->setData("SETRANDOM", setrandom);
 
-	if( this->getChemicalPotential().size()>0 ) {
-		std::cout << "CHEMIPOT      : ";
-		for(auto i : this->getChemicalPotential() )
-			std::cout << i << " ";
-		std::cout << std::endl;
-	}
-
-	if( this->input_spin_filename.size()>0 )
-		std::cout << "SPININPUT     : " << input_spin_filename << std::endl;
-	if( this->setrandom>0 )
-		std::cout << "SETRANDOM     : " << "YES" << std::endl;
-
-}
-
-bool WLconf::setSpinsFromDat(){
-	std::ifstream ifs(input_spin_filename.c_str());
-
-	if(!ifs){
-		ifs.close();
-		std::cout << "ERROR : flle [" << input_spin_filename << "] does not exist." << std::endl;
-		exit(1);
-	}
-
-	bool isSpinSearched = false;
-	std::string buf;
-	std::vector<std::string> v;
-	while(ifs && getline(ifs, buf)){
-		if(buf.size() == 0) continue;
-		boost::algorithm::trim(buf);
-		boost::algorithm::split(v, buf, boost::is_space());
-		double e = stod(v.at(1));
-		v.erase(v.begin());
-		v.erase(v.begin());
-
-		if(v.size() != this->getSpins().size()){
-			std::cout << "ERROR : input spin size in [" << input_spin_filename << "] differs from [POSCAR.spin]" << std::endl;
+		if( emin >= emax ){
+			std::cerr << "ERROR : input EMIN > EMAX " << std::endl;
 			exit(1);
 		}
-		if(emin <= e and e <= emax){
-			for(int i=0; i<v.size(); ++i){
-				this->setSpins(i,stod(v.at(i)));
+
+		if( input_spin_filename.size()>0 ){
+			this->setSpinsFromDat();
+			this->setInitialCorrelationFunction();
+		}	else if( setrandom>0 ){
+			this->setSpinsRandom();
+			this->setInitialCorrelationFunction();
+		}
+
+		this->edelta = (emax - emin) / (double)bin;
+	}
+
+	void WLconf::dispInput(void){
+		std::cout << "EMIN          : " << emin       << std::endl;
+		std::cout << "EMAX          : " << emax       << std::endl;
+		std::cout << "BIN           : " << bin        << std::endl;
+
+		if( this->getChemicalPotential().size()>0 ) {
+			std::cout << "CHEMIPOT      : ";
+			for(auto i : this->getChemicalPotential() )
+				std::cout << i << " ";
+			std::cout << std::endl;
+		}
+
+		if( this->input_spin_filename.size()>0 )
+			std::cout << "SPININPUT     : " << input_spin_filename << std::endl;
+		if( this->setrandom>0 )
+			std::cout << "SETRANDOM     : " << "YES" << std::endl;
+
+	}
+
+	bool WLconf::setSpinsFromDat(){
+		std::ifstream ifs(input_spin_filename.c_str());
+
+		if(!ifs){
+			ifs.close();
+			std::cout << "ERROR : flle [" << input_spin_filename << "] does not exist." << std::endl;
+			exit(1);
+		}
+
+		bool isSpinSearched = false;
+		std::string buf;
+		std::vector<std::string> v;
+		while(ifs && getline(ifs, buf)){
+			if(buf.size() == 0) continue;
+			boost::algorithm::trim(buf);
+			boost::algorithm::split(v, buf, boost::is_space());
+			double e = stod(v.at(1));
+			v.erase(v.begin());
+			v.erase(v.begin());
+
+			if(v.size() != this->getSpins().size()){
+				std::cout << "ERROR : input spin size in [" << input_spin_filename << "] differs from [POSCAR.spin]" << std::endl;
+				exit(1);
 			}
-			isSpinSearched = true;
-			break;
+			if(emin <= e and e <= emax){
+				for(int i=0; i<v.size(); ++i){
+					this->setSpins(i,stod(v.at(i)));
+				}
+				isSpinSearched = true;
+				break;
+			}
 		}
-	}
-	ifs.close();
+		ifs.close();
 
-	if(!isSpinSearched){
-		std::cout << "ERROR : no spin configuration satisfies the condition in [wang-landau.ini]" << std::endl;
-		exit(1);
-	}
+		if(!isSpinSearched){
+			std::cout << "ERROR : no spin configuration satisfies the condition in [wang-landau.ini]" << std::endl;
+			exit(1);
+		}
 
-	this->setSpinsBefore(this->getSpins());
-	return true;
-}
-
-std::vector<int> WLconf::getNeglectBinIndex(){
-	if( input_spin_filename.size() == 0 ) {
-		std::vector<int> result;
-		for(int i=0; i<this->bin; ++i) result.push_back(i);
-		return result;
+		this->setSpinsBefore(this->getSpins());
+		return true;
 	}
 
-	std::vector<double> e_vec;
-	std::vector<bool>   is_bin_exist_vec(this->bin, false);
+	std::vector<int> WLconf::getNeglectBinIndex(){
+		if( input_spin_filename.size() == 0 ) {
+			std::vector<int> result;
+			for(int i=0; i<this->bin; ++i) result.push_back(i);
+			return result;
+		}
 
-	std::ifstream ifs(input_spin_filename);
-	if(!ifs){
-		std::cerr << "ERROR : flle [" << input_spin_filename << "] does not exist." << std::endl;
-		exit(1);
+		std::vector<double> e_vec;
+		std::vector<bool>   is_bin_exist_vec(this->bin, false);
+
+		std::ifstream ifs(input_spin_filename);
+		if(!ifs){
+			std::cerr << "ERROR : flle [" << input_spin_filename << "] does not exist." << std::endl;
+			exit(1);
+		}
+
+		std::string buf;
+		std::vector<std::string> v;
+		while(ifs && getline(ifs, buf)){
+			if(buf.size() == 0) continue;
+			boost::algorithm::trim(buf);
+			boost::algorithm::split(v, buf, boost::is_space());
+			double e = stod(v.at(1));
+			e_vec.push_back(e);
+		}
+		ifs.close();
+
+		for(auto e : e_vec){
+			int index = (e - this->emin) / this->edelta;
+			if( index<0 ) index = 0;
+			else if(index>(bin-1)) index = bin-1;
+			is_bin_exist_vec.at(index) = true;
+		}
+
+		std::vector<int> neglect_bin_index;
+		for(int i=0; i<is_bin_exist_vec.size(); ++i){
+			if(!is_bin_exist_vec.at(i)) neglect_bin_index.push_back(i);
+		}
+
+		return neglect_bin_index;
 	}
 
-	std::string buf;
-	std::vector<std::string> v;
-	while(ifs && getline(ifs, buf)){
-		if(buf.size() == 0) continue;
-		boost::algorithm::trim(buf);
-		boost::algorithm::split(v, buf, boost::is_space());
-		double e = stod(v.at(1));
-		e_vec.push_back(e);
-	}
-	ifs.close();
+	void WLconf::setNewConf(){
 
-	for(auto e : e_vec){
-		int index = (e - this->emin) / this->edelta;
-		if( index<0 ) index = 0;
-		else if(index>(bin-1)) index = bin-1;
-		is_bin_exist_vec.at(index) = true;
-	}
-
-	std::vector<int> neglect_bin_index;
-	for(int i=0; i<is_bin_exist_vec.size(); ++i){
-		if(!is_bin_exist_vec.at(i)) neglect_bin_index.push_back(i);
-	}
-
-	return neglect_bin_index;
-}
-
-void WLconf::setNewConf(){
-
-	int count              = 0;
-	double Econf           = this->getTotalEnergy();
-	this->setIndex();
-	int index_conf         = this->getIndex();
-	const int index_before = index_conf;
-	double m_distance_before = 0;
-	double m_distance_after  = 0;
-	while(index_conf == index_before || Econf > this->emax || Econf < this->emin){
-		this->setMemento();
-		this->setCorrelationFunction();
-		this->setTotalEnergy();
+		int count              = 0;
+		double Econf           = this->getTotalEnergy();
 		this->setIndex();
-		Econf = this->getTotalEnergy();
-		index_conf  = this->getIndex();
+		int index_conf         = this->getIndex();
+		const int index_before = index_conf;
+		while(index_conf == index_before || Econf > this->emax || Econf < this->emin){
+			this->setMemento();
+			this->setCorrelationFunction();
+			this->setTotalEnergy();
+			this->setIndex();
+			Econf = this->getTotalEnergy();
+			index_conf  = this->getIndex();
 
-		if( index_conf != index_before and Econf <= this->emax and Econf >= this->emin )
-			break;
+			if( index_conf != index_before and Econf <= this->emax and Econf >= this->emin )
+				break;
 
-		if( Econf > this->emax || Econf < this->emin ) {
-			this->Memento();
+			if( Econf > this->emax || Econf < this->emin ) {
+				this->Memento();
+			}
+
 		}
-
 	}
-}
 
-void WLconf::outputEnergySpin(int index, std::string filename){
-	std::ofstream ofs(filename, std::ios::app);
-	ofs << index << " ";
-	ofs.precision(10);
-	ofs << this->getTotalEnergy() << " ";
-	for( auto j : this->getSpins() )  ofs << j << " ";
-	ofs << std::endl;
-	ofs.close();
 }

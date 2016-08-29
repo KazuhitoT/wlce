@@ -8,33 +8,23 @@
 #include "./input.hpp"
 #include "./wlconf.hpp"
 
-bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, int minstep, double low_cutoff=1){
-	double ave = accumulate(histogram.begin(), histogram.end(), 0) / (double)(histogram.size()-index_neglect_bin.size());
-	double limit = ave * lflat ;
-	for(int i=0, imax=histogram.size(); i<imax; ++i){
+void dispInput(std::shared_ptr<Input> in){
+	//  [INPUT]
+	std::cout << "EMIN          : " << in->getDataByString("EMIN") << std::endl;
+	std::cout << "EMAX          : " << in->getDataByString("EMAX") << std::endl;
+	std::cout << "BIN           : " << in->getDataByString("BIN")  << std::endl;
+	std::cout << "MCSTEP        : " << in->getDataByString("MCSTEP")        << std::endl;
+	std::cout << "FLATCHECKSTEP : " << in->getDataByString("FLATCHECKSTEP") << std::endl;
+	std::cout << "LOGFACTOR     : " << in->getDataByString("LOGFACTOR")     << std::endl;
+	std::cout << "FLATCRITERION : " << in->getDataByString("FLATCRITERION") << std::endl;
 
-		auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , i);
-		if( it != index_neglect_bin.end() ) continue;
-
-		if( minstep>0 and histogram.at(i)<minstep ) return false;
-
-		if(histogram.at(i) < (ave*(1.0-low_cutoff))) continue;
-		else if(histogram.at(i) < limit) return false;
-	}
-	return true;
+	//  [OPTION]
+	std::cout << "CHEMIPOT      : " << in->getDataByString("CHEMIPOT")  << std::endl;
+	std::cout << "SPININPUT     : " << in->getDataByString("SPININPUT") << std::endl;
+	std::cout << "SETRANDOM     : " << in->getDataByString("SETRANDOM") << std::endl;
 }
 
-void outputHistogram(const std::vector<double>& dos, const std::vector<double>& histogram, double emin, double delta, int fstep, std::string prefix = ""){
-		std::ofstream ofs("out-wl"+prefix+std::to_string(fstep)+".dat");
-		ofs.setf(std::ios_base::fixed, std::ios_base::floatfield);
-		for(int i=0, imax=dos.size(); i<imax; ++i){
-			ofs << i << " " << std::setprecision(10) << emin + i*delta << " " << emin + (i+1)*delta << " " <<
-			std::setprecision(10) << dos[i] << " " << histogram[i] << std::endl;
-		}
-		ofs.close();
-}
-
-double wl_step(WLconf& conf, const std::vector<double>& dos){
+double wl_step(WLconf::WLconf& conf, const std::vector<double>& dos){
 	conf.setTotalEnergy();
 	conf.setIndex();
 	int index_before = conf.getIndex();
@@ -76,13 +66,12 @@ int main(int argc, char* argv[]){
 	in->setData("MINSTEP",   minstep);
 	in->setData("LOWCUTOFF", low_cutoff);
 
-
 	const ParseLabels label("./labels.in");
 	const ParseEcicar ecicar("./ecicar");
 	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
 	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
 
-	WLconf PoscarSpin("./poscar.spin", in, label.getLabels(), cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
+	WLconf::WLconf PoscarSpin("./poscar.spin", in, label.getLabels(), cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
 
 	const int N = PoscarSpin.getSpins().size();
 
@@ -94,7 +83,7 @@ int main(int argc, char* argv[]){
 	std::cout << std::endl;
 
 	std::cout << "----------  Information about [wang-landau.ini]" << std::endl;
-	PoscarSpin.dispInput();
+	dispInput(in);
 
 	if( index_neglect_bin.size() and  filename_spin_input.size() ){
 		std::cout << "NEGLECT BIN INDEX :" << std::endl;
@@ -157,11 +146,12 @@ int main(int argc, char* argv[]){
 			}  /*  end MC sweep */
 
 			if((i % mcstep) == 0){
-				outputHistogram(dos,  histogram, emin, edelta, fstep);
+				WLconf::outputHistogram(dos,  histogram, emin, edelta, fstep);
+				PoscarSpin.outputPoscar("latest");
 				std::cout << i << "sweep done " << std::endl;
 			}
-			if((i % flatcheck_step) == 0 and checkHistogramFlat(histogram, index_neglect_bin, flat_criterion, minstep, low_cutoff)){
-				outputHistogram(dos,  histogram, emin, edelta, fstep);
+			if((i % flatcheck_step) == 0 and WLconf::checkHistogramFlat(histogram, index_neglect_bin, flat_criterion, minstep, low_cutoff)){
+				WLconf::outputHistogram(dos,  histogram, emin, edelta, fstep);
 				final_mcsweep = i;
 				break;
 			}

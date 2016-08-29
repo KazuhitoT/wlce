@@ -97,6 +97,8 @@ int main(int argc, char* argv[]){
 			std::cout << temperature << "[K] : " << i << " step done." << std::endl;
 		}
 
+		PoscarSpin.outputPoscar("T="+std::to_string((int)temperature));
+
 		for(int i=1; i<=mcstep; ++i){
 			for(int j=0; j<N; ++j){
 				double e = metropolis_step(PoscarSpin, temperature);
