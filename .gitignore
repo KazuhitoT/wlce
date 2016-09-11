@@ -3,6 +3,7 @@
 spglib/
 tmp/
 bin/
+lib/
 cuau/
 remc/
 remc-gs/
