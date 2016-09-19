@@ -4,6 +4,7 @@ spglib/
 tmp/
 bin/
 lib/
+docs/
 cuau/
 remc/
 remc-gs/
