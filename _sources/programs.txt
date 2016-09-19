@@ -1,0 +1,112 @@
+Programs
+===================
+
+.. _cluster:
+
+cluster
+-------------------
+
+Find and enumerate symmetry-equivalent clusters for cluster expansion [CE1]_ [CE2]_.
+
+* Input file
+
+  * :ref:`poscar.in`
+
+* Output files
+
+  * clusters.out, multiplicity.out, labels.out
+
+* Command line option
+
+  -d distance  truncation distance for searching symmetry-equivalent clusters
+  -p file      POSCAR filename (default: poscar.in)
+
+.. [CE1] J.M. Sanchez et. al., Physica A 128, 334-350 (1984).
+.. [CE2] A. van de Walle and M. Asta, Modelling Simul. Mater. Sci. Eng. 10, 521-538 (2002).
+
+
+
+.. _getconf:
+
+getconf
+-------------------
+
+Calculate properties of the system.
+
+
+* Input file
+
+	* :ref:`getconf.ini`, :ref:`poscar.spin`, clusters.in, multiplicity.in, labels.in,  :ref:`ecicar`
+
+* Output file
+
+	* Total energy, compositions and correlation functions.
+
+
+.. _metropolis:
+
+metropolis
+-------------------
+
+Calculate internal energy via Metropolis algorithm.
+
+* Input file
+
+  * :ref:`metropolis.ini`, :ref:`poscar.spin`, clusters.in, multiplicity.in, labels.in, :ref:`ecicar`
+
+* Output files
+
+  * metropolis.out ::
+
+		# Temperature Internal_energy Variance_of_internal_energy
+		900.000000 -890.638532 0.012757
+		800.000000 -890.658473 0.010480
+		700.000000 -890.698000 0.008718
+		600.000000 -890.703902 0.007955
+		500.000000 -890.756423 0.008978
+		400.000000 -890.800130 0.006220
+		300.000000 -890.895127 0.007164
+		200.000000 -891.040568 0.006781
+		...
+
+
+.. _wang-landau:
+
+wang-landau
+-------------------
+
+Calculate microcanonical entropy via Wang-Landau algorithm [WL1]_ [WL2]_
+
+* Input file
+
+  * :ref:`wang-landau.ini`, :ref:`poscar.spin`, clusters.in, multiplicity.in, labels.in, :ref:`ecicar`
+
+* Output files
+
+  * out-wl*.dat ::
+
+		# Index_of_bin Bin_low Bin_high Entropy Histogram
+		0 -256.0000000000 -253.9921568627 32087.3484191895 9458.0000000000
+		1 -253.9921568627 -251.9843137255 32092.8212432861 9427.0000000000
+		2 -251.9843137255 -249.9764705882 32093.5523376465 9820.0000000000
+		3 -249.9764705882 -247.9686274510 32097.6667175293 10686.0000000000
+		4 -247.9686274510 -245.9607843137 32099.1176452637 9044.0000000000
+		5 -245.9607843137 -243.9529411765 32102.2534332275 9965.0000000000
+		6 -243.9529411765 -241.9450980392 32103.9153900146 10233.0000000000
+		7 -241.9450980392 -239.9372549020 32106.5745849609 9918.0000000000
+		8 -239.9372549020 -237.9294117647 32108.4700622559 10952.0000000000
+		9 -237.9294117647 -235.9215686275 32110.8459320068 9683.0000000000
+		10 -235.9215686275 -233.9137254902 32112.8449401855 11868.0000000000
+		...
+
+
+  * macrostate.out ::
+
+		# Index_of_bin Energy [spins]
+		137 20 1 1 1 1 -1 1 -1 -1 -1 1 -1 1 -1 -1 -1 -1 -1 1 1 1 -1 -1 1 -1 1 1 -1 1 1 1 -1 1 1 1 1 -1 -1 -1 -1 1 -1 -1 -1 1 1 -1 1 1 -1 1 1 1 -1 1 -1 -1 -1 -1 -1 1 1 -1 1 -1 1 1 -1 -1 -1 -1 -1 -1 -1 -1 1 1 -1 -1 -1 -1 -1 1 1 1 -1 -1 1 1 -1 -1 -1 -1 1 1 -1 -1 -1 -1 1 -1 -1 -1 1 -1 1 -1 -1 1 1 -1 1 1 -1 1 1 -1 -1 -1 -1 1 -1 -1 -1 1 -1 -1 1 -1 1 -1 -1 -1 -1 1 1 1 -1 1 1 -1 1 1 -1 1 1 1 1 1 1 1 1 1 1 1 1 1 -1 1 -1 1 -1 1 -1 -1 -1 -1 1 1 1 1 1 1 -1 1 -1 1 -1 1 1 -1 1 -1 1 1 -1 1 -1 -1 1 1 -1 1 -1 1 1 -1 -1 -1 1 -1 1 1 1 1 1 -1 1 -1 -1 1 -1 1 -1 -1 -1 -1 1 1 1 -1 -1 -1 -1 1 -1 1 1 1 1 1 -1 1 1 -1 1 1 -1 -1 -1 -1 1 1 1 1 -1 1 1 -1 -1 -1 -1 1 1 1 1 1
+		135 16 1 1 1 1 -1 1 -1 -1 -1 1 -1 1 -1 -1 -1 -1 -1 1 1 1 -1 -1 1 -1 1 1 -1 1 1 1 -1 1 1 1 1 -1 1 -1 -1 1 -1 -1 -1 1 1 -1 1 1 -1 1 1 1 -1 1 -1 -1 -1 -1 -1 1 1 -1 1 -1 1 1 -1 -1 -1 -1 -1 -1 -1 -1 1 1 -1 -1 -1 -1 -1 1 1 1 -1 -1 1 1 -1 -1 -1 -1 1 1 -1 -1 -1 -1 1 -1 -1 -1 1 -1 1 -1 -1 1 1 -1 1 1 -1 1 1 -1 -1 -1 -1 1 -1 -1 -1 1 -1 -1 1 -1 1 -1 -1 -1 -1 1 1 1 -1 1 1 -1 1 1 -1 1 1 1 1 1 1 1 1 1 1 1 1 1 -1 1 -1 1 -1 1 -1 -1 -1 -1 1 1 1 1 1 1 -1 1 -1 1 -1 1 1 -1 1 -1 1 1 -1 1 -1 -1 1 1 -1 1 -1 1 1 -1 -1 -1 1 -1 1 1 1 1 1 -1 1 -1 -1 1 -1 1 -1 -1 -1 -1 1 1 1 -1 -1 -1 -1 1 -1 1 1 1 1 1 -1 1 1 -1 1 1 -1 -1 -1 -1 1 1 1 1 -1 1 1 -1 -1 -1 -1 1 1 1 1 1
+		...
+
+
+.. [WL1] F. G. Wang and D. P. Landau, Phys. Rev. Lett. 86, 2050 (2001).
+.. [WL2] F. G. Wang and D. P. Landau, Phys. Rev. E 64, 056101 (2001).

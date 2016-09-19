@@ -1,0 +1,307 @@
+Input files
+===================
+
+
+.. _getconf.ini:
+
+getconf.ini
+-------------------
+
+Configuration for :ref:`getconf`
+
+* TAGS
+
+	- :ref:`SPINCE <tag-spince>`
+	- :ref:`SPINPOSCAR <tag-spinposcar>`
+
+Example for getconf.ini::
+
+  [INPUT]
+  SPINCE        = -1 1
+  SPINPOSCAR    = -1 1
+
+
+
+.. _metropolis.ini:
+
+metropolis.ini
+-------------------
+
+Configuration for :ref:`metropolis`
+
+* TAGS
+
+	- :ref:`SPINCE <tag-spince>`
+	- :ref:`SPINPOSCAR <tag-spinposcar>`
+	- :ref:`MCSTEP <tag-mcstep>`
+	- :ref:`SAMPLESTEP<tag-samplestep>`
+	- :ref:`TEMPERATURE <tag-temperature>`
+	- :ref:`CHEMIPOT <tag-chemipot>` *(optional)*
+
+Example for metropolis.ini::
+
+  [INPUT]
+  SPINCE        = -1 1
+  SPINPOSCAR    = -1 1
+  MCSTEP        = 10
+  SAMPLESTEP    = 10
+  TEMPERATURE   = 700
+
+
+.. _wang-landau.ini:
+
+wang-landau.ini
+-------------------
+
+Configuration for :ref:`wang-landau`
+
+* TAGS
+
+	- :ref:`SPINCE <tag-spince>`
+	- :ref:`SPINPOSCAR <tag-spinposcar>`
+	- :ref:`MCSTEP <tag-mcstep>`
+	- :ref:`FLATCHECKSTEP <tag-flatcheckstep>`
+	- :ref:`FLATCRITERION <tag-logflimit>`
+	- :ref:`LOGFACTOR <tag-logfactor>`
+	- :ref:`BIN <tag-logflimit>`
+	- :ref:`EMIN <tag-logflimit>`
+	- :ref:`EMAX <tag-logflimit>`
+	- :ref:`CHEMIPOT <tag-logflimit>` *(optional)*
+	- :ref:`SPININPUT <tag-spininput>` *(optional)*
+
+
+Example for wang-landau.ini::
+
+  [INPUT]
+  SPINCE        = -1 1
+  SPINPOSCAR    = -1 1
+  FLATCHECKSTEP = 100
+  MCSTEP        = 100
+  LOGFACTOR     = 4
+  LOGFLIMIT     = 0.0000001
+  BIN           = 255
+  EMIN          = -1
+  EMAX          = 1
+  FLATCRITERION = 0.8
+  CHEMIPOT      = 0 1 # sgc mode
+
+
+
+.. _other-inputs:
+
+Other input files
+-------------------
+
+
+.. _poscar.in:
+
+poscar.in
+^^^^^^^^^^^^^^^^^^
+
+Input POSCAR file for :ref:`cluster`.
+The number of spins and those positions should be set.
+
+Example for poscar.in::
+
+	POSCAR fcc
+	1.0
+	    4.00000000000000      0.00000000000000      0.00000000000000
+	    0.00000000000000      4.00000000000000      0.00000000000000
+	    0.00000000000000      0.00000000000000      4.00000000000000
+	 4
+	Direct
+	    0.00000000000000      0.00000000000000      0.00000000000000
+	    0.50000000000000      0.50000000000000      0.00000000000000
+	    0.00000000000000      0.50000000000000      0.50000000000000
+	    0.50000000000000      0.00000000000000      0.50000000000000
+
+
+
+.. _poscar.spin:
+
+poscar.spin
+^^^^^^^^^^^^^^^^^^
+
+Initial spin configuration for MC simulations.
+The number of spins for each composition and those positions should be set.
+
+Example for poscar.spin::
+
+	POSCAR spin fcc
+	1.0
+	    4.00000000000000      0.00000000000000      0.00000000000000
+	    0.00000000000000      4.00000000000000      0.00000000000000
+	    0.00000000000000      0.00000000000000      4.00000000000000
+	 2 2
+	Direct
+	    0.00000000000000      0.00000000000000      0.00000000000000
+	    0.50000000000000      0.50000000000000      0.00000000000000
+	    0.00000000000000      0.50000000000000      0.50000000000000
+	    0.50000000000000      0.00000000000000      0.50000000000000
+
+
+
+.. _ecicar:
+
+ecicar
+^^^^^^^^^^^^^^^^^^
+
+Effective cluster interactions (ECI) for MC simulations.
+ECI should be consistent with basis functions.
+
+Example for ecicar in binary system::
+
+	0 0
+	1 0.1
+	2 0.05
+	3 -0.02
+	6 0.01
+	...
+
+Example for ecicar in ternary system::
+
+	0 0
+	1 0.1 0.2 0.1
+	2 0.05 0.2 0.3
+	...
+
+
+
+.. _tags:
+
+Tags
+-------------------
+
+.. _tag-spince:
+
+SPINCE
+^^^^^^^^^^^^^^^^^^^
+
+Spin variables for each compositions.
+
+
+.. _tag-spinposcar:
+
+
+SPINPOSCAR
+^^^^^^^^^^^^^^^^^^^
+
+Spin variables for each compositions in :ref:`poscar.spin`.
+
+
+.. _tag-mcstep:
+
+MCSTEP
+^^^^^^^^^^^^^^^^^^^
+
+Number of steps per site to propose a new state and accept/reject it via single-spin-flip/pair-spins-exchange.
+In order to make the system equilibrium, this tag is important.
+
+
+.. _tag-samplestep:
+
+SAMPLESTEP
+^^^^^^^^^^^^^^^^^^^
+
+Number of steps per site that samples total energy of the system.
+In order to calculate internal energy with good accuracy, the system should have been reached to equilibrium state [CE2]_.
+
+
+.. _tag-temperature:
+
+TEMPERATURE
+^^^^^^^^^^^^^^^^^^^
+
+Temperature at which the simulation is done.
+There are two ways to specify the tag.
+
+One is to specify one temperature at which the simulation is done.::
+
+     TEMPERATURE   = 700
+
+Another is to specify three values; first is the initial temperature, second is the step one, and final is the last temperature.::
+
+     TEMPERATURE   = 900 100 100 # temperature decreases from 900K to 100K.
+  or TEMPERATURE   = 100 100 900 # vice versa.
+
+
+.. _tag-flatcheckstep:
+
+FLATCHECKSTEP
+^^^^^^^^^^^^^^^^^^^
+
+Every FLATCHECKSTEP, the simulation checks  whether the histogram is flat according to :ref:`FLATCRITERION` tag.
+
+
+.. _tag-flatcriterion:
+
+FLATCRITERION
+^^^^^^^^^^^^^^^^^^^
+
+The definition of histogram flatness; if all possible histograms are larger than FLATCRITERION of the average of H(E), the histogram is regarded as flat.
+
+
+
+.. _tag-logfactor:
+
+LOGFACTOR
+^^^^^^^^^^^^^^^^^^^
+
+Initial logarithm of the factor.
+
+
+
+.. _tag-LOGFLIMIT:
+
+LOGFLIMIT
+^^^^^^^^^^^^^^^^^^^
+
+Final logarithm of the factor.
+
+
+
+.. _tag-bin:
+
+BIN
+^^^^^^^^^^^^^^^^^^^
+
+Number of bins.
+
+
+.. _tag-emin:
+
+EMIN
+^^^^^^^^^^^^^^^^^^^
+
+The minimum of total energy where the simulation constructs the density of states.
+
+
+.. _tag-emax:
+
+EMAX
+^^^^^^^^^^^^^^^^^^^
+
+The maximum of total energy where the simulation constructs the density of states.
+
+
+
+.. _tag-spininput:
+
+SPININPUT
+^^^^^^^^^^^^^^^^^^^
+
+Initial spin configuration file.
+
+::
+
+  SPININPUT      = macrostate.in
+
+
+.. _tag-chemipot:
+
+CHEMIPOT
+^^^^^^^^^^^^^^^^^^^
+
+Chemical potentials for each composition. If this tag is set, ensemble is automatically changed from canonical to semi-grand-canonical, i.e.  the sampling procedure is changed from a pair-spins exchange to single-spin-flip.::
+
+  CHEMIPOT      = 0 1 # sgc mode

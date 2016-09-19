@@ -1,0 +1,35 @@
+Install
+===================
+
+Requirements
+-------------------
+- C++11
+- CMake
+- Boost
+- Eigen
+
+Download
+-------------------
+Download the source code from https://github.com/KazuhitoT/wlce/
+
+Download zip::
+
+  % unzip https://github.com/KazuhitoT/wlce/archive/master.zip
+
+or clone the repository::
+
+  % git clone https://github.com/kazuhitoT/wlce
+  % cd wlce
+
+Build
+-------------------
+Move to the source code directory::
+
+  % cd wlce-master or wlce
+  % cmake .
+  % make
+
+If you have Intel compiler, you can use it by uncommenting the following two lines in CMakeLists.txt.::
+
+	# set(CMAKE_CXX_COMPILER icpc)
+	# set(CMAKE_CXX_COMPILER_ID Intel)

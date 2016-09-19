@@ -1,0 +1,353 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>4. Input files &mdash; wlce 0.8 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.8',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="wlce 0.8 documentation" href="index.html" />
+    <link rel="prev" title="3. Programs" href="programs.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="input-files">
+<h1>4. Input files<a class="headerlink" href="#input-files" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="getconf-ini">
+<span id="id1"></span><h2>4.1. getconf.ini<a class="headerlink" href="#getconf-ini" title="Permalink to this headline">¶</a></h2>
+<p>Configuration for <a class="reference internal" href="programs.html#getconf"><span class="std std-ref">getconf</span></a></p>
+<ul>
+<li><p class="first">TAGS</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="#tag-spince"><span class="std std-ref">SPINCE</span></a></li>
+<li><a class="reference internal" href="#tag-spinposcar"><span class="std std-ref">SPINPOSCAR</span></a></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p>Example for getconf.ini:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">INPUT</span><span class="p">]</span>
+<span class="n">SPINCE</span>        <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="mi">1</span>
+<span class="n">SPINPOSCAR</span>    <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="mi">1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="metropolis-ini">
+<span id="id2"></span><h2>4.2. metropolis.ini<a class="headerlink" href="#metropolis-ini" title="Permalink to this headline">¶</a></h2>
+<p>Configuration for <a class="reference internal" href="programs.html#metropolis"><span class="std std-ref">metropolis</span></a></p>
+<ul>
+<li><p class="first">TAGS</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="#tag-spince"><span class="std std-ref">SPINCE</span></a></li>
+<li><a class="reference internal" href="#tag-spinposcar"><span class="std std-ref">SPINPOSCAR</span></a></li>
+<li><a class="reference internal" href="#tag-mcstep"><span class="std std-ref">MCSTEP</span></a></li>
+<li><a class="reference internal" href="#tag-samplestep"><span class="std std-ref">SAMPLESTEP</span></a></li>
+<li><a class="reference internal" href="#tag-temperature"><span class="std std-ref">TEMPERATURE</span></a></li>
+<li><a class="reference internal" href="#tag-chemipot"><span class="std std-ref">CHEMIPOT</span></a> <em>(optional)</em></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p>Example for metropolis.ini:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">INPUT</span><span class="p">]</span>
+<span class="n">SPINCE</span>        <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="mi">1</span>
+<span class="n">SPINPOSCAR</span>    <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="mi">1</span>
+<span class="n">MCSTEP</span>        <span class="o">=</span> <span class="mi">10</span>
+<span class="n">SAMPLESTEP</span>    <span class="o">=</span> <span class="mi">10</span>
+<span class="n">TEMPERATURE</span>   <span class="o">=</span> <span class="mi">700</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="wang-landau-ini">
+<span id="id3"></span><h2>4.3. wang-landau.ini<a class="headerlink" href="#wang-landau-ini" title="Permalink to this headline">¶</a></h2>
+<p>Configuration for <a class="reference internal" href="programs.html#wang-landau"><span class="std std-ref">wang-landau</span></a></p>
+<ul>
+<li><p class="first">TAGS</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="#tag-spince"><span class="std std-ref">SPINCE</span></a></li>
+<li><a class="reference internal" href="#tag-spinposcar"><span class="std std-ref">SPINPOSCAR</span></a></li>
+<li><a class="reference internal" href="#tag-mcstep"><span class="std std-ref">MCSTEP</span></a></li>
+<li><a class="reference internal" href="#tag-flatcheckstep"><span class="std std-ref">FLATCHECKSTEP</span></a></li>
+<li><a class="reference internal" href="#tag-logflimit"><span class="std std-ref">FLATCRITERION</span></a></li>
+<li><a class="reference internal" href="#tag-logfactor"><span class="std std-ref">LOGFACTOR</span></a></li>
+<li><a class="reference internal" href="#tag-logflimit"><span class="std std-ref">BIN</span></a></li>
+<li><a class="reference internal" href="#tag-logflimit"><span class="std std-ref">EMIN</span></a></li>
+<li><a class="reference internal" href="#tag-logflimit"><span class="std std-ref">EMAX</span></a></li>
+<li><a class="reference internal" href="#tag-logflimit"><span class="std std-ref">CHEMIPOT</span></a> <em>(optional)</em></li>
+<li><a class="reference internal" href="#tag-spininput"><span class="std std-ref">SPININPUT</span></a> <em>(optional)</em></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p>Example for wang-landau.ini:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">INPUT</span><span class="p">]</span>
+<span class="n">SPINCE</span>        <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="mi">1</span>
+<span class="n">SPINPOSCAR</span>    <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="mi">1</span>
+<span class="n">FLATCHECKSTEP</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">MCSTEP</span>        <span class="o">=</span> <span class="mi">100</span>
+<span class="n">LOGFACTOR</span>     <span class="o">=</span> <span class="mi">4</span>
+<span class="n">LOGFLIMIT</span>     <span class="o">=</span> <span class="mf">0.0000001</span>
+<span class="n">BIN</span>           <span class="o">=</span> <span class="mi">255</span>
+<span class="n">EMIN</span>          <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">EMAX</span>          <span class="o">=</span> <span class="mi">1</span>
+<span class="n">FLATCRITERION</span> <span class="o">=</span> <span class="mf">0.8</span>
+<span class="n">CHEMIPOT</span>      <span class="o">=</span> <span class="mi">0</span> <span class="mi">1</span> <span class="c1"># sgc mode</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="other-input-files">
+<span id="other-inputs"></span><h2>4.4. Other input files<a class="headerlink" href="#other-input-files" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="poscar-in">
+<span id="id4"></span><h3>4.4.1. poscar.in<a class="headerlink" href="#poscar-in" title="Permalink to this headline">¶</a></h3>
+<p>Input POSCAR file for <a class="reference internal" href="programs.html#cluster"><span class="std std-ref">cluster</span></a>.
+The number of spins and those positions should be set.</p>
+<p>Example for poscar.in:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">POSCAR</span> <span class="n">fcc</span>
+<span class="mf">1.0</span>
+    <span class="mf">4.00000000000000</span>      <span class="mf">0.00000000000000</span>      <span class="mf">0.00000000000000</span>
+    <span class="mf">0.00000000000000</span>      <span class="mf">4.00000000000000</span>      <span class="mf">0.00000000000000</span>
+    <span class="mf">0.00000000000000</span>      <span class="mf">0.00000000000000</span>      <span class="mf">4.00000000000000</span>
+ <span class="mi">4</span>
+<span class="n">Direct</span>
+    <span class="mf">0.00000000000000</span>      <span class="mf">0.00000000000000</span>      <span class="mf">0.00000000000000</span>
+    <span class="mf">0.50000000000000</span>      <span class="mf">0.50000000000000</span>      <span class="mf">0.00000000000000</span>
+    <span class="mf">0.00000000000000</span>      <span class="mf">0.50000000000000</span>      <span class="mf">0.50000000000000</span>
+    <span class="mf">0.50000000000000</span>      <span class="mf">0.00000000000000</span>      <span class="mf">0.50000000000000</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="poscar-spin">
+<span id="id5"></span><h3>4.4.2. poscar.spin<a class="headerlink" href="#poscar-spin" title="Permalink to this headline">¶</a></h3>
+<p>Initial spin configuration for MC simulations.
+The number of spins for each composition and those positions should be set.</p>
+<p>Example for poscar.spin:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">POSCAR</span> <span class="n">spin</span> <span class="n">fcc</span>
+<span class="mf">1.0</span>
+    <span class="mf">4.00000000000000</span>      <span class="mf">0.00000000000000</span>      <span class="mf">0.00000000000000</span>
+    <span class="mf">0.00000000000000</span>      <span class="mf">4.00000000000000</span>      <span class="mf">0.00000000000000</span>
+    <span class="mf">0.00000000000000</span>      <span class="mf">0.00000000000000</span>      <span class="mf">4.00000000000000</span>
+ <span class="mi">2</span> <span class="mi">2</span>
+<span class="n">Direct</span>
+    <span class="mf">0.00000000000000</span>      <span class="mf">0.00000000000000</span>      <span class="mf">0.00000000000000</span>
+    <span class="mf">0.50000000000000</span>      <span class="mf">0.50000000000000</span>      <span class="mf">0.00000000000000</span>
+    <span class="mf">0.00000000000000</span>      <span class="mf">0.50000000000000</span>      <span class="mf">0.50000000000000</span>
+    <span class="mf">0.50000000000000</span>      <span class="mf">0.00000000000000</span>      <span class="mf">0.50000000000000</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ecicar">
+<span id="id6"></span><h3>4.4.3. ecicar<a class="headerlink" href="#ecicar" title="Permalink to this headline">¶</a></h3>
+<p>Effective cluster interactions (ECI) for MC simulations.
+ECI should be consistent with basis functions.</p>
+<p>Example for ecicar in binary system:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mi">0</span> <span class="mi">0</span>
+<span class="mi">1</span> <span class="mf">0.1</span>
+<span class="mi">2</span> <span class="mf">0.05</span>
+<span class="mi">3</span> <span class="o">-</span><span class="mf">0.02</span>
+<span class="mi">6</span> <span class="mf">0.01</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>Example for ecicar in ternary system:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mi">0</span> <span class="mi">0</span>
+<span class="mi">1</span> <span class="mf">0.1</span> <span class="mf">0.2</span> <span class="mf">0.1</span>
+<span class="mi">2</span> <span class="mf">0.05</span> <span class="mf">0.2</span> <span class="mf">0.3</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="tags">
+<span id="id7"></span><h2>4.5. Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="spince">
+<span id="tag-spince"></span><h3>4.5.1. SPINCE<a class="headerlink" href="#spince" title="Permalink to this headline">¶</a></h3>
+<p>Spin variables for each compositions.</p>
+</div>
+<div class="section" id="spinposcar">
+<span id="tag-spinposcar"></span><h3>4.5.2. SPINPOSCAR<a class="headerlink" href="#spinposcar" title="Permalink to this headline">¶</a></h3>
+<p>Spin variables for each compositions in <a class="reference internal" href="#poscar-spin"><span class="std std-ref">poscar.spin</span></a>.</p>
+</div>
+<div class="section" id="mcstep">
+<span id="tag-mcstep"></span><h3>4.5.3. MCSTEP<a class="headerlink" href="#mcstep" title="Permalink to this headline">¶</a></h3>
+<p>Number of steps per site to propose a new state and accept/reject it via single-spin-flip/pair-spins-exchange.
+In order to make the system equilibrium, this tag is important.</p>
+</div>
+<div class="section" id="samplestep">
+<span id="tag-samplestep"></span><h3>4.5.4. SAMPLESTEP<a class="headerlink" href="#samplestep" title="Permalink to this headline">¶</a></h3>
+<p>Number of steps per site that samples total energy of the system.
+In order to calculate internal energy with good accuracy, the system should have been reached to equilibrium state <a class="reference internal" href="programs.html#ce2" id="id8">[CE2]</a>.</p>
+</div>
+<div class="section" id="temperature">
+<span id="tag-temperature"></span><h3>4.5.5. TEMPERATURE<a class="headerlink" href="#temperature" title="Permalink to this headline">¶</a></h3>
+<p>Temperature at which the simulation is done.
+There are two ways to specify the tag.</p>
+<p>One is to specify one temperature at which the simulation is done.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">TEMPERATURE</span>   <span class="o">=</span> <span class="mi">700</span>
+</pre></div>
+</div>
+<p>Another is to specify three values; first is the initial temperature, second is the step one, and final is the last temperature.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>   <span class="n">TEMPERATURE</span>   <span class="o">=</span> <span class="mi">900</span> <span class="mi">100</span> <span class="mi">100</span> <span class="c1"># temperature decreases from 900K to 100K.</span>
+<span class="ow">or</span> <span class="n">TEMPERATURE</span>   <span class="o">=</span> <span class="mi">100</span> <span class="mi">100</span> <span class="mi">900</span> <span class="c1"># vice versa.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="flatcheckstep">
+<span id="tag-flatcheckstep"></span><h3>4.5.6. FLATCHECKSTEP<a class="headerlink" href="#flatcheckstep" title="Permalink to this headline">¶</a></h3>
+<p>Every FLATCHECKSTEP, the simulation checks  whether the histogram is flat according to <span class="xref std std-ref">FLATCRITERION</span> tag.</p>
+</div>
+<div class="section" id="flatcriterion">
+<span id="tag-flatcriterion"></span><h3>4.5.7. FLATCRITERION<a class="headerlink" href="#flatcriterion" title="Permalink to this headline">¶</a></h3>
+<p>The definition of histogram flatness; if all possible histograms are larger than FLATCRITERION of the average of H(E), the histogram is regarded as flat.</p>
+</div>
+<div class="section" id="logfactor">
+<span id="tag-logfactor"></span><h3>4.5.8. LOGFACTOR<a class="headerlink" href="#logfactor" title="Permalink to this headline">¶</a></h3>
+<p>Initial logarithm of the factor.</p>
+</div>
+<div class="section" id="logflimit">
+<span id="tag-logflimit"></span><h3>4.5.9. LOGFLIMIT<a class="headerlink" href="#logflimit" title="Permalink to this headline">¶</a></h3>
+<p>Final logarithm of the factor.</p>
+</div>
+<div class="section" id="bin">
+<span id="tag-bin"></span><h3>4.5.10. BIN<a class="headerlink" href="#bin" title="Permalink to this headline">¶</a></h3>
+<p>Number of bins.</p>
+</div>
+<div class="section" id="emin">
+<span id="tag-emin"></span><h3>4.5.11. EMIN<a class="headerlink" href="#emin" title="Permalink to this headline">¶</a></h3>
+<p>The minimum of total energy where the simulation constructs the density of states.</p>
+</div>
+<div class="section" id="emax">
+<span id="tag-emax"></span><h3>4.5.12. EMAX<a class="headerlink" href="#emax" title="Permalink to this headline">¶</a></h3>
+<p>The maximum of total energy where the simulation constructs the density of states.</p>
+</div>
+<div class="section" id="spininput">
+<span id="tag-spininput"></span><h3>4.5.13. SPININPUT<a class="headerlink" href="#spininput" title="Permalink to this headline">¶</a></h3>
+<p>Initial spin configuration file.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">SPININPUT</span>      <span class="o">=</span> <span class="n">macrostate</span><span class="o">.</span><span class="ow">in</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="chemipot">
+<span id="tag-chemipot"></span><h3>4.5.14. CHEMIPOT<a class="headerlink" href="#chemipot" title="Permalink to this headline">¶</a></h3>
+<p>Chemical potentials for each composition. If this tag is set, ensemble is automatically changed from canonical to semi-grand-canonical, i.e.  the sampling procedure is changed from a pair-spins exchange to single-spin-flip.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">CHEMIPOT</span>      <span class="o">=</span> <span class="mi">0</span> <span class="mi">1</span> <span class="c1"># sgc mode</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">4. Input files</a><ul>
+<li><a class="reference internal" href="#getconf-ini">4.1. getconf.ini</a></li>
+<li><a class="reference internal" href="#metropolis-ini">4.2. metropolis.ini</a></li>
+<li><a class="reference internal" href="#wang-landau-ini">4.3. wang-landau.ini</a></li>
+<li><a class="reference internal" href="#other-input-files">4.4. Other input files</a><ul>
+<li><a class="reference internal" href="#poscar-in">4.4.1. poscar.in</a></li>
+<li><a class="reference internal" href="#poscar-spin">4.4.2. poscar.spin</a></li>
+<li><a class="reference internal" href="#ecicar">4.4.3. ecicar</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tags">4.5. Tags</a><ul>
+<li><a class="reference internal" href="#spince">4.5.1. SPINCE</a></li>
+<li><a class="reference internal" href="#spinposcar">4.5.2. SPINPOSCAR</a></li>
+<li><a class="reference internal" href="#mcstep">4.5.3. MCSTEP</a></li>
+<li><a class="reference internal" href="#samplestep">4.5.4. SAMPLESTEP</a></li>
+<li><a class="reference internal" href="#temperature">4.5.5. TEMPERATURE</a></li>
+<li><a class="reference internal" href="#flatcheckstep">4.5.6. FLATCHECKSTEP</a></li>
+<li><a class="reference internal" href="#flatcriterion">4.5.7. FLATCRITERION</a></li>
+<li><a class="reference internal" href="#logfactor">4.5.8. LOGFACTOR</a></li>
+<li><a class="reference internal" href="#logflimit">4.5.9. LOGFLIMIT</a></li>
+<li><a class="reference internal" href="#bin">4.5.10. BIN</a></li>
+<li><a class="reference internal" href="#emin">4.5.11. EMIN</a></li>
+<li><a class="reference internal" href="#emax">4.5.12. EMAX</a></li>
+<li><a class="reference internal" href="#spininput">4.5.13. SPININPUT</a></li>
+<li><a class="reference internal" href="#chemipot">4.5.14. CHEMIPOT</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="programs.html" title="previous chapter">3. Programs</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/inputs.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Kazuhito TAKEUCHI.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/inputs.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
