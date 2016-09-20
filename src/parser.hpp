@@ -23,8 +23,8 @@ class Parser{
 		const char* filename;
 		std::vector<std::vector<double> > content;
 	public:
-		Parser(const char*);						/* ecicarとか */
-		Parser(const char*, const std::vector<int>&);	/* index指定した行のみ読み込み */
+		Parser(const char*);
+		Parser(const char*, const std::vector<int>&);
 		~Parser(){};
 		std::vector<std::vector<double> > getContent()      const { return content; };
 		std::vector<double>          getContent(int i) const { return content[i]; };
