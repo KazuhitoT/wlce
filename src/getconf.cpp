@@ -78,6 +78,7 @@ int main(int argc, char* argv[]){
 	double prec = 0.00001;
 	bool noexpand = false;
 	bool is_corrdump = false;
+	bool is_noin = false;
 
 	std::string filename_poscar_in = "poscar.in";
 	std::shared_ptr<Input> in(new Input("getconf.ini"));
@@ -92,11 +93,57 @@ int main(int argc, char* argv[]){
 			filename_poscar_in = str;
 		} else if( str.substr(0, 3) == "-c" ){
 			is_corrdump = true;
+		} else if( str.substr(0, 6) == "--noin" ){
+			is_noin = true;
 		} else {
 			std::cerr << " ERROR : invalid commandline argument [" << str << "]" << std::endl;
 			exit(1);
 		}
-		// std::cout << std::endl;
+	}
+
+	//  autoload *.in files if exist
+	if( std::ifstream("labels.in")
+			and std::ifstream("ecicar")
+			and std::ifstream("multiplicity.in")
+			and std::ifstream("clusters.in")
+			and std::ifstream("poscar.spin")
+			and !is_noin
+		){
+
+		const ParseLabels labels_in("./labels.in");
+		const ParseEcicar ecicar("./ecicar");
+		const ParseMultiplicityIn multiplicity_in("./multiplicity.in");
+		const ParseClusterIn  cluster_in("./clusters.in", multiplicity_in.getMultiplicityIn());
+
+		std::map<int, std::vector<double>> dummy_ecicar;
+		for(int i=0; i<cluster_in.getCluster()->size(); ++i){
+			dummy_ecicar[i] = std::vector<double>((*cluster_in.getCluster())[i].size(), 0);
+		}
+		Metroconf::Metroconf PoscarSpin("./poscar.spin", in, labels_in.getLabels(), cluster_in.getCluster(),  dummy_ecicar, nullptr, nullptr);
+
+		std::shared_ptr<allclusters> pall_clusters_dummy(new allclusters());
+		for(int i=0; i<cluster_in.getCluster()->size(); ++i){
+			for(const auto eci : ecicar.getEci() ){
+				if( (i+1) == eci.first ) {
+					pall_clusters_dummy->push_back((*cluster_in.getCluster())[i]);
+					break;
+				}
+			}
+		}
+
+		Metroconf PoscarSpin_ene("./poscar.expand.spin", in, labels_in.getLabels(), pall_clusters_dummy, ecicar.getEci(), nullptr, nullptr);
+		PoscarSpin.setTotalEnergy();
+		auto compositions = PoscarSpin.getCompositions();
+
+		std::cout << "--- compositions : total energy --- " << std::endl;
+		for(const auto c : compositions) std::cout << c << " ";
+		std::cout << PoscarSpin_ene.getTotalEnergy() << std::endl;
+		std::cout << std::endl;
+
+		std::cout << "--- correlation functions --- " << std::endl;
+		PoscarSpin.dispCorr();
+		std::cout << std::endl;
+		return 1;
 	}
 
 	if( argc == 1 or d2==-1 ){
@@ -106,6 +153,7 @@ int main(int argc, char* argv[]){
 
 	ParsePoscar poscar(filename_poscar_in.c_str());
 	const int N = poscar.getAtoms().size();
+
 
 	double lattice[3][3];
 	double lattice_unit[3][3];

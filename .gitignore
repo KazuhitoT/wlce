@@ -3,8 +3,11 @@
 spglib/
 tmp/
 bin/
+lib/
+docs/
 cuau/
 remc/
+remc-gs/
 Testing/
 2dising/*out*
 2dising/clusters.in

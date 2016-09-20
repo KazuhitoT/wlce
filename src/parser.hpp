@@ -23,8 +23,8 @@ class Parser{
 		const char* filename;
 		std::vector<std::vector<double> > content;
 	public:
-		Parser(const char*);						/* ecicarとか */
-		Parser(const char*, const std::vector<int>&);	/* index指定した行のみ読み込み */
+		Parser(const char*);
+		Parser(const char*, const std::vector<int>&);
 		~Parser(){};
 		std::vector<std::vector<double> > getContent()      const { return content; };
 		std::vector<double>          getContent(int i) const { return content[i]; };
@@ -75,9 +75,6 @@ class ParseClusterIn : public Parser{
 		void checkClusterIn();
 };
 
-
-void outputPoscar(double lattice[3][3], double position[][3], int N, std::string prefix);
-
 class ParsePoscar {
 private:
 	std::string comment;
@@ -91,9 +88,9 @@ public:
 	ParsePoscar(){};
 	ParsePoscar(const char*);
 
-	Eigen::Matrix3d getLatticeBasis();
-	std::vector<int> getAtomTypes();
-	std::vector<std::pair<int, Eigen::Vector3d>> getAtoms();
+	Eigen::Matrix3d getLatticeBasis() const;
+	std::vector<int> getAtomTypes() const;
+	std::vector<std::pair<int, Eigen::Vector3d>> getAtoms() const;
 	std::string getComment() const {return comment;}
 	std::string getCoordinateType() const {return coordinate_type;}
 };

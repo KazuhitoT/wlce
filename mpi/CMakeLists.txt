@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 include(CheckCXXCompilerFlag)
 project(wlce)
 
-# set(CMAKE_CXX_COMPILER icpc)
-# set(CMAKE_CXX_COMPILER_ID Intel)
-
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # using Clang
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -31,36 +28,21 @@ set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -s -DNDEBUG")
 # seed fix
 # add_definitions("-DSEED")
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ./lib)
+set(CMAKE_CXX_COMPILER mpic++)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../lib)
 
-add_library(parser STATIC ./src/parser.cpp)
-add_library(conf STATIC ./src/conf2corr.cpp ./src/metroconf.cpp ./src/wlconf.cpp)
+add_library(mpiparser STATIC ../src/parser.cpp)
+add_library(mpiconf STATIC ../src/conf2corr.cpp ../src/metroconf.cpp ../src/wlconf.cpp)
 
-add_executable(cluster ./src/cluster.cpp)
-target_link_libraries(cluster parser)
+add_executable(remc
+	./src/remc.cpp
+)
+target_link_libraries(remc mpiparser mpiconf)
 
-add_executable(getconf ./src/getconf.cpp)
-target_link_libraries(getconf parser conf)
-
-add_executable(wang-landau ./src/wang-landau.cpp ./src/input.cpp)
-target_link_libraries(wang-landau parser conf)
-
-add_executable(metropolis ./src/metropolis.cpp)
-target_link_libraries(metropolis parser conf)
-
-find_package(Boost 1.4 COMPONENTS unit_test_framework)
-if(Boost_FOUND)
-	add_executable(test-main
-		tests/test-main.cpp
-		tests/test-conf2corr.cpp
-	)
-	target_link_libraries(test-main parser conf ${Boost_LIBRARIES})
-	enable_testing()
-	add_test(
-		NAME MyTest
-		COMMAND $<TARGET_FILE:test-main>
-		WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/tests
-	)
-endif()
+set(CMAKE_CXX_COMPILER mpic++)
+add_executable(remc-gs-search
+	./src/remc-gs-search.cpp
+)
+target_link_libraries(remc-gs-search mpiparser mpiconf)
