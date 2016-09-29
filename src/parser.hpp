@@ -15,7 +15,17 @@
 #include <random>
 #include <iomanip>
 
-// #define DEBUG
+using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
+class ParseClusterIn_ {
+	public:
+		ParseClusterIn_(const char*);
+
+	private:
+		std::ifstream ifs;
+		const char* filename;
+		std::shared_ptr<allclusters> pall_clusters;
+};
+
 
 class Parser{
 	private:
@@ -48,7 +58,6 @@ class ParseEcicar : public Parser{
 		std::map<int, std::vector<double>> 	getEci()			const {return ecicar;};
 };
 
-using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
 class ParseMultiplicityIn : public Parser{
 	private:
 		std::map<int /* = index */, std::pair<int /* = numPointsInBody */, int /* = numClusters */> > multiplicity;
@@ -87,6 +96,8 @@ private:
 public:
 	ParsePoscar(){};
 	ParsePoscar(const char*);
+
+	void expandPoscar(int, int, int);
 
 	Eigen::Matrix3d getLatticeBasis() const;
 	std::vector<int> getAtomTypes() const;

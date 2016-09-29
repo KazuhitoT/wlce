@@ -1,4 +1,24 @@
+#include <algorithm>
+#include <tuple>
 #include "./parser.hpp"
+
+ParseClusterIn_::ParseClusterIn_ (const char* f):filename(f) {
+	ifs.open(filename);
+	std::string buf;
+	if(!ifs){
+		std::cout << "ERROR : flle [" << filename << "] does not exist." << std::endl;
+		exit(1);
+	}
+
+	std::string str;
+	ifs >> str;
+	while( !ifs.eof() ) {
+		ifs >> str;
+
+	}
+
+}
+
 
 Parser::Parser (const char* f):filename(f) {
 	ifs.open(filename);
@@ -258,6 +278,70 @@ std::vector<int> ParsePoscar::getAtomTypes() const{
 std::vector<std::pair<int, Eigen::Vector3d>> ParsePoscar::getAtoms() const{
 	return atoms;
 };
+
+void ParsePoscar::expandPoscar(int expand_x, int expand_y, int expand_z){
+
+	std::vector<double> spins;
+	for(int i=0; i<this->atom_types.size(); ++i) {
+		for(int j=0; j<this->atom_types[i]; ++j){
+			spins.push_back(i);
+		}
+	}
+
+	int N_unit = this->atoms.size();
+	// std::vector<std::pair<int, Eigen::Vector3d>> new_positions;
+	// std::vector<std::pair<int, Eigen::Vector3d>> new_positions_unit;
+
+	using Position = std::tuple<int, int, Eigen::Vector3d>;
+
+	/* site_num, atom_type, position */
+	std::vector<Position> new_positions;
+	std::vector<Position> new_positions_unit;
+
+	Eigen::Matrix3d div_mat;
+	div_mat << 1./double(expand_x),0,0,
+						 0,1./double(expand_y),0,
+						 0,0,1./double(expand_z);
+	for( int i=0; i<atoms.size(); ++i ){
+		//  std::pair<int, Eigen::Vector3d> -> spin_type and position
+		new_positions_unit.push_back( std::make_tuple( i, spins[i], div_mat * atoms[i].second ));
+	}
+
+	int count = 0;
+	for(int x=0; x<expand_x; ++x){
+		for(int y=0; y<expand_y; ++y){
+			for(int z=0; z<expand_z; ++z){
+				Eigen::Vector3d block_vec;
+				block_vec << double(x)/double(expand_x), double(y)/double(expand_y), double(z)/double(expand_z);
+				for(int i=0; i<N_unit; ++i){
+					auto position = block_vec + std::get<2>(new_positions_unit[i]);
+					new_positions.push_back( std::make_tuple( i, spins[i], position ) );
+					++count;
+				}
+			}
+		}
+	}
+
+	std::sort( std::begin(new_positions), std::end(new_positions), [](const Position& x, const Position& y) -> int { return std::get<1>(x) > std::get<1>(y);});
+
+	std::vector<int> new_atom_types;
+	for(int i=0; i<this->atom_types.size(); ++i){
+		int n = std::count_if(new_positions.begin(), new_positions.end(),  [i](const Position& position)->bool{return (std::get<1>(position) == i);} );
+		new_atom_types.push_back(n);
+	}
+
+	std::vector<std::pair<int, Eigen::Vector3d>> new_atoms;
+	for( const auto& position : new_positions ){
+		new_atoms.push_back( std::pair<int, Eigen::Vector3d> ( std::get<0>(position), std::get<2>(position) ));
+	}
+
+	this->atoms = new_atoms;
+	this->atom_types = new_atom_types;
+	Eigen::Matrix3d max_ex_mat;
+	max_ex_mat << expand_x,0,0, 0,expand_y,0, 0,0,expand_z;
+	this->lattice_basis = max_ex_mat * this->lattice_basis;
+
+}
 
 ParseLabels::ParseLabels(const char* filename) : plabels(new labels())
 {

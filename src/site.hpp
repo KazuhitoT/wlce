@@ -5,75 +5,100 @@
 #include <unordered_map>
 #include <vector>
 #include <iostream>
+#include <boost/mem_fn.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/composite_key.hpp>
+#include "myindex.hpp"
 
-Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
-	Eigen::Vector3d d_vec = lhs - rhs;
-	for( int i=0; i<3; ++i ){ /* boundary condition */
-		if( d_vec(i) > (0.5) )       {d_vec(i) = d_vec(i)-1;}
-		else if( d_vec(i) < -(0.5) ) {d_vec(i) = 1+d_vec(i);}
-	}
-	return d_vec;
-};
+class Lattice;
+class Site;
+class PairIndex;
+class TripletIndex;
 
-Eigen::Vector3d validCoordinate(Eigen::Vector3d lhs){
-	for( int i=0; i<3; ++i ){ /* boundary condition */
-		if( lhs(i) >  (0.5) )      {lhs(i) = lhs(i)-1;}
-		else if( lhs(i) < -(0.5) ) {lhs(i) = 1+lhs(i);}
-	}
-	return lhs;
-};
+Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs);
 
-std::vector<std::vector<double>> getAllTriplets(const std::vector<Eigen::Vector3d>& points, const Eigen::Matrix3d& lattice, double maxd, const std::vector<double>& distances){
-	std::vector<std::vector<double>> result;
-	for(int i=0; i<points.size(); ++i){
-		for(int j=(i+1); j<points.size(); ++j){
-			for(int k=(j+1); k<points.size(); ++k){
-				auto coord_ij = validCoordinate(points[i], points[j]);
-				auto coord_jk = validCoordinate(points[j], points[k]);
-				auto coord_ki = coord_ij + coord_jk;
-				double distance1 = ( lattice * coord_ij ).norm();
-				double distance2 = ( lattice * coord_jk ).norm();
-				double distance3 = ( lattice * coord_ki ).norm();
-				if( distance1 > maxd or distance2 > maxd or distance3 > maxd
-						or distance1 < 0.00001 or distance2 < 0.00001  or distance3 < 0.00001) return std::vector<std::vector<double>>{};
-				auto it1 = find_if(distances.begin(), distances.end(), [distance1](const double d){
-					if( std::abs(distance1-d) < 0.00001 ) return true;
-					else return false;
-				});
-				auto it2 = find_if(distances.begin(), distances.end(), [distance2](const double d){
-					if( std::abs(distance2-d) < 0.00001 ) return true;
-					else return false;
-				});
-				auto it3 = find_if(distances.begin(), distances.end(), [distance3](const double d){
-					if( std::abs(distance3-d) < 0.00001 ) return true;
-					else return false;
-				});
-				if( it1==distances.end() or it2==distances.end() or it3==distances.end()) return std::vector<std::vector<double>>{};
-				std::vector<double> lines = {*it1, *it2, *it3};
-				sort(lines.begin(), lines.end());
-				result.push_back(lines);
-			}
+Eigen::Vector3d validCoordinate(Eigen::Vector3d lhs);
+
+std::vector<std::vector<double>> getAllTriplets(const std::vector<Eigen::Vector3d>& points, const Eigen::Matrix3d& lattice, double maxd, const std::vector<double>& distances);
+
+std::vector<TripletIndex> getAllTripletIndex(
+	const std::vector<std::shared_ptr<Site>>& sites,
+	const Eigen::Matrix3d& lattice,
+	double maxd,
+	const std::vector<PairIndex>& vec_pair_index
+);
+
+
+struct RelativeSite{
+	double distance;
+	std::shared_ptr<Site> site;
+	double x,y,z;
+
+	RelativeSite(std::shared_ptr<Site> _s, double _d, const Eigen::Vector3d& _r)
+		: site(_s), distance(_d) {
+			x = _r(0);
+			y = _r(1);
+			z = _r(2);
+		}
+
+	bool operator==(const RelativeSite &r) const {
+		if( std::fabs(this->x-r.x) < 0.00001
+				&& std::fabs(this->y-r.y) < 0.00001
+				&& std::fabs(this->z-r.z) < 0.00001
+			){
+			return true;
+		} else {
+			return false;
 		}
 	}
 
-	for(int i=2; i>=0; --i){
-		stable_sort(result.begin(), result.end(), [i](const std::vector<double>& lhs, const std::vector<double>& rhs){
-			// std::cout <<  lhs[i] << " < " <<  rhs[i] << std::endl;
-			if (std::abs(lhs[i] - rhs[i])<0.00001) return false;
-			else return lhs[i] < rhs[i];
-		});
+	friend size_t hash_value(const RelativeSite &r){
+		const int C = 997;	// prime_number
+		double result = 0;
+		result = result*C + r.x;
+		result = result*C + r.y;
+		result = result*C + r.z;
+		return result;
 	}
-	//
-	// for(const auto& i : result) {
-	// 	std::cout  << "[ ";
-	// 	for(const auto& j : i){
-	// 		std::cout << j << " ";
-	// 	}
-	// 	std::cout  << " ]";
-	// }
-	// std::cout << std::endl;
-	return result;
-}
+};
+
+
+using namespace std;
+using namespace boost::multi_index;
+
+struct tag_distance {};
+struct tag_relative_coord {};
+
+typedef composite_key <
+    RelativeSite,
+		BOOST_MULTI_INDEX_MEMBER(RelativeSite, double, x),
+		BOOST_MULTI_INDEX_MEMBER(RelativeSite, double, y),
+		BOOST_MULTI_INDEX_MEMBER(RelativeSite, double, z)
+> composite_key_site;
+
+typedef composite_key_hash <
+	std::hash<double>,
+	std::hash<double>,
+	std::hash<double>
+> composite_key_hash_coord;
+
+typedef composite_key_equal_to <
+	std::equal_to<double>,
+	std::equal_to<double>,
+	std::equal_to<double>
+> composite_key_equal_coord;
+
+typedef multi_index_container<
+    RelativeSite,
+    indexed_by<
+        hashed_non_unique<tag<tag_distance>, member<RelativeSite, double, &RelativeSite::distance> >,
+				hashed_unique<composite_key_site, composite_key_hash_coord, composite_key_equal_coord>
+    >
+> LinkedSite;
+
 
 class Site {
 private :
@@ -92,100 +117,49 @@ private :
 
 	const int site_num;
 	const Eigen::Vector3d coordinate;
-	std::unordered_map<double, std::vector<std::shared_ptr<Site>>> linked_site;
+	std::shared_ptr<Lattice> lattice;
 
-	/*  site-> pair< corrdination, site >  */
-	// std::vector<std::pair<Eigen::Vector3d, std::shared_ptr<Site>>> site_relative;
-	std::unordered_map<Eigen::Vector3d, std::shared_ptr<Site>, hash_vec3d> site_relative;
+	LinkedSite linked_site;
 
 	const static std::shared_ptr<Site> not_found;
 
 public :
 	Site(int _n, const Eigen::Vector3d& _c):site_num(_n), coordinate(_c) {};
+	Site(int _n, const Eigen::Vector3d& _c, std::shared_ptr<Lattice> _l):site_num(_n), coordinate(_c), lattice(_l){};
 
 	bool operator <(const Site& rhs) {
 		return this->site_num < rhs.site_num;
 	}
 
-	void setRelativeSite(const std::vector<std::shared_ptr<Site>>& all_sites){
-		for( const auto& site : all_sites){
-			site_relative[validCoordinate(site->getCoordinate(), this->coordinate)] = site;
-		}
-		assert( this->site_relative.size() == all_sites.size() );
+	void setLinkedSite(const std::vector<std::shared_ptr<Site>>& all_sites, double pair_truncation);
+	void setLinkedSite(const std::shared_ptr<Site> all_sites, double distance, const Eigen::Vector3d& relative_coord);
+
+	std::pair<LinkedSite::iterator, LinkedSite::iterator> getLinkedSiteIterator(double distance){
+		std::pair<LinkedSite::iterator, LinkedSite::iterator> pair_itr  = linked_site.equal_range(distance);
+		return pair_itr;
 	}
 
-	std::shared_ptr<Site> getRelativeSite(const Eigen::Vector3d& coord){
-		if( this->site_relative.find(coord) != this->site_relative.end() ){
-			return this->site_relative.at(coord);
-		} else {
-			for(const auto& site : site_relative){
-				if( (site.first-coord).norm() < 0.00001 ) return site.second;
+	std::shared_ptr<Site> getLinkedSite(const Eigen::Vector3d& coord){
+		LinkedSite::nth_index<1>::type& a = linked_site.get<1>();
+		LinkedSite::nth_index<1>::type::iterator itr = a.find(boost::make_tuple(coord(0), coord(1), coord(2)));
+		if( itr != a.end() ) return itr->site;
+		else {
+			for( auto it=a.begin(); it!=a.end(); ++it){
+				if( (validCoordinate(it->site->getCoordinate(), this->getCoordinate())-coord).norm() < 0.0001 ) return it->site;
 			}
 		}
-		/* if not found */
-		// std::cerr << " ERROR : in [site.hpp, getRelativeSite() ] relative site is not found." << std::endl;
-		// exit(1);
-		return nullptr;
+		std::cerr << "ERROR : site not found" << std::endl;
+		exit(1);
+
+		return not_found;
 	}
 
-	void setLinkedSite(double distance, const std::shared_ptr<Site> another_site){
-		this->linked_site[distance].push_back(another_site);
-	};
+	// std::shared_ptr<LinkedSite> getLinkedSite(){return linked_site;}
 
-	const std::unordered_map<double, std::vector<std::shared_ptr<Site>>>& getLinkedSite() const {
-		return linked_site;
-	}
-
-	const std::shared_ptr<Site>& getLinkedSite(double distance, const int num) const {
-		if( this->linked_site.find(distance) == this->linked_site.end() ){
-			bool is_found = false;
-			for( const auto& i : this->linked_site ){
-				if( std::abs( distance - i.first ) < 0.00001 ) {
-					distance = i.first;
-					is_found = true;
-					break;
-				}
-			}
-			/*  distance is not found  */
-			std::cerr << " ERROR : in [site.hpp, getLinkedSite(double, const int) ] distance ";
-			std::cerr << distance << " is not found in linked_site." << std::endl;
-			exit(1);
-		}
-
-		auto it = find_if( linked_site.at(distance).begin(), linked_site.at(distance).end(),
-				[num](const std::shared_ptr<Site> s){ return ( s->getSiteNum() == num );} );
-		if( it != linked_site.at(distance).end() )
-			return *it;
-		else
-			return not_found;
-	};
-
-	const std::vector<std::shared_ptr<Site>>& getLinkedSiteviaDisncace(const double distance) const {
-		return this->linked_site.at(distance);
-	};
-	const std::unordered_map<Eigen::Vector3d, std::shared_ptr<Site>, hash_vec3d> getSiteRelative(){
-		return site_relative;
-	}
 
 	const int getSiteNum() const { return this->site_num; };
+	const int getLatticeNum();
 	const Eigen::Vector3d& getCoordinate() const { return this->coordinate; };
-	const double getDistance(double distance) const {
-		if( this->linked_site.find(distance) == this->linked_site.end() ){
-			for( const auto& i : this->linked_site ){
-				if( std::abs( distance - i.first ) < 0.00001 ) {
-					return i.first;
-				}
-			}
-			/*  distance is not found  */
-			return -1;
-
-			// std::cerr << " ERROR : in [site.hpp, getDistance(double) ] distance ";
-			// std::cerr << distance << " is not found in linked_site." << std::endl;
-			// exit(1);
-		} else {
-			return distance;
-		}
-	}
 
 	bool isCoordinate( const Eigen::Vector3d& obj ){
 		for( int i=0; i<3; ++i ){
@@ -197,6 +171,5 @@ public :
 	}
 };
 
-const std::shared_ptr<Site> Site::not_found;
 
 #endif
