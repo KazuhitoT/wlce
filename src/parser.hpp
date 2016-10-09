@@ -16,14 +16,19 @@
 #include <iomanip>
 
 using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
-class ParseClusterIn_ {
+using labels      = std::vector<std::pair<int, Eigen::Vector3d>>;
+
+class ParseClusterOut {
 	public:
-		ParseClusterIn_(const char*);
+		ParseClusterOut(const char* f, std::vector<int> index = {});
+		std::shared_ptr<allclusters> getCluster() const {return this->pall_clusters;}
+		std::shared_ptr<labels> getLabel() const {return this->plabels;}
 
 	private:
 		std::ifstream ifs;
 		const char* filename;
 		std::shared_ptr<allclusters> pall_clusters;
+		std::shared_ptr<labels> plabels;
 };
 
 
@@ -68,20 +73,6 @@ class ParseMultiplicityIn : public Parser{
 		~ParseMultiplicityIn(){};
 		std::pair<int, int> getMultiplicityIn(int index) const {return multiplicity.at(index);};
 		std::map<int, std::pair<int, int> > getMultiplicityIn() const {return multiplicity;};
-};
-
-class ParseClusterIn : public Parser{
-	private:
-		// ClusterOut[index][lattice_point]~
-		std::shared_ptr<allclusters> pclusters;
-		std::vector<int> index;
-	public:
-		ParseClusterIn(const char*, const std::map<int , std::pair<int, int> >& multiplicity);
-		ParseClusterIn(const char*, const std::vector<int>&, const std::map<int , std::pair<int, int> >&);
-		std::shared_ptr<allclusters> getCluster() const {return pclusters;};
-
- 		/* for Confirm */
-		void checkClusterIn();
 };
 
 class ParsePoscar {

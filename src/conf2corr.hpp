@@ -84,7 +84,7 @@ class Conf2corr {
 		double getBasisFunction(int, int);
 
 		void setInitialCorrelationFunction();
-		void setCorrelationFunction_flip();
+		void setCorrelationFunction_flip(int lattice_point = -1, int after_spin = -1);
 		void setCorrelationFunction_exchange();
 
 		double calcCorrelationFunctionNorm(double p);

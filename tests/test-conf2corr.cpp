@@ -6,45 +6,81 @@
 
 BOOST_AUTO_TEST_SUITE(conf2corr)
 
-BOOST_AUTO_TEST_CASE(setcorr)
+BOOST_AUTO_TEST_CASE(setcorr_2dising_L16)
 {
 	std::shared_ptr<Input> in(new Input("test.ini"));
+	const ParseClusterOut  cluster_out_2dising("./cluster.out.2dising");
+	Conf2corr conf2corr_2dising("./poscar.in.2dising", in, cluster_out_2dising.getLabel(), cluster_out_2dising.getCluster());
 
-	const ParseLabels labels_in("./labels.in.2dising");
-	const ParseEcicar ecicar("./ecicar.2dising");
-	const ParseMultiplicityIn multiplicity_in_2dising("./multiplicity.in.2dising", ecicar.getIndex());
-	const ParseClusterIn  cluster_in_2dising("./clusters.in.2dising", ecicar.getIndex(), multiplicity_in_2dising.getMultiplicityIn());
-
-	Conf2corr conf2corr_2dising("./poscar.in.2dising", in, labels_in.getLabels(), cluster_in_2dising.getCluster());
-
-	for( int i=0; i<1000; ++i ) {
+	for( int i=0; i<100; ++i ) {
 		conf2corr_2dising.setMemento();
 		conf2corr_2dising.setCorrelationFunction_flip();
-	}
 
-	auto corr_2dising  = conf2corr_2dising.getCorrelationFunctions();
-	conf2corr_2dising.setInitialCorrelationFunction();
-	auto corr_2dising_confirm = conf2corr_2dising.getCorrelationFunctions();
+		auto corr_2dising  = conf2corr_2dising.getCorrelationFunctions();
+		conf2corr_2dising.setInitialCorrelationFunction();
+		auto corr_2dising_confirm = conf2corr_2dising.getCorrelationFunctions();
 
-	for( int i=0; i<corr_2dising.size(); ++i){
-		for( int j=0; j<corr_2dising[i].size(); ++j){
-			BOOST_CHECK_CLOSE(corr_2dising[i][j], corr_2dising_confirm[i][j], 0.00001);
+		for( int j=0; j<corr_2dising.size(); ++j){
+			for( int k=0; k<corr_2dising[j].size(); ++k){
+				BOOST_CHECK_CLOSE(corr_2dising[j][k], corr_2dising_confirm[j][k], 0.00001);
+			}
 		}
 	}
 
-	for( int i=0; i<1000; ++i ){
+	for( int i=0; i<100; ++i ) {
 		conf2corr_2dising.setMemento();
-		conf2corr_2dising.setCorrelationFunction_exchange();
+		conf2corr_2dising.setCorrelationFunction_flip();
+
+		auto corr_2dising_exchange  = conf2corr_2dising.getCorrelationFunctions();
+		conf2corr_2dising.setInitialCorrelationFunction();
+		auto corr_2dising_exchange_confirm = conf2corr_2dising.getCorrelationFunctions();
+
+		for( int j=0; j<corr_2dising_exchange.size(); ++j){
+			for( int k=0; k<corr_2dising_exchange[j].size(); ++k){
+				BOOST_CHECK_CLOSE(corr_2dising_exchange[j][k], corr_2dising_exchange_confirm[j][k], 0.00001);
+			}
+		}
 	}
 
-	auto corr_2dising_exchange  = conf2corr_2dising.getCorrelationFunctions();
-	conf2corr_2dising.setInitialCorrelationFunction();
-	auto corr_2dising_exchange_confirm = conf2corr_2dising.getCorrelationFunctions();
+}
 
-	for( int i=0; i<corr_2dising_exchange.size(); ++i){
-		for( int j=0; j<corr_2dising_exchange[i].size(); ++j){
-			BOOST_CHECK_CLOSE(corr_2dising_exchange[i][j], corr_2dising_exchange_confirm[i][j], 0.00001);
+
+BOOST_AUTO_TEST_CASE(setcorr_fcc_unit)
+{
+	std::shared_ptr<Input> in(new Input("test.ini"));
+	const ParseClusterOut  cluster_out_fcc_unit("./cluster.out.fcc.unit");
+	Conf2corr conf2corr_fcc_unit("./poscar.in.fcc.unit", in, cluster_out_fcc_unit.getLabel(), cluster_out_fcc_unit.getCluster());
+
+	for( int i=0; i<100; ++i ) {
+		conf2corr_fcc_unit.setMemento();
+		conf2corr_fcc_unit.setCorrelationFunction_flip();
+
+		auto corr_fcc_unit = conf2corr_fcc_unit.getCorrelationFunctions();
+		conf2corr_fcc_unit.setInitialCorrelationFunction();
+		auto corr_fcc_unit_confirm = conf2corr_fcc_unit.getCorrelationFunctions();
+
+		for( int j=0; j<corr_fcc_unit.size(); ++j){
+			for( int k=0; k<corr_fcc_unit[j].size(); ++k){
+				BOOST_CHECK_SMALL( (corr_fcc_unit_confirm[j][k]-corr_fcc_unit[j][k]), 0.00001);
+			}
 		}
+
+	}
+
+	for( int i=0; i<100; ++i ){
+		 conf2corr_fcc_unit.setMemento();
+		 conf2corr_fcc_unit.setCorrelationFunction_exchange();
+
+		 auto corr_fcc_unit_exchange  =  conf2corr_fcc_unit.getCorrelationFunctions();
+		 conf2corr_fcc_unit.setInitialCorrelationFunction();
+		 auto corr_fcc_unit_exchange_confirm =  conf2corr_fcc_unit.getCorrelationFunctions();
+
+		 for( int j=0; j<corr_fcc_unit_exchange.size(); ++j){
+			 for( int k=0; k<corr_fcc_unit_exchange[j].size(); ++k){
+				 BOOST_CHECK_SMALL( (corr_fcc_unit_exchange_confirm[j][k]-corr_fcc_unit_exchange[j][k]), 0.00001);
+			 }
+		 }
+
 	}
 
 }

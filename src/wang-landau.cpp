@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
 	const ParseLabels label("./labels.in");
 	const ParseEcicar ecicar("./ecicar");
 	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
-	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
+	const ParseClusterOut  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
 
 	WLconf::WLconf PoscarSpin("./poscar.spin", in, label.getLabels(), cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
 

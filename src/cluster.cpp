@@ -58,6 +58,7 @@ int main(int argc, char* argv[]){
 	}
 
 	ParsePoscar poscar(filename_poscar_in.c_str());
+	const auto atoms_unit = poscar.getAtoms();
 
 	Eigen::Vector3d unit_x, unit_y, unit_z;
 	unit_x << 1, 0, 0;
@@ -87,14 +88,21 @@ int main(int argc, char* argv[]){
 	std::vector<std::shared_ptr<Site>> vec_sites;
 	setSiteAndLattice(vec_lattices, vec_sites, poscar);
 
+	std::ofstream cluster_out( "cluster.out", std::ios::out );
+
+	for( int i=0; i<atoms_unit.size(); ++i){
+		cluster_out << atoms_unit[i].first << " " <<  atoms_unit[i].second.transpose() << std::endl;
+	}
+	cluster_out << "--" << std::endl;
+
 	/*  set nbody = 1 */
 	std::cout << " -- point cluster" << std::endl;
 	int num_index = 1;
-	std::ofstream cluster_out( "cluster.out", std::ios::out );
 	for( const auto& lattice : vec_lattices ){
 		std::cout << num_index << " : "  << "[" << lattice->getLatticeNum() << "] : 0 : 1 : 0 0 0 " << std::endl;
 		cluster_out << num_index << " ";
 		cluster_out << "1" << " ";
+		cluster_out << N_unit << " ";
 		cluster_out << N_unit << " ";
 		for( int i=0; i<N_unit; ++i){
 			cluster_out << vec_sites[i]->getSiteNum() << " ";
@@ -130,6 +138,7 @@ int main(int argc, char* argv[]){
 
 		cluster_out << num_index << " ";
 		cluster_out << "2" << " ";
+		cluster_out << N_unit << " ";
 		cluster_out << N_unit * std::distance(pair_itr.first, pair_itr.second) << " ";
 		for(int i=0; i<N_unit; ++i){
 			auto pair_itr = vec_sites[i]->getLinkedSiteIterator(pairindex.distance);
@@ -139,6 +148,11 @@ int main(int argc, char* argv[]){
 			}
 		}
 		cluster_out << std::endl;
+		++num_index;
+	}
+	if( num_max_body == 2 ){
+		cluster_out.close();
+		return 1;
 	}
 
 	/*  set nbody = 3 */
@@ -169,6 +183,7 @@ int main(int argc, char* argv[]){
 
 		cluster_out << num_index << " ";
 		cluster_out << "3" << " ";
+		cluster_out << N_unit << " ";
 		cluster_out << N_unit*index_triplet_cluster[tripletindex].size() << " ";
 		for(int i=0; i<N_unit; ++i){
 			for(int j=0; j<index_triplet_cluster[tripletindex].size(); ++j){
@@ -179,6 +194,10 @@ int main(int argc, char* argv[]){
 		}
 		cluster_out << std::endl;
 		++num_index;
+	}
+	if( num_max_body == 3 ){
+		cluster_out.close();
+		return 1;
 	}
 
 	// /*  set nbody = 4 */
@@ -213,6 +232,7 @@ int main(int argc, char* argv[]){
 
 		cluster_out << num_index << " ";
 		cluster_out << "4" << " ";
+		cluster_out << N_unit << " ";
 		cluster_out << N_unit*index_quadruplet_cluster[key_index_quadruplet_cluster].size() << " ";
 		for(int i=0; i<N_unit; ++i){
 			for(int j=0; j<index_quadruplet_cluster[key_index_quadruplet_cluster].size(); ++j){

@@ -2,7 +2,9 @@
 #include <tuple>
 #include "./parser.hpp"
 
-ParseClusterIn_::ParseClusterIn_ (const char* f):filename(f) {
+using allclusters = std::vector<std::vector<std::vector<std::vector<int>>>>;
+
+ParseClusterOut::ParseClusterOut (const char* f, std::vector<int> vec_index_read):filename(f), pall_clusters(new allclusters()), plabels(new labels()){
 	ifs.open(filename);
 	std::string buf;
 	if(!ifs){
@@ -10,11 +12,48 @@ ParseClusterIn_::ParseClusterIn_ (const char* f):filename(f) {
 		exit(1);
 	}
 
-	std::string str;
-	ifs >> str;
-	while( !ifs.eof() ) {
-		ifs >> str;
 
+	/* reading labels in cluster.out */
+	int num_label;
+	double x,y,z;
+	while( ifs >> buf ){
+		if( buf == "--" ) break;
+
+		num_label = std::stoi(buf);
+		ifs >> x >> y >> z;
+
+		Eigen::Vector3d coord;
+		coord << x, y, z;
+		plabels->push_back( std::pair<int, Eigen::Vector3d>(num_label, coord) );
+	}
+
+
+	/* reading clusters in cluster.out */
+	int index;
+	int nbody;
+	int num_in_cluster;
+	int num_of_cluster_per_site;
+	while( ifs >> index >> num_in_cluster >> nbody >> num_of_cluster_per_site ) {
+
+		auto it = std::find(vec_index_read.begin(), vec_index_read.end(), index);
+		if( vec_index_read.size()>0 and it==vec_index_read.end() ) continue;
+
+		num_of_cluster_per_site /= nbody;
+		// std::cout << index << ":" << num_in_cluster << ":" << num_of_cluster_per_site << std::endl;
+		std::vector<std::vector<std::vector<int>>> vec_clusters_for_index(nbody);
+		for(int i=0; i<nbody; ++i){
+			std::vector<std::vector<int>> vec_clusters_for_a_site(num_of_cluster_per_site);
+			for(int j=0; j<num_of_cluster_per_site; ++j){
+				std::vector<int> vec_sites_of_clusters_for_a_site(num_in_cluster);
+				for(int k=0; k<num_in_cluster; ++k){
+					ifs >> vec_sites_of_clusters_for_a_site[k];
+				}
+				vec_sites_of_clusters_for_a_site.erase(vec_sites_of_clusters_for_a_site.begin());
+				vec_clusters_for_a_site[j] = std::move(vec_sites_of_clusters_for_a_site);
+			}
+			vec_clusters_for_index[i] = std::move(vec_clusters_for_a_site);
+		}
+		pall_clusters->push_back(vec_clusters_for_index);
 	}
 
 }
@@ -93,99 +132,6 @@ ParseMultiplicityIn::ParseMultiplicityIn (const char* filename, const std::vecto
 			exit(1);
 		}
 		multiplicity[index[i]] = std::pair<int, int>(this->getContent(index[i]-1,0), this->getContent(index[i]-1,1));
-	}
-}
-
-ParseClusterIn::ParseClusterIn (const char* filename, const std::map<int , std::pair<int, int> >& multiplicity )
-	: Parser(filename), pclusters(new std::vector<std::vector<std::vector<std::vector<int>>>>())
- {
-	for(const auto i : multiplicity) index.push_back(i.first);
-	int j = 1;  /* for empty cluster */
-	for(int i=0, imax=this->getContent().size(); i<imax; ++i){
-		std::vector<std::vector<std::vector<int> > > c;
-		std::vector<std::vector<int> > b;
-		std::vector<int> a;
-		int num_in_cluster = multiplicity.at(index[j]).first;
-		/* ここのnum_of_clusterだけ配位数を意味している */
-		/* NOTE :: multiplicity.at(0).secondを原子数として代用している */
-		int num_of_cluster = multiplicity.at(index[j]).second / multiplicity.at(0).second * num_in_cluster;
-
-		/* NOTE: kmaxも含めないと最後まで含まれない*/
-		for(int k=1, kmax=this->getContent(i).size(); k<=kmax; ++k){
-			if((k % (num_of_cluster * num_in_cluster)) == 0){
-				b.push_back(a);
-				c.push_back(b);
-				std::vector<int> ().swap(a);
-				std::vector<std::vector<int> > ().swap(b);
-				continue;
-			}else if((k % num_in_cluster) == 0){
-				b.push_back(a);
-				std::vector<int> ().swap(a);
-				continue;
-			}
-			a.push_back(this->getContent(i, k));
-		}
-		pclusters->push_back(c);
-		std::vector<std::vector<std::vector<int> > > ().swap(c);
-		j++;
-		if((index.size()) == j)
-			break;
-	}
-	std::vector<std::vector<std::vector<std::vector<int>>>> (*pclusters).swap(*pclusters);
-
-	this->clearContent();
-}
-
-ParseClusterIn::ParseClusterIn (
-	const char* filename,
-	const std::vector<int>& _index,
-	const std::map<int , std::pair<int, int> >& multiplicity)
-	: Parser(filename, _index),
-		index(_index),
-	  pclusters(new std::vector<std::vector<std::vector<std::vector<int>>>>())
- {
-
-	int j = 1;  /* for empty cluster */
-	for(int i=0, imax=this->getContent().size(); i<imax; ++i){
-		std::vector<std::vector<std::vector<int> > > c;
-		std::vector<std::vector<int> > b;
-		std::vector<int> a;
-		int num_in_cluster = multiplicity.at(index[j]).first;
-		/* ここのnum_of_clusterだけ配位数を意味している */
-		int num_of_cluster = multiplicity.at(index[j]).second / multiplicity.at(0).second * num_in_cluster;
-
-		/* NOTE: kmaxも含めないと最後まで含まれない*/
-		for(int k=1, kmax=this->getContent(i).size(); k<=kmax; ++k){
-			if((k % (num_of_cluster * num_in_cluster)) == 0){
-				b.push_back(a);
-				c.push_back(b);
-				std::vector<int> ().swap(a);
-				std::vector<std::vector<int> > ().swap(b);
-				continue;
-			}else if((k % num_in_cluster) == 0){
-				b.push_back(a);
-				std::vector<int> ().swap(a);
-				continue;
-			}
-			a.push_back(this->getContent(i, k));
-		}
-		pclusters->push_back(c);
-		std::vector<std::vector<std::vector<int> > > ().swap(c);
-		j++;
-		if((index.size()) == j)
-			break;
-	}
-	std::vector<std::vector<std::vector<std::vector<int>>>> (*pclusters).swap(*pclusters);
-
-	this->clearContent();
-}
-
-void ParseClusterIn::checkClusterIn(){
-	for(int i=0; i<pclusters->size(); ++i){
-		if((*pclusters)[i].size() == 0) continue;
-		for(int j=0; j<(*pclusters)[i].size(); ++j){
-			std::cout << j << " " << (*pclusters)[i][j].size() << std::endl;
-		}
 	}
 }
 
