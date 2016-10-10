@@ -56,12 +56,10 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 
-	const ParseLabels label("./labels.in");
 	const ParseEcicar ecicar("./ecicar");
-	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
-	const ParseClusterOut  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
+	const ParseClusterOut cluster("./cluster.out", ecicar.getIndex());
 
-	Metroconf PoscarSpin("./poscar.spin", in, label.getLabels(), cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
+	Metroconf PoscarSpin("./poscar.spin", in, cluster.getLabel(), cluster.getCluster(), ecicar.getEci(), nullptr, nullptr);
 
 	const int N = PoscarSpin.getSpins().size();
 

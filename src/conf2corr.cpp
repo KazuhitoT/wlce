@@ -161,7 +161,6 @@ void Conf2corr::setIndexOrders(){
 	}
 }
 
-//  !! note : point cluster is troublesome
 void Conf2corr::setInitialCorrelationFunction(){
 	std::vector<std::vector<double>> corr;
 	corr.push_back(std::vector<double>{1});	/* for empty cluster */
@@ -252,8 +251,15 @@ void Conf2corr::setCorrelationFunction_flip(int lattice_point, int after_spin){
 			if( num_of_cluster>0 ){
 				num_in_cluster = (*pall_clusters)[i][0][0].size()+1;
 			}
+		} else {
+			num_of_cluster = 1;
+			num_in_cluster = 1;
 		}
-		if( i==0 ) num_of_cluster = 1;
+
+		if(num_of_cluster==0 and num_in_cluster==1){
+			num_of_cluster = 1;
+			num_in_cluster = 1;
+		}
 
 		int count_index_order = 0;
 		for(const auto& index_order : (*pindex_orders)[num_in_cluster-1] ){
@@ -267,7 +273,7 @@ void Conf2corr::setCorrelationFunction_flip(int lattice_point, int after_spin){
 				} else {
 					for(const auto& site_clusters : (*pall_clusters)[i][lattice_point] ) {
 						// std::cout << (*pall_clusters)[i][lattice_point].size() << " " << num_of_cluster << std::endl;
-						assert( (*pall_clusters)[i][lattice_point].size() == num_of_cluster );
+						// assert( (*pall_clusters)[i][lattice_point].size() == num_of_cluster );
 						double delta_spin_after  = getBasisFunction(orders[0], after_spin);
 						double delta_spin_before = getBasisFunction(orders[0], before_spin);
 						double num_equiv_site = 1;
@@ -420,8 +426,6 @@ void Conf2corr::outputPoscar(std::string prefix){
 	ofs << std::endl;
 
 	ofs << "Direct" << std::endl;
-
-	/*  ここ治す  */
 	std::vector<std::vector<Eigen::Vector3d>> atom_types_coords(pposcar_spin->getAtomTypes().size());
 
 	const auto& atoms = pposcar_spin->getAtoms();

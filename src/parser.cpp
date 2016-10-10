@@ -36,7 +36,10 @@ ParseClusterOut::ParseClusterOut (const char* f, std::vector<int> vec_index_read
 	while( ifs >> index >> num_in_cluster >> nbody >> num_of_cluster_per_site ) {
 
 		auto it = std::find(vec_index_read.begin(), vec_index_read.end(), index);
-		if( vec_index_read.size()>0 and it==vec_index_read.end() ) continue;
+		if( vec_index_read.size()>0 and it==vec_index_read.end() ) {
+			std::getline(ifs, buf);
+			continue;
+		}
 
 		num_of_cluster_per_site /= nbody;
 		// std::cout << index << ":" << num_in_cluster << ":" << num_of_cluster_per_site << std::endl;
