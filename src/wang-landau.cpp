@@ -66,12 +66,11 @@ int main(int argc, char* argv[]){
 	in->setData("MINSTEP",   minstep);
 	in->setData("LOWCUTOFF", low_cutoff);
 
-	const ParseLabels label("./labels.in");
-	const ParseEcicar ecicar("./ecicar");
-	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
-	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
 
-	WLconf::WLconf PoscarSpin("./poscar.spin", in, label.getLabels(), cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
+	const ParseEcicar ecicar("./ecicar");
+	const ParseClusterOut cluster("./cluster.out", ecicar.getIndex());
+
+	WLconf::WLconf PoscarSpin("./poscar.spin", in, cluster.getLabel(), cluster.getCluster(), ecicar.getEci(), nullptr, nullptr);
 
 	const int N = PoscarSpin.getSpins().size();
 
