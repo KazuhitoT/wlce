@@ -420,8 +420,12 @@ void Conf2corr::outputPoscar(std::string prefix){
 		ofs << std::endl;
 	}
 
-	for(const auto& i : pposcar_spin->getAtomTypes() ){
-		ofs << i << " ";
+	for( int i=0; i<this->spince.size(); ++i ){
+		int count = 0;
+		for( int j=0; j<this->spins.size(); ++j ){
+			if( spince[i] == spins[j] ) ++count;
+		}
+		ofs << count << " ";
 	}
 	ofs << std::endl;
 
