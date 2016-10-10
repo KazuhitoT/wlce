@@ -32,47 +32,19 @@ class ParseClusterOut {
 };
 
 
-class Parser{
-	private:
-		std::ifstream ifs;
-		const char* filename;
-		std::vector<std::vector<double> > content;
-	public:
-		Parser(const char*);
-		Parser(const char*, const std::vector<int>&);
-		~Parser(){};
-		std::vector<std::vector<double> > getContent()      const { return content; };
-		std::vector<double>          getContent(int i) const { return content[i]; };
-		double			        getContent(int i, int j) const { return content[i][j]; };
+class ParseEcicar{
+public:
+	ParseEcicar(const char*);
+	~ParseEcicar(){};
 
-		void clearContent() { std::vector<std::vector<double> > ().swap(content); };
-};
+	std::vector<int>     getIndex() 			const {return index;};
+	std::vector<double> 	getEci(int index)	{return ecicar[index];};
+	std::map<int, std::vector<double>> 	getEci()			const {return ecicar;};
 
-
-class ParseEcicar : public Parser{
-	private:
+private:
+	std::ifstream ifs;
 		std::map<int /*index*/ ,std::vector<double> /*eci*/> ecicar;
 		std::vector<int> index;
-	public:
-		// ParseEcicar(){};
-		ParseEcicar(const char*);
-		~ParseEcicar(){};
-
-		std::vector<int>     getIndex() 			const {return index;};
-		std::vector<double> 	getEci(int index)	{return ecicar[index];};
-		std::map<int, std::vector<double>> 	getEci()			const {return ecicar;};
-};
-
-class ParseMultiplicityIn : public Parser{
-	private:
-		std::map<int /* = index */, std::pair<int /* = numPointsInBody */, int /* = numClusters */> > multiplicity;
-	public:
-		// ParseMultiplicityIn(){};
-		ParseMultiplicityIn(const char*);
-		ParseMultiplicityIn(const char*, const std::vector<int>&);
-		~ParseMultiplicityIn(){};
-		std::pair<int, int> getMultiplicityIn(int index) const {return multiplicity.at(index);};
-		std::map<int, std::pair<int, int> > getMultiplicityIn() const {return multiplicity;};
 };
 
 class ParsePoscar {
@@ -98,13 +70,5 @@ public:
 };
 
 using labels = std::vector<std::pair<int, Eigen::Vector3d>>;
-class ParseLabels {
-private:
-	std::shared_ptr<labels> plabels;
 
-public:
-	ParseLabels(const char*);
-	const std::shared_ptr<labels> getLabels() const {return plabels;}
-
-};
 #endif
