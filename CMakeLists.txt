@@ -37,18 +37,18 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ./lib)
 add_library(common STATIC ./src/input.cpp ./src/parser.cpp)
 add_library(conf STATIC ./src/conf2corr.cpp ./src/metroconf.cpp ./src/wlconf.cpp)
 add_library(cluster-lib STATIC ./src/site.cpp ./src/myindex.cpp ./src/search_equiv_sites.cpp)
-
+#
 add_executable(cluster ./src/cluster.cpp)
-target_link_libraries(cluster common common cluster-lib)
+target_link_libraries(cluster common cluster-lib)
 
-# add_executable(getconf ./src/getconf.cpp)
-# target_link_libraries(getconf common conf)
-
-add_executable(wang-landau ./src/wang-landau.cpp ./src/input.cpp)
-target_link_libraries(wang-landau common conf)
+add_executable(getconf ./src/getconf.cpp)
+ target_link_libraries(getconf common conf cluster-lib)
 
 add_executable(metropolis ./src/metropolis.cpp)
 target_link_libraries(metropolis common conf)
+
+add_executable(wang-landau ./src/wang-landau.cpp)
+target_link_libraries(wang-landau common conf)
 
 find_package(Boost 1.4 COMPONENTS unit_test_framework)
 if(Boost_FOUND)
