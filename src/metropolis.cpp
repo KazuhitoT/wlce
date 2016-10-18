@@ -26,15 +26,25 @@ double metropolis_step(Metroconf& conf, double temperature){
 	return conf.getTotalEnergy();
 }
 
+void outputCorr(const Metroconf& PoscarSpin, std::ofstream& ofs_corr){
+	for( const auto& corrs : PoscarSpin.getCorrelationFunctions() ){
+		for( const auto& corr : corrs ){
+			ofs_corr << corr << " ";
+		}
+	}
+	ofs_corr << std::endl;
+}
+
 int main(int argc, char* argv[]){
 	std::shared_ptr<Input> in(new Input("metropolis.ini"));
 
-	int mcstep, samplestep;
+	int mcstep, samplestep, is_output_corr = -1;
 	std::vector<double> temperature_input;
 
 	in->setData("MCSTEP",      mcstep, true);
 	in->setData("SAMPLESTEP",  samplestep, true);
 	in->setData("TEMPERATURE", temperature_input, true);
+	in->setData("OUTPUTCORR",  is_output_corr);
 
 	std::vector<double> vec_temperature;
 	if( temperature_input.size() == 1 ){
@@ -84,6 +94,10 @@ int main(int argc, char* argv[]){
 	std::ofstream ofs("metropolis.out");
 	ofs.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
+	std::ofstream ofs_corr;
+	ofs_corr.setf(std::ios_base::fixed, std::ios_base::floatfield);
+	if( is_output_corr > 0 ) ofs_corr.open("metropolis.corr.out", std::ios::out);
+
 	int loop_count = 0;
 	for( const auto& temperature : vec_temperature ){
 		std::vector<double> vec_ene;
@@ -101,9 +115,12 @@ int main(int argc, char* argv[]){
 			for(int j=0; j<N; ++j){
 				double e = metropolis_step(PoscarSpin, temperature);
 				vec_ene.push_back(e);
+				if( is_output_corr>0 ) outputCorr(PoscarSpin, ofs_corr);
 			}
 			std::cout << "SAMPLE " << temperature << "[K] : " << i << " step done." << std::endl;
 		}
+
+		PoscarSpin.outputPoscar("latest");
 
 		double average  = std::accumulate(vec_ene.begin(), vec_ene.end(), 0.0 ) / double(vec_ene.size());
 		double variance = std::accumulate(vec_ene.begin(), vec_ene.end(), 0.0,
@@ -117,7 +134,7 @@ int main(int argc, char* argv[]){
 	}
 
 	ofs.close();
-
+	ofs_corr.close();
 
 	std::cout << std::endl;
 	std::cout << std::endl;

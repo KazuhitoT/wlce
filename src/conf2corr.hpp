@@ -114,7 +114,7 @@ class Conf2corr {
 		double getCompositions(int i){ return compositions[i]; };
 		std::vector<double> getSpinCE(){ return spince; };
 		std::vector<double> getSpinPoscar(){ return spinposcar; };
-		std::vector<std::vector<double>> getCorrelationFunctions(){ return correlation_functions; };
+		std::vector<std::vector<double>> getCorrelationFunctions() const { return correlation_functions; };
 		double getCorrelationFunctions(int i, int j){ return correlation_functions[i][j]; };
 
 		std::vector<double> getBeforeCompositions(){ return compositions_before; };
