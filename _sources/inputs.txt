@@ -1,25 +1,57 @@
 Input files
 ===================
 
+.. _cluster.ini:
+
+cluster.ini
+-------------------
+
+Configuration for :ref:`cluster`
+
+* TAGS
+
+	- :ref:`MAXBODY <tag-maxbody>`
+	- :ref:`TRUNCATION <tag-truncation>`
+	- :ref:`PAIRTRUNC <tag-pairtrunc>` *(optional)*
+	- :ref:`TRITRUNC  <tag-tritrunc>` *(optional)*
+	- :ref:`QUADTRUNC <tag-quadtrunc>` *(optional)*
+
+Example for cluster.ini::
+
+	[INPUT]
+	MAXBODY    = 4
+	TRUNCATION = 2
+
 
 .. _getconf.ini:
 
 getconf.ini
 -------------------
 
-Configuration for :ref:`getconf`
+| Configuration for :ref:`getconf`.
+| :ref:`getconf` calculate total energy of poscar.spin using ecicar by default.
+| If :ref:`CORRDUMP <tag-corrdump>` tag is specified, :ref:`getconf` output correlation functions of poscar.spin.
+| If cluster.out already exists, you can skip over making it by specifying :ref:`CLUSTEROUT <tag-clusterout>` tag.
 
 * TAGS
 
 	- :ref:`SPINCE <tag-spince>`
 	- :ref:`SPINPOSCAR <tag-spinposcar>`
+	- :ref:`MAXBODY <tag-maxbody>`
+	- :ref:`TRUNCATION <tag-truncation>`
+	- :ref:`PAIRTRUNC <tag-pairtrunc>` *(optional)*
+	- :ref:`TRITRUNC  <tag-tritrunc>` *(optional)*
+	- :ref:`QUADTRUNC <tag-quadtrunc>` *(optional)*
+	- :ref:`CORRDUMP <tag-corrdump>` *(optional)*
+	- :ref:`CLUSTEROUT <tag-clusterout>` *(optional)*
 
 Example for getconf.ini::
 
   [INPUT]
   SPINCE        = -1 1
   SPINPOSCAR    = -1 1
-
+  CORRDUMP      = 1
+  CLUSTEROUT    = 1
 
 
 .. _metropolis.ini:
@@ -172,6 +204,62 @@ Example for ecicar in ternary system::
 Tags
 -------------------
 
+.. _tag-maxbody:
+
+MAXBODY
+^^^^^^^^^^^^^^^^^^^
+
+Maximum number of sites to be searched.
+MAXBODY should be 4 or less.
+
+.. _tag-truncation:
+
+TRUNCATION
+^^^^^^^^^^^^^^^^^^^
+
+Maximum distance (angstrom) to be searched.
+
+
+.. _tag-pairtrunc:
+
+PAIRTRUNC
+^^^^^^^^^^^^^^^^^^^
+
+Maximum distance (angstrom) to be searched for pair cluster.
+
+
+.. _tag-tritrunc:
+
+TRITRUNC
+^^^^^^^^^^^^^^^^^^^
+
+Maximum distance (angstrom) to be searched for triplet cluster.
+
+
+.. _tag-quadtrunc:
+
+QUADTRUNC
+^^^^^^^^^^^^^^^^^^^
+
+Maximum distance (angstrom) to be searched for quadruplet cluster.
+
+
+.. _tag-corrdump:
+
+CORRDUMP
+^^^^^^^^^^^^^^^^^^^
+
+If CORRDUMP >= 1, program outputs correlation functions instead of total energy.
+
+
+.. _tag-clusterout:
+
+CLUSTEROUT
+^^^^^^^^^^^^^^^^^^^
+
+If CLUSTEROUT >= 1, program uses cluster.out which is already outputed by :ref:`cluster`.
+
+
 .. _tag-spince:
 
 SPINCE
@@ -230,7 +318,7 @@ Another is to specify three values; first is the initial temperature, second is 
 FLATCHECKSTEP
 ^^^^^^^^^^^^^^^^^^^
 
-Every FLATCHECKSTEP, the simulation checks  whether the histogram is flat according to :ref:`FLATCRITERION` tag.
+Every FLATCHECKSTEP, the simulation checks  whether the histogram is flat according to :ref:`FLATCRITERION <tag-flatcriterion>` tag.
 
 
 .. _tag-flatcriterion:

@@ -13,10 +13,7 @@ Two-dimensional 16 * 16 square lattice Ising model
 ::
 
   % cd 2dising
-  % ../bin/cluster -d=1.0
-  % cp multiplicity.out multiplicity.in
-  % cp clusters.out clusters.in
-  % cp labels.out labels.in
+  % ../bin/cluster
   % ../bin/wang-landau
 
 2. Plot the microcanonical entropy.

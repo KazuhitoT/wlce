@@ -10,16 +10,12 @@ Find and enumerate symmetry-equivalent clusters for cluster expansion [CE1]_ [CE
 
 * Input file
 
-  * :ref:`poscar.in`
+  * :ref:`cluster.ini`, :ref:`poscar.in`
 
 * Output files
 
-  * clusters.out, multiplicity.out, labels.out
+  * cluster.out
 
-* Command line option
-
-  -d distance  truncation distance for searching symmetry-equivalent clusters
-  -p file      POSCAR filename (default: poscar.in)
 
 .. [CE1] J.M. Sanchez et. al., Physica A 128, 334-350 (1984).
 .. [CE2] A. van de Walle and M. Asta, Modelling Simul. Mater. Sci. Eng. 10, 521-538 (2002).
@@ -31,12 +27,12 @@ Find and enumerate symmetry-equivalent clusters for cluster expansion [CE1]_ [CE
 getconf
 -------------------
 
-Calculate properties of the system.
+Calculate total energy or correlation functions of poscar.spin.
 
 
 * Input file
 
-	* :ref:`getconf.ini`, :ref:`poscar.spin`, clusters.in, multiplicity.in, labels.in,  :ref:`ecicar`
+	* :ref:`getconf.ini`, :ref:`poscar.spin`, cluster.out, :ref:`ecicar`
 
 * Output file
 
@@ -52,7 +48,7 @@ Calculate internal energy via Metropolis algorithm.
 
 * Input file
 
-  * :ref:`metropolis.ini`, :ref:`poscar.spin`, clusters.in, multiplicity.in, labels.in, :ref:`ecicar`
+  * :ref:`metropolis.ini`, :ref:`poscar.spin`, cluster.out , :ref:`ecicar`
 
 * Output files
 
@@ -79,7 +75,7 @@ Calculate microcanonical entropy via Wang-Landau algorithm [WL1]_ [WL2]_
 
 * Input file
 
-  * :ref:`wang-landau.ini`, :ref:`poscar.spin`, clusters.in, multiplicity.in, labels.in, :ref:`ecicar`
+  * :ref:`wang-landau.ini`, :ref:`poscar.spin`, cluster.out, :ref:`ecicar`
 
 * Output files
 
@@ -107,6 +103,7 @@ Calculate microcanonical entropy via Wang-Landau algorithm [WL1]_ [WL2]_
 		135 16 1 1 1 1 -1 1 -1 -1 -1 1 -1 1 -1 -1 -1 -1 -1 1 1 1 -1 -1 1 -1 1 1 -1 1 1 1 -1 1 1 1 1 -1 1 -1 -1 1 -1 -1 -1 1 1 -1 1 1 -1 1 1 1 -1 1 -1 -1 -1 -1 -1 1 1 -1 1 -1 1 1 -1 -1 -1 -1 -1 -1 -1 -1 1 1 -1 -1 -1 -1 -1 1 1 1 -1 -1 1 1 -1 -1 -1 -1 1 1 -1 -1 -1 -1 1 -1 -1 -1 1 -1 1 -1 -1 1 1 -1 1 1 -1 1 1 -1 -1 -1 -1 1 -1 -1 -1 1 -1 -1 1 -1 1 -1 -1 -1 -1 1 1 1 -1 1 1 -1 1 1 -1 1 1 1 1 1 1 1 1 1 1 1 1 1 -1 1 -1 1 -1 1 -1 -1 -1 -1 1 1 1 1 1 1 -1 1 -1 1 -1 1 1 -1 1 -1 1 1 -1 1 -1 -1 1 1 -1 1 -1 1 1 -1 -1 -1 1 -1 1 1 1 1 1 -1 1 -1 -1 1 -1 1 -1 -1 -1 -1 1 1 1 -1 -1 -1 -1 1 -1 1 1 1 1 1 -1 1 1 -1 1 1 -1 -1 -1 -1 1 1 1 1 -1 1 1 -1 -1 -1 -1 1 1 1 1 1
 		...
 
+  * poscar.latest
 
 .. [WL1] F. G. Wang and D. P. Landau, Phys. Rev. Lett. 86, 2050 (2001).
 .. [WL2] F. G. Wang and D. P. Landau, Phys. Rev. E 64, 056101 (2001).
