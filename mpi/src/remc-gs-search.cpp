@@ -18,7 +18,6 @@ double metropolis_like_step(Metroconf& conf, double p){
 	double norm_after  = conf.calcCorrelationFunctionNorm(p);
 
 	double b = exp( -(norm_after-norm_before) );
-	std::cout << b << " : " << norm_after << " " << norm_before << std::endl;
 	if(b>=1.0 or b>conf.RandReal()){
 	} else {
 		conf.Memento();

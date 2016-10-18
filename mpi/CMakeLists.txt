@@ -36,8 +36,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../lib)
 add_library(mpicommon STATIC ../src/input.cpp ../src/parser.cpp)
 add_library(mpiconf STATIC ../src/conf2corr.cpp ../src/metroconf.cpp ../src/wlconf.cpp)
 
-# add_executable(remc ./src/remc.cpp)
-# target_link_ltibraries(remc common mpiconf)
+add_executable(remc ./src/remc.cpp)
+target_link_libraries(remc mpicommon mpiconf)
 
 add_executable(remc-gs-search ./src/remc-gs-search.cpp)
 target_link_libraries(remc-gs-search mpicommon mpiconf)

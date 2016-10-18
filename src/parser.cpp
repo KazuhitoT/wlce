@@ -70,13 +70,13 @@ ParseEcicar::ParseEcicar (const char* filename) {
 	while( getline(ifs, buf) ){
 		std::vector<double> vec_eci;
 
-		int i;
-		ifs >> i;
-
 		std::stringstream ss(buf);
+
+		int i;
+		ss >> i;
+
 		double eci;
 		while( ss >> eci ) vec_eci.push_back(eci);
-
 		ecicar[i] = vec_eci;
 		index.push_back(i);
 	}
