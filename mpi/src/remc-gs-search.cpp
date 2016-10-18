@@ -5,9 +5,9 @@
 #include <chrono>
 #include <mpi.h>
 
-#include "../src/parser.hpp"
-#include "../src/input.hpp"
-#include "../src/metroconf.hpp"
+#include "../../src/parser.hpp"
+#include "../../src/input.hpp"
+#include "../../src/metroconf.hpp"
 
 constexpr double kb = 0.0000861733; // [eV/K]
 
@@ -17,9 +17,8 @@ double metropolis_like_step(Metroconf& conf, double p){
 	conf.setNewConf();
 	double norm_after  = conf.calcCorrelationFunctionNorm(p);
 
-	// std::cout << norm_after << " " << norm_before << std::endl;
-
 	double b = exp( -(norm_after-norm_before) );
+	std::cout << b << " : " << norm_after << " " << norm_before << std::endl;
 	if(b>=1.0 or b>conf.RandReal()){
 	} else {
 		conf.Memento();
@@ -47,7 +46,7 @@ int main(int argc, char* argv[]){
 	in->setData("MCSTEP",      mcstep, true);
 	in->setData("SAMPLESTEP",  samplestep, true);
 	in->setData("EXSTEP",      exstep, true);
-	in->setData("P", p_input, true);
+	in->setData("P",           p_input, true);
 
 
 	if ( p_input.size() == 2 ) {
@@ -62,18 +61,16 @@ int main(int argc, char* argv[]){
 			}
 		}
 	} else {
-		std::cerr << " ERROR : TEMPERATURE in remc.ini must be 2 arguments." << std::endl;
+		std::cerr << " ERROR : P in remc-gs-search.ini must be 2 arguments." << std::endl;
 		exit(1);
 	}
 
-	const ParseLabels label("./labels.in");
 	const ParseEcicar ecicar("./ecicar");
-	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
-	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
+	const ParseClusterOut cluster("./cluster.out", ecicar.getIndex());
 
-	Metroconf PoscarSpin("./poscar.spin", in, label.getLabels(), cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
+	Metroconf PoscarSpin("./poscar.spin", in, cluster.getLabel(), cluster.getCluster(), ecicar.getEci(), nullptr, nullptr);
 
-	const int N = label.getLabels()->size();
+	const int N = cluster.getLabel()->size();
 
 	MPI::COMM_WORLD.Barrier();
 
@@ -137,7 +134,6 @@ int main(int argc, char* argv[]){
 			MPI::Status status;
 			MPI::COMM_WORLD.Recv(&recv_ave, 1, MPI::DOUBLE, i, 0, status);
 			MPI::COMM_WORLD.Recv(&recv_var, 1, MPI::DOUBLE, i, 0, status);
-			std::cout << vec_p[i] << " " << recv_ave << " " << recv_var << std::endl;
 			ofs << vec_p[i] << " " << recv_ave << " " << recv_var << std::endl;
 		}
 
