@@ -313,10 +313,9 @@ void Conf2corr::setCorrelationFunction_exchange(){
 	exchanged_spins[1] = rnd_int_N();
 	while( spins[exchanged_spins[0]] == spins[exchanged_spins[1]] )
 		exchanged_spins[1] = rnd_int_N();
-	std::swap(spins[exchanged_spins[0]], spins[exchanged_spins[1]]);
 
-	this->setCorrelationFunction_flip(exchanged_spins[0], spins[exchanged_spins[0]]);
-	this->setCorrelationFunction_flip(exchanged_spins[1], spins[exchanged_spins[1]]);
+	this->setCorrelationFunction_flip(exchanged_spins[0], spins[exchanged_spins[1]]);
+	this->setCorrelationFunction_flip(exchanged_spins[1], spins[exchanged_spins[0]]);
 }
 
 double Conf2corr::calcCorrelationFunctionNorm(double p){
