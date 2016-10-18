@@ -35,7 +35,7 @@ void setSiteReferencesAndPairIndex(
 				const Eigen::Vector3d relative_coord = validCoordinate(site->getCoordinate(), base_site->getCoordinate());
 
 				double distance = (lattice_basis * relative_coord).norm();
-				if ( precision < distance and distance <= pair_truncation ) {
+				if ( precision < distance and distance <= (pair_truncation+precision) ) {
 
 					auto itr_distance = std::find_if( vec_pair_distance.begin(), vec_pair_distance.end(), [precision, distance](const double x){
 						return std::fabs(x-distance) < precision;
