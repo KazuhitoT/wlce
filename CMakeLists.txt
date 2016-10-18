@@ -34,21 +34,21 @@ set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -s -DNDEBUG")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ./bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ./lib)
 
-
-add_library(parser STATIC ./src/parser.cpp)
+add_library(common STATIC ./src/input.cpp ./src/parser.cpp)
 add_library(conf STATIC ./src/conf2corr.cpp ./src/metroconf.cpp ./src/wlconf.cpp)
-
+add_library(cluster-lib STATIC ./src/site.cpp ./src/myindex.cpp ./src/search_equiv_sites.cpp)
+#
 add_executable(cluster ./src/cluster.cpp)
-target_link_libraries(cluster parser)
+target_link_libraries(cluster common cluster-lib)
 
 add_executable(getconf ./src/getconf.cpp)
-target_link_libraries(getconf parser conf)
-
-add_executable(wang-landau ./src/wang-landau.cpp ./src/input.cpp)
-target_link_libraries(wang-landau parser conf)
+ target_link_libraries(getconf common conf cluster-lib)
 
 add_executable(metropolis ./src/metropolis.cpp)
-target_link_libraries(metropolis parser conf)
+target_link_libraries(metropolis common conf)
+
+add_executable(wang-landau ./src/wang-landau.cpp)
+target_link_libraries(wang-landau common conf)
 
 find_package(Boost 1.4 COMPONENTS unit_test_framework)
 if(Boost_FOUND)
@@ -56,7 +56,7 @@ if(Boost_FOUND)
 		tests/test-main.cpp
 		tests/test-conf2corr.cpp
 	)
-	target_link_libraries(test-main parser conf ${Boost_LIBRARIES})
+	target_link_libraries(test-main common conf ${Boost_LIBRARIES})
 	enable_testing()
 	add_test(
 		NAME MyTest

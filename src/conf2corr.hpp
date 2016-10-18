@@ -84,7 +84,7 @@ class Conf2corr {
 		double getBasisFunction(int, int);
 
 		void setInitialCorrelationFunction();
-		void setCorrelationFunction_flip();
+		void setCorrelationFunction_flip(int lattice_point = -1, int after_spin = -1);
 		void setCorrelationFunction_exchange();
 
 		double calcCorrelationFunctionNorm(double p);
@@ -114,7 +114,7 @@ class Conf2corr {
 		double getCompositions(int i){ return compositions[i]; };
 		std::vector<double> getSpinCE(){ return spince; };
 		std::vector<double> getSpinPoscar(){ return spinposcar; };
-		std::vector<std::vector<double>> getCorrelationFunctions(){ return correlation_functions; };
+		std::vector<std::vector<double>> getCorrelationFunctions() const { return correlation_functions; };
 		double getCorrelationFunctions(int i, int j){ return correlation_functions[i][j]; };
 
 		std::vector<double> getBeforeCompositions(){ return compositions_before; };
