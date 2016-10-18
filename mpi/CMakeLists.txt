@@ -33,16 +33,11 @@ set(CMAKE_CXX_COMPILER mpic++)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../lib)
 
-add_library(mpiparser STATIC ../src/parser.cpp)
+add_library(mpicommon STATIC ../src/input.cpp ../src/parser.cpp)
 add_library(mpiconf STATIC ../src/conf2corr.cpp ../src/metroconf.cpp ../src/wlconf.cpp)
 
-add_executable(remc
-	./src/remc.cpp
-)
-target_link_libraries(remc mpiparser mpiconf)
+add_executable(remc ./src/remc.cpp)
+target_link_libraries(remc mpicommon mpiconf)
 
-set(CMAKE_CXX_COMPILER mpic++)
-add_executable(remc-gs-search
-	./src/remc-gs-search.cpp
-)
-target_link_libraries(remc-gs-search mpiparser mpiconf)
+add_executable(remc-gs-search ./src/remc-gs-search.cpp)
+target_link_libraries(remc-gs-search mpicommon mpiconf)

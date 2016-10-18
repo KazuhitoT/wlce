@@ -5,20 +5,19 @@
 #include <chrono>
 #include <mpi.h>
 
-#include "../src/parser.hpp"
-#include "../src/input.hpp"
-#include "../src/metroconf.hpp"
+#include "../../src/parser.hpp"
+#include "../../src/input.hpp"
+#include "../../src/metroconf.hpp"
 
 constexpr double kb = 0.0000861733; // [eV/K]
 
 double metropolis_step(Metroconf& conf, double temperature){
-	conf.setTotalEnergy();
 	double ene_before = conf.getTotalEnergy();
-
 	conf.setNewConf();
 	double ene_after  = conf.getTotalEnergy();
 
 	double b = exp( -(ene_after-ene_before)/kb/temperature );
+	// std::cout << b << " : " << ene_after << " " << ene_before << " " << x << " " << y <<  std::endl;
 	if(b>=1.0 or b>conf.RandReal()){
 	} else {
 		conf.Memento();
@@ -48,7 +47,6 @@ int main(int argc, char* argv[]){
 	in->setData("EXSTEP",      exstep, true);
 	in->setData("TEMPERATURE", temperature_input, true);
 
-
 	if ( temperature_input.size() == 2 ) {
 		double tdelta = fabs(temperature_input[1] - temperature_input[0])/(double)(size-1);
 		if( temperature_input[0] > temperature_input[1] ){ // 900 100 100
@@ -65,14 +63,12 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 
-	const ParseLabels label("./labels.in");
 	const ParseEcicar ecicar("./ecicar");
-	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
-	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
+	const ParseClusterOut cluster("./cluster.out", ecicar.getIndex());
 
-	Metroconf PoscarSpin("./poscar.spin", in, label.getLabels(), cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
+	Metroconf PoscarSpin("./poscar.spin", in, cluster.getLabel(), cluster.getCluster(), ecicar.getEci(), nullptr, nullptr);
 
-	const int N = label.getLabels()->size();
+	const int N = cluster.getLabel()->size();
 
 	MPI::COMM_WORLD.Barrier();
 
@@ -133,7 +129,6 @@ int main(int argc, char* argv[]){
 			MPI::Status status;
 			MPI::COMM_WORLD.Recv(&recv_ave, 1, MPI::DOUBLE, i, 0, status);
 			MPI::COMM_WORLD.Recv(&recv_var, 1, MPI::DOUBLE, i, 0, status);
-			std::cout << vec_temperature[i] << " " << recv_ave << " " << recv_var << std::endl;
 			ofs << vec_temperature[i] << " " << recv_ave << " " << recv_var << std::endl;
 		}
 

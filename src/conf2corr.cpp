@@ -307,7 +307,7 @@ void Conf2corr::setCorrelationFunction_flip(int lattice_point, int after_spin){
 }
 
 void Conf2corr::setCorrelationFunction_exchange(){
-	std::vector<int> exchanged_spins(2,0);
+	int exchanged_spins[2];
 
 	exchanged_spins[0] = rnd_int_N();
 	exchanged_spins[1] = rnd_int_N();
