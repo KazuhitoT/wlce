@@ -52,7 +52,6 @@ BOOST_AUTO_TEST_CASE(setcorr_fcc_unit)
 	Conf2corr conf2corr_fcc_unit("./poscar.in.fcc.unit", in, cluster_out_fcc_unit.getLabel(), cluster_out_fcc_unit.getCluster());
 
 	for( int i=0; i<100; ++i ) {
-		conf2corr_fcc_unit.setMemento();
 		conf2corr_fcc_unit.setCorrelationFunction_flip();
 
 		auto corr_fcc_unit = conf2corr_fcc_unit.getCorrelationFunctions();
@@ -68,7 +67,6 @@ BOOST_AUTO_TEST_CASE(setcorr_fcc_unit)
 	}
 
 	for( int i=0; i<100; ++i ){
-		 conf2corr_fcc_unit.setMemento();
 		 conf2corr_fcc_unit.setCorrelationFunction_exchange();
 
 		 auto corr_fcc_unit_exchange  =  conf2corr_fcc_unit.getCorrelationFunctions();

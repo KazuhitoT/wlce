@@ -55,6 +55,7 @@ if(Boost_FOUND)
 	add_executable(test-main
 		tests/test-main.cpp
 		tests/test-conf2corr.cpp
+		tests/test-metroconf.cpp
 	)
 	target_link_libraries(test-main common conf ${Boost_LIBRARIES})
 	enable_testing()

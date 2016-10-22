@@ -215,7 +215,7 @@ void Conf2corr::setInitialCorrelationFunction(){
 }
 
 //  !! note : point cluster is troublesome
-void Conf2corr::setCorrelationFunction_flip(int lattice_point, int after_spin){
+void Conf2corr::setCorrelationFunction_flip(int lattice_point, double after_spin){
 
 	int before_spin;
 
@@ -314,8 +314,9 @@ void Conf2corr::setCorrelationFunction_exchange(){
 	while( spins[exchanged_spins[0]] == spins[exchanged_spins[1]] )
 		exchanged_spins[1] = rnd_int_N();
 
+	double tmp_spin =  spins[exchanged_spins[0]];
 	this->setCorrelationFunction_flip(exchanged_spins[0], spins[exchanged_spins[1]]);
-	this->setCorrelationFunction_flip(exchanged_spins[1], spins[exchanged_spins[0]]);
+	this->setCorrelationFunction_flip(exchanged_spins[1], tmp_spin);
 }
 
 double Conf2corr::calcCorrelationFunctionNorm(double p){
