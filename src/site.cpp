@@ -18,7 +18,10 @@ double myfloor( double dSrc, int iLen )
 Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs){
 	Eigen::Vector3d d_vec = lhs - rhs;
 	for( int i=0; i<3; ++i ){ /* boundary condition */
-		if( d_vec(i) > (0.5) )       {d_vec(i) = d_vec(i)-1;}
+		if( std::fabs(std::fabs(d_vec(i))-0.5) < 0.00001 ){
+		 d_vec(i)>0 ? d_vec(i)=0.5 : d_vec(i)=-0.5;
+		}
+		else if( d_vec(i) > (0.5) )  {d_vec(i) = d_vec(i)-1;}
 		else if( d_vec(i) < -(0.5) ) {d_vec(i) = 1+d_vec(i);}
 	}
 	return d_vec;
@@ -26,6 +29,9 @@ Eigen::Vector3d validCoordinate(const Eigen::Vector3d& lhs, const Eigen::Vector3
 
 Eigen::Vector3d validCoordinate(Eigen::Vector3d lhs){
 	for( int i=0; i<3; ++i ){ /* boundary condition */
+		if( std::fabs(std::fabs(lhs(i))-0.5) < 0.00001 ){
+			 lhs(i)>0 ? lhs(i)=0.5 : lhs(i)=-0.5;
+		}
 		if( lhs(i) >  (0.5) )      {lhs(i) = lhs(i)-1;}
 		else if( lhs(i) < -(0.5) ) {lhs(i) = 1+lhs(i);}
 	}
