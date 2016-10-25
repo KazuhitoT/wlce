@@ -71,13 +71,13 @@ ParseEcicar::ParseEcicar (const char* filename) {
 		std::vector<double> vec_eci;
 
 		std::stringstream ss(buf);
-
 		int i;
 		ss >> i;
 
 		double eci;
 		while( ss >> eci ) vec_eci.push_back(eci);
-		ecicar[i] = vec_eci;
+		ecicar[i] = std::move(vec_eci);
+
 		index.push_back(i);
 	}
 
