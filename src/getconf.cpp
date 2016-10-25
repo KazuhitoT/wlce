@@ -29,7 +29,6 @@ void dispInput(std::shared_ptr<Input> in){
 	std::cout << "CORRDUMP    : " << in->getDataByString("CORRDUMP") << std::endl;
 }
 
-
 void showResult(int is_corrdump, const std::shared_ptr<Input>& in){
 
 	const ParseClusterOut parse_cluster_out("./cluster.out");
@@ -102,7 +101,7 @@ int main(int argc, char* argv[]){
 		return 1;
 	}
 
-	std::string filename_poscar_in = "poscar.in";
+	std::string filename_poscar_in = "poscar.spin";
 
 	ParsePoscar poscar(filename_poscar_in.c_str());
 	const auto atoms_unit = poscar.getAtoms();
@@ -135,6 +134,7 @@ int main(int argc, char* argv[]){
 	std::vector<std::shared_ptr<Site>> vec_sites;
 	setSiteAndLattice(vec_lattices, vec_sites, poscar);
 
+	std::ofstream cluster_info("cluster.info", std::ios::out );
 	std::ofstream cluster_out( "cluster.out", std::ios::out );
 
 	for( int i=0; i<atoms_unit.size(); ++i){
@@ -143,10 +143,10 @@ int main(int argc, char* argv[]){
 	cluster_out << "--" << std::endl;
 
 	/*  set nbody = 1 */
-	// std::cout << " -- point cluster" << std::endl;
+	cluster_info << " -- point cluster" << std::endl;
 	int num_index = 1;
 	for( const auto& lattice : vec_lattices ){
-		// std::cout << num_index << " : "  << "[" << lattice->getLatticeNum() << "] : 0 : 1 : 0 0 0 " << std::endl;
+		cluster_info << num_index << " : "  << "[" << lattice->getLatticeNum() << "] : 0 : 1 : 0 0 0 " << std::endl;
 		cluster_out << num_index << " ";
 		cluster_out << "1" << " ";
 		cluster_out << N_unit << " ";
@@ -159,7 +159,7 @@ int main(int argc, char* argv[]){
 	}
 
 	/*  set nbody = 2 */
-	// std::cout << " -- 2 body cluster" << std::endl;
+	cluster_info << " -- 2 body cluster" << std::endl;
 	std::unordered_map<PairIndex , Eigen::Vector3d, hash_pairindex> index_pair_clusters;
 	if( pair_truncation == 0 ) pair_truncation = truncation;
 	setSiteReferencesAndPairIndex(vec_lattices, vec_sites, index_pair_clusters, pair_truncation, precision);
@@ -170,13 +170,13 @@ int main(int argc, char* argv[]){
 	}
 	sort(sorted_vec_pairindex.begin(), sorted_vec_pairindex.end());
 
-	// std::cout << " # [index] : distance : multiplicity : coordination " << std::endl;
+	cluster_info << " # [index] : distance : multiplicity : coordination " << std::endl;
 	for( const auto& pairindex : sorted_vec_pairindex ){
-		// std::cout << num_index << " : ";
-		// std::cout << "[" << pairindex.lattice_index[0] << "," << pairindex.lattice_index[1]  << "] : ";
+		cluster_info << num_index << " : ";
+		cluster_info << "[" << pairindex.lattice_index[0] << "," << pairindex.lattice_index[1]  << "] : ";
 		const auto pair_itr = vec_sites[0]->getLinkedSiteIterator(pairindex.distance);
-		// std::cout << pairindex.distance << " : " << std::distance(pair_itr.first, pair_itr.second) << " : ";
-		// std::cout << index_pair_clusters[pairindex].transpose() << std::endl;
+		cluster_info << pairindex.distance << " : " << std::distance(pair_itr.first, pair_itr.second) << " : ";
+		cluster_info << index_pair_clusters[pairindex].transpose() << std::endl;
 
 		for( const auto& site : vec_sites ) {
 			const auto test_pair_itr = site->getLinkedSiteIterator(pairindex.distance);
@@ -197,9 +197,15 @@ int main(int argc, char* argv[]){
 		cluster_out << std::endl;
 		++num_index;
 	}
+	if( num_max_body == 2 ){
+		cluster_out.close();
+		cluster_info.close();
+		showResult(is_corrdump, in);
+		return 1;
+	}
 
 	/*  set nbody = 3 */
-	// std::cout << " -- 3 body cluster" << std::endl;
+	cluster_info << " -- 3 body cluster" << std::endl;
 	std::vector<TripletIndex> keys_index_triplet_cluster;
 	std::unordered_map<TripletIndex, std::vector<std::vector<Eigen::Vector3d>>, hash_tripletindex> index_triplet_cluster;
 	setTripletIndex(vec_lattices, vec_sites, sorted_vec_pairindex, keys_index_triplet_cluster, index_triplet_cluster, triplet_truncation, precision);
@@ -212,17 +218,17 @@ int main(int argc, char* argv[]){
 
 	for(const auto& tripletindex : keys_index_triplet_cluster){
 
-		// std::cout << num_index << " : ";
-		// std::cout << "[] : ";
-		// std::cout << " [ ";
-		// std::cout << tripletindex.vec_pairindex[0].distance << ",";
-		// std::cout << tripletindex.vec_pairindex[1].distance << ",";
-		// std::cout << tripletindex.vec_pairindex[2].distance;
-		// std::cout << " ] : ";
-		// std::cout << index_triplet_cluster[tripletindex].size() <<  " : ";
-		//
-		// std::cout << index_triplet_cluster[tripletindex][0][0].transpose() << ",";
-		// std::cout << index_triplet_cluster[tripletindex][0][1].transpose() << std::endl;
+		cluster_info << num_index << " : ";
+		cluster_info << "[] : ";
+		cluster_info << " [ ";
+		cluster_info << tripletindex.vec_pairindex[0].distance << ",";
+		cluster_info << tripletindex.vec_pairindex[1].distance << ",";
+		cluster_info << tripletindex.vec_pairindex[2].distance;
+		cluster_info << " ] : ";
+		cluster_info << index_triplet_cluster[tripletindex].size() <<  " : ";
+
+		cluster_info << index_triplet_cluster[tripletindex][0][0].transpose() << ",";
+		cluster_info << index_triplet_cluster[tripletindex][0][1].transpose() << std::endl;
 
 		cluster_out << num_index << " ";
 		cluster_out << "3" << " ";
@@ -239,8 +245,15 @@ int main(int argc, char* argv[]){
 		++num_index;
 	}
 
+	if( num_max_body == 3 ){
+		cluster_out.close();
+		cluster_info.close();
+		showResult(is_corrdump, in);
+		return 1;
+	}
+
 	// /*  set nbody = 4 */
-	// std::cout << " -- 4 body cluster" << std::endl;
+	cluster_info << " -- 4 body cluster" << std::endl;
 	std::vector<QuadrupletIndex> keys_index_quadruplet_cluster;
 	std::unordered_map<QuadrupletIndex, std::vector<std::vector<Eigen::Vector3d>>, hash_quadrupletindex> index_quadruplet_cluster;
 	setQuadrupletIndex(vec_lattices, vec_sites, sorted_vec_pairindex,  index_triplet_cluster, keys_index_quadruplet_cluster, index_quadruplet_cluster, quadruplet_truncation, precision);
@@ -256,18 +269,18 @@ int main(int argc, char* argv[]){
 
 	for(const auto& key_index_quadruplet_cluster : keys_index_quadruplet_cluster){
 
-		// std::cout << num_index << " : ";
-		// std::cout << "[] : ";
-		// std::cout << " [ ";
-		// for( const auto distance : key_index_quadruplet_cluster.getVecDistance() ){
-		// 	std::cout << distance << ",";
-		// }
-		// std::cout << " ] : ";
-		// std::cout << index_quadruplet_cluster[key_index_quadruplet_cluster].size() <<  " : ";
-		//
-		// std::cout << index_quadruplet_cluster[key_index_quadruplet_cluster][0][0].transpose() << ",";
-		// std::cout << index_quadruplet_cluster[key_index_quadruplet_cluster][0][1].transpose() << ",";
-		// std::cout << index_quadruplet_cluster[key_index_quadruplet_cluster][0][2].transpose() << std::endl;
+		cluster_info << num_index << " : ";
+		cluster_info << "[] : ";
+		cluster_info << " [ ";
+		for( const auto distance : key_index_quadruplet_cluster.getVecDistance() ){
+			cluster_info << distance << ",";
+		}
+		cluster_info << " ] : ";
+		cluster_info << index_quadruplet_cluster[key_index_quadruplet_cluster].size() <<  " : ";
+
+		cluster_info << index_quadruplet_cluster[key_index_quadruplet_cluster][0][0].transpose() << ",";
+		cluster_info << index_quadruplet_cluster[key_index_quadruplet_cluster][0][1].transpose() << ",";
+		cluster_info << index_quadruplet_cluster[key_index_quadruplet_cluster][0][2].transpose() << std::endl;
 
 		cluster_out << num_index << " ";
 		cluster_out << "4" << " ";
@@ -285,6 +298,7 @@ int main(int argc, char* argv[]){
 		++num_index;
 	}
 	cluster_out.close();
+	cluster_info.close();
 
 	showResult(is_corrdump, in);
 	return 1;

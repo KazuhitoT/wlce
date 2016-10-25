@@ -4,15 +4,23 @@
 void setSiteAndLattice(std::vector<std::shared_ptr<Lattice>>& vec_lattices, std::vector<std::shared_ptr<Site>>& vec_sites, const ParsePoscar& poscar){
 	const auto atoms = poscar.getAtoms();
 	const std::vector<int> vec_atom_types = poscar.getAtomTypes();
-	for(int i=0, j=0; i<vec_atom_types.size(); ++i) {
-		auto lattice = std::shared_ptr<Lattice>( new Lattice(i) );
-		lattice->setBasis(poscar.getLatticeBasis());
-		vec_lattices.push_back(lattice);
-		for(int k=0; k<vec_atom_types[i]; ++j, ++k){
-			auto site = std::shared_ptr<Site>( new Site(atoms[j].first, atoms[j].second, lattice) );
-			vec_sites.push_back(site);
-			lattice->setSite(site);
-		}
+	// for(int i=0, j=0; i<vec_atom_types.size(); ++i) {
+	// 	auto lattice = std::shared_ptr<Lattice>( new Lattice(i) );
+	// 	lattice->setBasis(poscar.getLatticeBasis());
+	// 	vec_lattices.push_back(lattice);
+	// 	for(int k=0; k<vec_atom_types[i]; ++j, ++k){
+	// 		auto site = std::shared_ptr<Site>( new Site(atoms[j].first, atoms[j].second, lattice) );
+	// 		vec_sites.push_back(site);
+	// 		lattice->setSite(site);
+	// 	}
+	// }
+	auto lattice = std::shared_ptr<Lattice>( new Lattice(0) );
+	lattice->setBasis(poscar.getLatticeBasis());
+	vec_lattices.push_back(lattice);
+	for(int i=0; i<atoms.size(); ++i){
+		auto site = std::shared_ptr<Site>( new Site(atoms[i].first, atoms[i].second, lattice) );
+		vec_sites.push_back(site);
+		lattice->setSite(site);
 	}
 }
 
