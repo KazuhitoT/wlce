@@ -157,8 +157,6 @@ void ParsePoscar::expandPoscar(int expand_x, int expand_y, int expand_z){
 	}
 
 	int N_unit = this->atoms.size();
-	// std::vector<std::pair<int, Eigen::Vector3d>> new_positions;
-	// std::vector<std::pair<int, Eigen::Vector3d>> new_positions_unit;
 
 	using Position = std::tuple<int, int, Eigen::Vector3d>;
 
@@ -170,11 +168,11 @@ void ParsePoscar::expandPoscar(int expand_x, int expand_y, int expand_z){
 	div_mat << 1./double(expand_x),0,0,
 						 0,1./double(expand_y),0,
 						 0,0,1./double(expand_z);
+
 	for( int i=0; i<atoms.size(); ++i ){
 		//  std::pair<int, Eigen::Vector3d> -> spin_type and position
 		new_positions_unit.push_back( std::make_tuple( i, spins[i], div_mat * atoms[i].second ));
 	}
-
 	int count = 0;
 	for(int x=0; x<expand_x; ++x){
 		for(int y=0; y<expand_y; ++y){
@@ -189,8 +187,6 @@ void ParsePoscar::expandPoscar(int expand_x, int expand_y, int expand_z){
 			}
 		}
 	}
-
-	std::sort( std::begin(new_positions), std::end(new_positions), [](const Position& x, const Position& y) -> int { return std::get<1>(x) > std::get<1>(y);});
 
 	std::vector<int> new_atom_types;
 	for(int i=0; i<this->atom_types.size(); ++i){
@@ -207,6 +203,7 @@ void ParsePoscar::expandPoscar(int expand_x, int expand_y, int expand_z){
 	this->atom_types = new_atom_types;
 	Eigen::Matrix3d max_ex_mat;
 	max_ex_mat << expand_x,0,0, 0,expand_y,0, 0,0,expand_z;
-	this->lattice_basis = max_ex_mat * this->lattice_basis;
+
+	this->lattice_basis = this->lattice_basis * max_ex_mat;
 
 }
