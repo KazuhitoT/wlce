@@ -75,11 +75,9 @@ ParseEcicar::ParseEcicar (const char* filename) {
 		ss >> i;
 
 		double eci;
-		while( ss >> eci ) {
-			vec_eci.push_back(eci);
-		}
-
+		while( ss >> eci ) vec_eci.push_back(eci);
 		ecicar[i] = std::move(vec_eci);
+
 		index.push_back(i);
 	}
 
