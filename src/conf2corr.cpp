@@ -41,6 +41,8 @@ Conf2corr::Conf2corr(char* filename,
 ) : pbasis_functions(new basisfunc()), pindex_orders(new indexorders()), pposcar_spin(new ParsePoscar(filename)){
 	_in->setData("SPINCE", spince, true);
 	_in->setData("SPINPOSCAR", spinposcar, true);
+	_in->setData("CHECKINSIDESPIN", spin_for_check_inside);
+	_in->setData("CHECKINSIDEINDEX", index_for_check_inside);
 	pall_clusters = _pall_clusters;
 
 	this->setSpins(_plabels);
@@ -214,25 +216,35 @@ void Conf2corr::setInitialCorrelationFunction(){
 	this->correlation_functions_before = corr;
 }
 
+
 //  !! note : point cluster is troublesome
 void Conf2corr::setCorrelationFunction_flip(int lattice_point, double after_spin){
 
 	int before_spin;
 
-	if( lattice_point >= 0 ){
-		before_spin = this->spins[lattice_point];
-		this->spins[lattice_point] = after_spin;
-	} else {
-		lattice_point = this->rnd_int_N();
-		before_spin = this->spins[lattice_point];
-		after_spin  = before_spin;
-		auto tmp_spins = this->spince;
-		std::shuffle(tmp_spins.begin(), tmp_spins.end(), mt);
-		while( before_spin == after_spin ){
-			after_spin = tmp_spins[0];
-			tmp_spins.erase(tmp_spins.begin());
+	while(1){
+		if( lattice_point >= 0 ){
+			before_spin = this->spins[lattice_point];
+			this->spins[lattice_point] = after_spin;
+		} else {
+			lattice_point = this->rnd_int_N();
+			before_spin = this->spins[lattice_point];
+			after_spin  = before_spin;
+			auto tmp_spins = this->spince;
+			std::shuffle(tmp_spins.begin(), tmp_spins.end(), mt);
+			while( before_spin == after_spin ){
+				after_spin = tmp_spins[0];
+				tmp_spins.erase(tmp_spins.begin());
+			}
+			this->spins[lattice_point] = after_spin;
 		}
-		this->spins[lattice_point] = after_spin;
+
+		if( index_for_check_inside.size() > 0 and isInNthNearestNeighborPair(lattice_point) ) {
+			this->spins[lattice_point] = before_spin;
+			lattice_point = -1;
+		} else {
+			break;
+		}
 	}
 
 	int index_before_spin = 0;
@@ -393,6 +405,21 @@ void Conf2corr::setBasisCoefficient(){
 		(*pbasis_functions)[i] = tmp;
 	}
 };
+
+
+bool Conf2corr::isInNthNearestNeighborPair(int lattice_point){
+	if( this->spins[lattice_point] != spin_for_check_inside ) return false;
+
+	for( auto index : index_for_check_inside ){
+		--index; // for empty cluster
+		for(const auto& site_clusters : (*(this->pall_clusters))[index][lattice_point] ) {
+			for(int k=0; k<site_clusters.size(); ++k){
+				if( this->spins[site_clusters[k]] == spin_for_check_inside ) return true;
+			}
+		}
+	}
+	return false;
+}
 
 void Conf2corr::dispCorr(){
 	for(int i=0, imax=correlation_functions.size(); i<imax; ++i){

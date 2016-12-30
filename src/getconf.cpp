@@ -117,9 +117,9 @@ int main(int argc, char* argv[]){
 
 	int N_unit = poscar.getAtoms().size();
 	/* if use ceil, integer distance cannot be correctly handled. */
-	int expand_x = std::ceil((pair_truncation*2.)/unit_length_x)+2;
-	int expand_y = std::ceil((pair_truncation*2.)/unit_length_y)+2;
-	int expand_z = std::ceil((pair_truncation*2.)/unit_length_z)+2;
+	int expand_x = std::ceil((pair_truncation*3.)/unit_length_x);
+	int expand_y = std::ceil((pair_truncation*3.)/unit_length_y);
+	int expand_z = std::ceil((pair_truncation*3.)/unit_length_z);
 
 	poscar.expandPoscar(expand_x, expand_y, expand_z);
 
