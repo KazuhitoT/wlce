@@ -27,24 +27,10 @@ void dispInput(std::shared_ptr<Input> in){
 	std::cout << "SETRANDOM     : " << in->getDataByString("SETRANDOM") << std::endl;
 }
 
-double wl_step(WLconfT::WLconfT& conf, const std::vector<double>& dos){
+double wl_step_by_T(WLconfT::WLconfT& conf, const std::vector<double>& dos){
 
 	conf.setTotalEnergy();
-	double ene_before = conf.getTotalEnergy();
-
-	conf.setNewConfByEnergy();
-	double ene_after  = conf.getTotalEnergy();
-
-	// std::cout << ene_before << " " << ene_after << std::endl;
-
-	double b_metropolis = exp( -(ene_after-ene_before)/kb/conf.calcTemperature() );
-	if(b_metropolis>=1.0 or b_metropolis>conf.RandReal()){
-	} else {
-		conf.Memento();
-	}
-
 	double energy = conf.getTotalEnergy();
-
 	int index_before = conf.getIndex();
 	int index_after  = index_before;
 	double temperature_before = conf.calcTemperature();
@@ -53,10 +39,7 @@ double wl_step(WLconfT::WLconfT& conf, const std::vector<double>& dos){
 	index_after  = conf.getIndex();
 	double temperature_after  = conf.calcTemperature();
 
-	// std::cout << index_before << " " << index_after << std::endl;
-	// std::cout << temperature_before << " " << temperature_after << std::endl;
-
-	double b_wl = exp( energy*(1.0/temperature_after-1.0/temperature_before)/kb + dos.at(index_before)-dos.at(index_after));
+	double b_wl = exp( - energy*(1.0/temperature_after-1.0/temperature_before)/kb + dos.at(index_before)-dos.at(index_after));
 	if(b_wl>=1.0 or b_wl>conf.RandReal()){
 	} else {
 		conf.Memento();
@@ -64,12 +47,31 @@ double wl_step(WLconfT::WLconfT& conf, const std::vector<double>& dos){
 	return conf.getTotalEnergy();
 }
 
+double wl_step_by_E(WLconfT::WLconfT& conf, const std::vector<double>& dos){
+
+	conf.setTotalEnergy();
+	double ene_before = conf.getTotalEnergy();
+
+	conf.setNewConfByEnergy();
+	double ene_after  = conf.getTotalEnergy();
+
+	double b_metropolis = exp( -(ene_after-ene_before)/kb/conf.calcTemperature() );
+	if(b_metropolis>=1.0 or b_metropolis>conf.RandReal()){
+	} else {
+		conf.Memento();
+	}
+
+	return conf.getTotalEnergy();
+}
+
+
 int main(int argc, char* argv[]){
 	std::shared_ptr<Input> in(new Input("directZ.ini"));
 
 	int mcstep, bin, flatcheck_step, minstep=0;
 	double logfactor, logflimit, tmin, tmax, tdelta, flat_criterion;
 	double low_cutoff = 1.0;
+	double probability_move_by_T = 0.0001;
 	std::string filename_spin_input;
 
 	in->setData("BIN",  bin, true);
@@ -79,23 +81,22 @@ int main(int argc, char* argv[]){
 	in->setData("TMAX", tmax, true);
 	tdelta = (tmax - tmin) / (double)bin;
 
-	in->setData("FLATCHECKSTEP", flatcheck_step, true);
 	in->setData("LOGFACTOR", logfactor, true);
 	in->setData("LOGFLIMIT", logflimit, true);
 	in->setData("FLATCRITERION", flat_criterion, true);
+	in->setData("PROBABILITYBYT" ,probability_move_by_T, true);
 
 	in->setData("SPININPUT", filename_spin_input);
 
+	in->setData("FLATCHECKSTEP", flatcheck_step);
 	in->setData("MINSTEP",   minstep);
 	in->setData("LOWCUTOFF", low_cutoff);
 
 
-	const ParseLabels label("./labels.in");
 	const ParseEcicar ecicar("./ecicar");
-	const ParseMultiplicityIn multiplicity_in("./multiplicity.in", ecicar.getIndex());
-	const ParseClusterIn  cluster_in("./clusters.in", ecicar.getIndex(), multiplicity_in.getMultiplicityIn());
+	const ParseClusterOut cluster("./cluster.out", ecicar.getIndex());
 
-	WLconfT::WLconfT PoscarSpin("./poscar.spin", in, label.getLabels(), cluster_in.getCluster(), ecicar.getEci(), nullptr, nullptr);
+	WLconfT::WLconfT PoscarSpin("./poscar.spin", in, cluster.getLabel(), cluster.getCluster(), ecicar.getEci(), nullptr, nullptr);
 
 	const int N = PoscarSpin.getSpins().size();
 
@@ -150,22 +151,29 @@ int main(int argc, char* argv[]){
 
 				int before_index = PoscarSpin.getIndex();
 
-				wl_step(PoscarSpin, dos);
-				// PoscarSpin.setIndex();
-				int index = PoscarSpin.getIndex();
 
-				if( dos[index] == 0 ){
-					auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , index);
-					if( it != index_neglect_bin.end() ){
-						dos[index] = dos[PoscarSpin.getBeforeIndex()];
-						histogram[index] = histogram[PoscarSpin.getBeforeIndex()];
-						index_neglect_bin.erase(it);
-						PoscarSpin.outputEnergySpin(index, filename_rep_macrostate);
+				if( PoscarSpin.RandReal() < probability_move_by_T ) {
+					wl_step_by_T(PoscarSpin, dos);
+
+					int index = PoscarSpin.getIndex();
+
+					if( dos[index] == 0 ){
+						auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , index);
+						if( it != index_neglect_bin.end() ){
+							dos[index] = dos[PoscarSpin.getBeforeIndex()];
+							histogram[index] = histogram[PoscarSpin.getBeforeIndex()];
+							index_neglect_bin.erase(it);
+							PoscarSpin.outputEnergySpin(index, filename_rep_macrostate);
+						}
 					}
+
+					dos.at(index) += logfactor;
+					histogram.at(index) += 1;
+
+				} else {
+					wl_step_by_E(PoscarSpin, dos);
 				}
 
-				dos.at(index) += logfactor;
-				histogram.at(index) += 1;
 
 			}  /*  end MC sweep */
 

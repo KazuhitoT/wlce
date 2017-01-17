@@ -11,7 +11,7 @@
 int main(){
 	const ParseLabels labels_in("./labels.in");
 	const ParseMultiplicityIn multiplicity_in("./multiplicity.in");
-	const ParseClusterIn  cluster_in("./clusters.in", multiplicity_in.getMultiplicityIn());
+	const ParseClusterOut  cluster_in("./clusters.in", multiplicity_in.getMultiplicityIn());
 
 	Input in("corrdump.ini");
 	std::vector<double> spince;

@@ -13,6 +13,7 @@ Metroconf::Metroconf(char* filename,
 	{
 
 	setEci(_ecicar);
+	setTotalEnergy();
 	_in->setData("CHEMIPOT", this->chemical_potential);
 
 }

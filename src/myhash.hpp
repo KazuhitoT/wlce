@@ -1,3 +1,6 @@
+#ifndef __MY_HASH_HPP
+#define __MY_HASH_HPP
+
 #include <vector>
 
 class hash_vecd {
@@ -25,3 +28,5 @@ public:
     return result;
   }
 };
+
+#endif
