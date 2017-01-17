@@ -36,6 +36,11 @@ void showResult(int is_corrdump, const std::shared_ptr<Input>& in){
 	if( is_corrdump>0 ){
 		Conf2corr PoscarSpin("./poscar.spin", in, parse_cluster_out.getLabel(), parse_cluster_out.getCluster());
 
+		for(int i=0; i<PoscarSpin.getSpins().size(); ++i ){
+			bool isin = PoscarSpin.isInNthNearestNeighborPair(i);
+			if( isin ) return;
+		}
+
 		for(const auto& corrs : PoscarSpin.getCorrelationFunctions() ) {
 			for(const auto& corr : corrs){
 				std::cout << corr << " ";
