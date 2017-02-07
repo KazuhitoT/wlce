@@ -50,6 +50,10 @@ target_link_libraries(metropolis common conf)
 add_executable(wang-landau ./src/wang-landau.cpp)
 target_link_libraries(wang-landau common conf)
 
+add_executable(directZ ./src/directZ.cpp ./src/wlconfT.cpp)
+target_link_libraries(directZ common conf)
+
+
 find_package(Boost 1.4 COMPONENTS unit_test_framework)
 if(Boost_FOUND)
 	add_executable(test-main
