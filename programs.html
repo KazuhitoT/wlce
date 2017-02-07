@@ -186,6 +186,46 @@
 </tbody>
 </table>
 </div>
+<div class="section" id="directz">
+<span id="id9"></span><h2>3.5. directZ<a class="headerlink" href="#directz" title="Permalink to this headline">¶</a></h2>
+<p>Calculate parition functions directly <a class="reference internal" href="#cz2007" id="id10">[CZ2007]</a></p>
+<ul>
+<li><p class="first">Input file</p>
+<ul class="simple">
+<li><a class="reference internal" href="inputs.html#directz-ini"><span class="std std-ref">directZ.ini</span></a>, <a class="reference internal" href="inputs.html#poscar-spin"><span class="std std-ref">poscar.spin</span></a>, cluster.out, <a class="reference internal" href="inputs.html#ecicar"><span class="std std-ref">ecicar</span></a></li>
+</ul>
+</li>
+<li><p class="first">Output files</p>
+<ul>
+<li><p class="first">out-wl*.dat</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Index_of_bin Bin_low(temperature) Bin_high(temperature) logarithm_of_Z Histogram</span>
+<span class="mi">0</span> <span class="o">-</span><span class="mf">256.0000000000</span> <span class="o">-</span><span class="mf">253.9921568627</span> <span class="mf">32087.3484191895</span> <span class="mf">9458.0000000000</span>
+<span class="mi">1</span> <span class="o">-</span><span class="mf">253.9921568627</span> <span class="o">-</span><span class="mf">251.9843137255</span> <span class="mf">32092.8212432861</span> <span class="mf">9427.0000000000</span>
+<span class="mi">2</span> <span class="o">-</span><span class="mf">251.9843137255</span> <span class="o">-</span><span class="mf">249.9764705882</span> <span class="mf">32093.5523376465</span> <span class="mf">9820.0000000000</span>
+<span class="mi">3</span> <span class="o">-</span><span class="mf">249.9764705882</span> <span class="o">-</span><span class="mf">247.9686274510</span> <span class="mf">32097.6667175293</span> <span class="mf">10686.0000000000</span>
+<span class="mi">4</span> <span class="o">-</span><span class="mf">247.9686274510</span> <span class="o">-</span><span class="mf">245.9607843137</span> <span class="mf">32099.1176452637</span> <span class="mf">9044.0000000000</span>
+<span class="mi">5</span> <span class="o">-</span><span class="mf">245.9607843137</span> <span class="o">-</span><span class="mf">243.9529411765</span> <span class="mf">32102.2534332275</span> <span class="mf">9965.0000000000</span>
+<span class="mi">6</span> <span class="o">-</span><span class="mf">243.9529411765</span> <span class="o">-</span><span class="mf">241.9450980392</span> <span class="mf">32103.9153900146</span> <span class="mf">10233.0000000000</span>
+<span class="mi">7</span> <span class="o">-</span><span class="mf">241.9450980392</span> <span class="o">-</span><span class="mf">239.9372549020</span> <span class="mf">32106.5745849609</span> <span class="mf">9918.0000000000</span>
+<span class="mi">8</span> <span class="o">-</span><span class="mf">239.9372549020</span> <span class="o">-</span><span class="mf">237.9294117647</span> <span class="mf">32108.4700622559</span> <span class="mf">10952.0000000000</span>
+<span class="mi">9</span> <span class="o">-</span><span class="mf">237.9294117647</span> <span class="o">-</span><span class="mf">235.9215686275</span> <span class="mf">32110.8459320068</span> <span class="mf">9683.0000000000</span>
+<span class="mi">10</span> <span class="o">-</span><span class="mf">235.9215686275</span> <span class="o">-</span><span class="mf">233.9137254902</span> <span class="mf">32112.8449401855</span> <span class="mf">11868.0000000000</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">macrostate.out, poscar.latest</p>
+</li>
+</ul>
+</li>
+</ul>
+<table class="docutils citation" frame="void" id="cz2007" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id10">[CZ2007]</a></td><td>Cheng Zhang and Jianpeng Ma, Phys. Rev. E 76, 036798 (2007).</td></tr>
+</tbody>
+</table>
+</div>
 </div>
 
 
@@ -201,6 +241,7 @@
 <li><a class="reference internal" href="#getconf">3.2. getconf</a></li>
 <li><a class="reference internal" href="#metropolis">3.3. metropolis</a></li>
 <li><a class="reference internal" href="#wang-landau">3.4. wang-landau</a></li>
+<li><a class="reference internal" href="#directz">3.5. directZ</a></li>
 </ul>
 </li>
 </ul>

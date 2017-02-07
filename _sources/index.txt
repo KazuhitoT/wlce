@@ -16,6 +16,7 @@ Features
 - Canonical Metropolis sampling
 - Canonical Wang-Landau sampling
 - Semi-Grand-Canonical Wang-Landau sampling
+- Direct computation of partition functions
 
 Contents
 ===================

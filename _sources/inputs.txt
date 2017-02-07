@@ -10,17 +10,17 @@ Configuration for :ref:`cluster`
 
 * TAGS
 
-	- :ref:`MAXBODY <tag-maxbody>`
-	- :ref:`TRUNCATION <tag-truncation>`
-	- :ref:`PAIRTRUNC <tag-pairtrunc>` *(optional)*
-	- :ref:`TRITRUNC  <tag-tritrunc>` *(optional)*
-	- :ref:`QUADTRUNC <tag-quadtrunc>` *(optional)*
+  - :ref:`MAXBODY <tag-maxbody>`
+  - :ref:`TRUNCATION <tag-truncation>`
+  - :ref:`PAIRTRUNC <tag-pairtrunc>` *(optional)*
+  - :ref:`TRITRUNC  <tag-tritrunc>` *(optional)*
+  - :ref:`QUADTRUNC <tag-quadtrunc>` *(optional)*
 
 Example for cluster.ini::
 
-	[INPUT]
-	MAXBODY    = 4
-	TRUNCATION = 2
+  [INPUT]
+  MAXBODY    = 4
+  TRUNCATION = 2
 
 
 .. _getconf.ini:
@@ -35,15 +35,15 @@ getconf.ini
 
 * TAGS
 
-	- :ref:`SPINCE <tag-spince>`
-	- :ref:`SPINPOSCAR <tag-spinposcar>`
-	- :ref:`MAXBODY <tag-maxbody>`
-	- :ref:`TRUNCATION <tag-truncation>`
-	- :ref:`PAIRTRUNC <tag-pairtrunc>` *(optional)*
-	- :ref:`TRITRUNC  <tag-tritrunc>` *(optional)*
-	- :ref:`QUADTRUNC <tag-quadtrunc>` *(optional)*
-	- :ref:`CORRDUMP <tag-corrdump>` *(optional)*
-	- :ref:`CLUSTEROUT <tag-clusterout>` *(optional)*
+  - :ref:`SPINCE <tag-spince>`
+  - :ref:`SPINPOSCAR <tag-spinposcar>`
+  - :ref:`MAXBODY <tag-maxbody>`
+  - :ref:`TRUNCATION <tag-truncation>`
+  - :ref:`PAIRTRUNC <tag-pairtrunc>` *(optional)*
+  - :ref:`TRITRUNC  <tag-tritrunc>` *(optional)*
+  - :ref:`QUADTRUNC <tag-quadtrunc>` *(optional)*
+  - :ref:`CORRDUMP <tag-corrdump>` *(optional)*
+  - :ref:`CLUSTEROUT <tag-clusterout>` *(optional)*
 
 Example for getconf.ini::
 
@@ -63,12 +63,12 @@ Configuration for :ref:`metropolis`
 
 * TAGS
 
-	- :ref:`SPINCE <tag-spince>`
-	- :ref:`SPINPOSCAR <tag-spinposcar>`
-	- :ref:`MCSTEP <tag-mcstep>`
-	- :ref:`SAMPLESTEP<tag-samplestep>`
-	- :ref:`TEMPERATURE <tag-temperature>`
-	- :ref:`CHEMIPOT <tag-chemipot>` *(optional)*
+  - :ref:`SPINCE <tag-spince>`
+  - :ref:`SPINPOSCAR <tag-spinposcar>`
+  - :ref:`MCSTEP <tag-mcstep>`
+  - :ref:`SAMPLESTEP<tag-samplestep>`
+  - :ref:`TEMPERATURE <tag-temperature>`
+  - :ref:`CHEMIPOT <tag-chemipot>` *(optional)*
 
 Example for metropolis.ini::
 
@@ -89,17 +89,17 @@ Configuration for :ref:`wang-landau`
 
 * TAGS
 
-	- :ref:`SPINCE <tag-spince>`
-	- :ref:`SPINPOSCAR <tag-spinposcar>`
-	- :ref:`MCSTEP <tag-mcstep>`
-	- :ref:`FLATCHECKSTEP <tag-flatcheckstep>`
-	- :ref:`FLATCRITERION <tag-logflimit>`
-	- :ref:`LOGFACTOR <tag-logfactor>`
-	- :ref:`BIN <tag-logflimit>`
-	- :ref:`EMIN <tag-logflimit>`
-	- :ref:`EMAX <tag-logflimit>`
-	- :ref:`CHEMIPOT <tag-logflimit>` *(optional)*
-	- :ref:`SPININPUT <tag-spininput>` *(optional)*
+  - :ref:`SPINCE <tag-spince>`
+  - :ref:`SPINPOSCAR <tag-spinposcar>`
+  - :ref:`MCSTEP <tag-mcstep>`
+  - :ref:`FLATCHECKSTEP <tag-flatcheckstep>`
+  - :ref:`FLATCRITERION <tag-flatcriterion>`
+  - :ref:`LOGFACTOR <tag-logfactor>`
+  - :ref:`BIN <tag-bin>`
+  - :ref:`EMIN <tag-emin>`
+  - :ref:`EMAX <tag-emax>`
+  - :ref:`CHEMIPOT <tag-chemipot>` *(optional)*
+  - :ref:`SPININPUT <tag-spininput>` *(optional)*
 
 
 Example for wang-landau.ini::
@@ -118,6 +118,45 @@ Example for wang-landau.ini::
   CHEMIPOT      = 0 1 # sgc mode
 
 
+.. _directZ.ini:
+
+directZ.ini
+-------------------
+
+Configuration for :ref:`directZ`
+
+* TAGS
+
+  - :ref:`SPINCE <tag-spince>`
+  - :ref:`SPINPOSCAR <tag-spinposcar>`
+  - :ref:`MCSTEP <tag-mcstep>`
+  - :ref:`FLATCHECKSTEP <tag-flatcheckstep>`
+  - :ref:`FLATCRITERION <tag-flatcriterion>`
+  - :ref:`LOGFACTOR <tag-logfactor>`
+  - :ref:`BIN <tag-bin>`
+  - :ref:`TMIN <tag-tmin>`
+  - :ref:`TMAX <tag-tmax>`
+  - :ref:`TMOVELIMIT <tag-tmovelimit>`
+  - :ref:`PROBABILITYBYT <tag-probabilitybyt>`
+  - :ref:`CHEMIPOT <tag-chemipot>` *(optional)*
+  - :ref:`SPININPUT <tag-spininput>` *(optional)*
+
+
+Example for directZ.ini::
+
+  [INPUT]
+  SPINCE        = -1 1
+  SPINPOSCAR    = -1 1
+  MCSTEP        = 100
+  FLATCHECKSTEP = 100
+  LOGFACTOR     = 4
+  LOGFLIMIT     = 0.0000001
+  BIN           = 200
+  TMIN          = 0
+  TMAX          = 8
+  TMOVELIMIT    = 4
+  FLATCRITERION = 0.8
+
 
 .. _other-inputs:
 
@@ -135,17 +174,17 @@ The number of spins and those positions should be set.
 
 Example for poscar.in::
 
-	POSCAR fcc
-	1.0
-	    4.00000000000000      0.00000000000000      0.00000000000000
-	    0.00000000000000      4.00000000000000      0.00000000000000
-	    0.00000000000000      0.00000000000000      4.00000000000000
-	 4
-	Direct
-	    0.00000000000000      0.00000000000000      0.00000000000000
-	    0.50000000000000      0.50000000000000      0.00000000000000
-	    0.00000000000000      0.50000000000000      0.50000000000000
-	    0.50000000000000      0.00000000000000      0.50000000000000
+  POSCAR fcc
+  1.0
+      4.00000000000000      0.00000000000000      0.00000000000000
+      0.00000000000000      4.00000000000000      0.00000000000000
+      0.00000000000000      0.00000000000000      4.00000000000000
+   4
+  Direct
+      0.00000000000000      0.00000000000000      0.00000000000000
+      0.50000000000000      0.50000000000000      0.00000000000000
+      0.00000000000000      0.50000000000000      0.50000000000000
+      0.50000000000000      0.00000000000000      0.50000000000000
 
 
 
@@ -159,17 +198,17 @@ The number of spins for each composition and those positions should be set.
 
 Example for poscar.spin::
 
-	POSCAR spin fcc
-	1.0
-	    4.00000000000000      0.00000000000000      0.00000000000000
-	    0.00000000000000      4.00000000000000      0.00000000000000
-	    0.00000000000000      0.00000000000000      4.00000000000000
-	 2 2
-	Direct
-	    0.00000000000000      0.00000000000000      0.00000000000000
-	    0.50000000000000      0.50000000000000      0.00000000000000
-	    0.00000000000000      0.50000000000000      0.50000000000000
-	    0.50000000000000      0.00000000000000      0.50000000000000
+  POSCAR spin fcc
+  1.0
+      4.00000000000000      0.00000000000000      0.00000000000000
+      0.00000000000000      4.00000000000000      0.00000000000000
+      0.00000000000000      0.00000000000000      4.00000000000000
+   2 2
+  Direct
+      0.00000000000000      0.00000000000000      0.00000000000000
+      0.50000000000000      0.50000000000000      0.00000000000000
+      0.00000000000000      0.50000000000000      0.50000000000000
+      0.50000000000000      0.00000000000000      0.50000000000000
 
 
 
@@ -183,19 +222,19 @@ ECI should be consistent with basis functions.
 
 Example for ecicar in binary system::
 
-	0 0
-	1 0.1
-	2 0.05
-	3 -0.02
-	6 0.01
-	...
+  0 0
+  1 0.1
+  2 0.05
+  3 -0.02
+  6 0.01
+  ...
 
 Example for ecicar in ternary system::
 
-	0 0
-	1 0.1 0.2 0.1
-	2 0.05 0.2 0.3
-	...
+  0 0
+  1 0.1 0.2 0.1
+  2 0.05 0.2 0.3
+  ...
 
 
 
@@ -393,3 +432,37 @@ CHEMIPOT
 Chemical potentials for each composition. If this tag is set, ensemble is automatically changed from canonical to semi-grand-canonical, i.e.  the sampling procedure is changed from a pair-spins exchange to single-spin-flip.::
 
   CHEMIPOT      = 0 1 # sgc mode
+
+
+
+.. _tag-tmin:
+
+TMIN
+^^^^^^^^^^^^^^^^^^^
+
+The minimum of temperature where the simulation can reach.
+
+
+.. _tag-tmax:
+
+TMAX
+^^^^^^^^^^^^^^^^^^^
+
+The maximum of temperature where the simulation can reach.
+
+
+.. _tag-tmovelimit:
+
+TMOVELIMIT
+^^^^^^^^^^^^^^^^^^^
+
+The number of :ref:`tag-bin` the random walker can reach in one step.
+
+
+
+.. _tag-probabilitybyt:
+
+PROBABILITYBYT
+^^^^^^^^^^^^^^^^^^^
+
+The probability that the similation select the type of move, energy move or temperature move.
