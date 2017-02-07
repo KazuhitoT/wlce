@@ -40,8 +40,7 @@ double wl_step_by_T(WLconfT::WLconfT& conf, const std::vector<double>& dos){
 	double temperature_after  = conf.calcTemperature();
 
 	double b_wl = exp( - energy*(1.0/temperature_after-1.0/temperature_before)/kb + dos.at(index_before)-dos.at(index_after));
-	if(b_wl>=1.0 or b_wl>conf.RandReal()){
-	} else {
+	if(b_wl<conf.RandReal()){
 		conf.Memento();
 	}
 	return conf.getTotalEnergy();
@@ -56,8 +55,7 @@ double wl_step_by_E(WLconfT::WLconfT& conf, const std::vector<double>& dos){
 	double ene_after  = conf.getTotalEnergy();
 
 	double b_metropolis = exp( -(ene_after-ene_before)/kb/conf.calcTemperature() );
-	if(b_metropolis>=1.0 or b_metropolis>conf.RandReal()){
-	} else {
+	if(b_metropolis<conf.RandReal()){
 		conf.Memento();
 	}
 
@@ -151,29 +149,26 @@ int main(int argc, char* argv[]){
 
 				int before_index = PoscarSpin.getIndex();
 
-
 				if( PoscarSpin.RandReal() < probability_move_by_T ) {
 					wl_step_by_T(PoscarSpin, dos);
-
-					int index = PoscarSpin.getIndex();
-
-					if( dos[index] == 0 ){
-						auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , index);
-						if( it != index_neglect_bin.end() ){
-							dos[index] = dos[PoscarSpin.getBeforeIndex()];
-							histogram[index] = histogram[PoscarSpin.getBeforeIndex()];
-							index_neglect_bin.erase(it);
-							PoscarSpin.outputEnergySpin(index, filename_rep_macrostate);
-						}
-					}
-
-					dos.at(index) += logfactor;
-					histogram.at(index) += 1;
-
 				} else {
 					wl_step_by_E(PoscarSpin, dos);
 				}
 
+				int index = PoscarSpin.getIndex();
+
+				if( dos[index] == 0 ){
+					auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , index);
+					if( it != index_neglect_bin.end() ){
+						dos[index] = dos[PoscarSpin.getBeforeIndex()];
+						histogram[index] = histogram[PoscarSpin.getBeforeIndex()];
+						index_neglect_bin.erase(it);
+						PoscarSpin.outputEnergySpin(index, filename_rep_macrostate);
+					}
+				}
+
+				dos.at(index) += logfactor;
+				histogram.at(index) += 1;
 
 			}  /*  end MC sweep */
 
