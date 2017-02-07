@@ -6,12 +6,15 @@
 
 #include "./parser.hpp"
 #include "./input.hpp"
-#include "./wlconf.hpp"
+#include "./wlconfT.hpp"
+
+constexpr double kb = 0.0000861733; // [eV/K]
 
 void dispInput(std::shared_ptr<Input> in){
 	//  [INPUT]
-	std::cout << "EMIN          : " << in->getDataByString("EMIN") << std::endl;
-	std::cout << "EMAX          : " << in->getDataByString("EMAX") << std::endl;
+	std::cout << "TMIN          : " << in->getDataByString("TMIN") << std::endl;
+	std::cout << "TMAX          : " << in->getDataByString("TMAX") << std::endl;
+	std::cout << "TMOVELIMIT    : " << in->getDataByString("TMOVELIMIT") << std::endl;
 	std::cout << "BIN           : " << in->getDataByString("BIN")  << std::endl;
 	std::cout << "MCSTEP        : " << in->getDataByString("MCSTEP")        << std::endl;
 	std::cout << "FLATCHECKSTEP : " << in->getDataByString("FLATCHECKSTEP") << std::endl;
@@ -24,45 +27,66 @@ void dispInput(std::shared_ptr<Input> in){
 	std::cout << "SETRANDOM     : " << in->getDataByString("SETRANDOM") << std::endl;
 }
 
-double wl_step(WLconf::WLconf& conf, const std::vector<double>& dos){
+double wl_step_by_T(WLconfT::WLconfT& conf, const std::vector<double>& dos){
+
 	conf.setTotalEnergy();
-	conf.setIndex();
+	double energy = conf.getTotalEnergy();
 	int index_before = conf.getIndex();
 	int index_after  = index_before;
+	double temperature_before = conf.calcTemperature();
 
-	conf.setNewConf();
+	conf.setNewConfByTemperature();
 	index_after  = conf.getIndex();
+	double temperature_after  = conf.calcTemperature();
 
-	double b = exp(dos.at(index_before) - dos.at(index_after));
-	if(b>=1.0 or b>conf.RandReal()){
-	} else {
+	double b_wl = exp( - energy*(1.0/temperature_after-1.0/temperature_before)/kb + dos.at(index_before)-dos.at(index_after));
+	if(b_wl<conf.RandReal()){
 		conf.Memento();
 	}
 	return conf.getTotalEnergy();
 }
 
+double wl_step_by_E(WLconfT::WLconfT& conf, const std::vector<double>& dos){
+
+	conf.setTotalEnergy();
+	double ene_before = conf.getTotalEnergy();
+
+	conf.setNewConfByEnergy();
+	double ene_after  = conf.getTotalEnergy();
+
+	double b_metropolis = exp( -(ene_after-ene_before)/kb/conf.calcTemperature() );
+	if(b_metropolis<conf.RandReal()){
+		conf.Memento();
+	}
+
+	return conf.getTotalEnergy();
+}
+
+
 int main(int argc, char* argv[]){
-	std::shared_ptr<Input> in(new Input("wang-landau.ini"));
+	std::shared_ptr<Input> in(new Input("directZ.ini"));
 
 	int mcstep, bin, flatcheck_step, minstep=0;
-	double logfactor, logflimit, emin, emax, edelta, flat_criterion;
+	double logfactor, logflimit, tmin, tmax, tdelta, flat_criterion;
 	double low_cutoff = 1.0;
+	double probability_move_by_T = 0.0001;
 	std::string filename_spin_input;
 
 	in->setData("BIN",  bin, true);
 	in->setData("MCSTEP", mcstep, true);
 
-	in->setData("EMIN", emin, true);
-	in->setData("EMAX", emax, true);
-	edelta = (emax - emin) / (double)bin;
+	in->setData("TMIN", tmin, true);
+	in->setData("TMAX", tmax, true);
+	tdelta = (tmax - tmin) / (double)bin;
 
-	in->setData("FLATCHECKSTEP", flatcheck_step, true);
 	in->setData("LOGFACTOR", logfactor, true);
 	in->setData("LOGFLIMIT", logflimit, true);
 	in->setData("FLATCRITERION", flat_criterion, true);
+	in->setData("PROBABILITYBYT" ,probability_move_by_T, true);
 
 	in->setData("SPININPUT", filename_spin_input);
 
+	in->setData("FLATCHECKSTEP", flatcheck_step);
 	in->setData("MINSTEP",   minstep);
 	in->setData("LOWCUTOFF", low_cutoff);
 
@@ -70,7 +94,7 @@ int main(int argc, char* argv[]){
 	const ParseEcicar ecicar("./ecicar");
 	const ParseClusterOut cluster("./cluster.out", ecicar.getIndex());
 
-	WLconf::WLconf PoscarSpin("./poscar.spin", in, cluster.getLabel(), cluster.getCluster(), ecicar.getEci());
+	WLconfT::WLconfT PoscarSpin("./poscar.spin", in, cluster.getLabel(), cluster.getCluster(), ecicar.getEci(), nullptr, nullptr);
 
 	const int N = PoscarSpin.getSpins().size();
 
@@ -81,7 +105,7 @@ int main(int argc, char* argv[]){
 	std::cout << std::endl;
 	std::cout << std::endl;
 
-	std::cout << "----------  Information about [wang-landau.ini]" << std::endl;
+	std::cout << "----------  Information about [directZ.ini]" << std::endl;
 	dispInput(in);
 
 	if( index_neglect_bin.size() and  filename_spin_input.size() ){
@@ -121,12 +145,16 @@ int main(int argc, char* argv[]){
 		std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
 		std::cout << std::setprecision(10) << "--- fstep " << fstep << " --  log(factor) = " << logfactor << std::endl;
 		for(int i=1; ; ++i, ++mc_time){
-			for(int j=0; j<N ; ++j){  // start a MC sweep
+			for(int j=0; j<N ; ++j){  // スピン数だけステップ回す これで1MCSweep
 
 				int before_index = PoscarSpin.getIndex();
 
-				wl_step(PoscarSpin, dos);
-				PoscarSpin.setIndex();
+				if( PoscarSpin.RandReal() < probability_move_by_T ) {
+					wl_step_by_T(PoscarSpin, dos);
+				} else {
+					wl_step_by_E(PoscarSpin, dos);
+				}
+
 				int index = PoscarSpin.getIndex();
 
 				if( dos[index] == 0 ){
@@ -142,15 +170,14 @@ int main(int argc, char* argv[]){
 				dos.at(index) += logfactor;
 				histogram.at(index) += 1;
 
-			}  /*  end a MC sweep */
+			}  /*  end MC sweep */
 
 			if((i % mcstep) == 0){
-				WLconf::outputHistogram(dos,  histogram, emin, edelta, fstep);
-				PoscarSpin.outputPoscar("latest");
+				WLconfT::outputHistogram(dos,  histogram, tmin, tdelta, fstep);
 				std::cout << i << "sweep done " << std::endl;
 			}
-			if((i % flatcheck_step) == 0 and WLconf::checkHistogramFlat(histogram, index_neglect_bin, flat_criterion, minstep, low_cutoff)){
-				WLconf::outputHistogram(dos,  histogram, emin, edelta, fstep);
+			if((i % flatcheck_step) == 0 and WLconfT::checkHistogramFlat(histogram, index_neglect_bin, flat_criterion, minstep, low_cutoff)){
+				WLconfT::outputHistogram(dos,  histogram, tmin, tdelta, fstep);
 				final_mcsweep = i;
 				break;
 			}

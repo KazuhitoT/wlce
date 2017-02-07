@@ -4,7 +4,7 @@ Wang-Landau sampling with Cluster Expansion
 For further details, see https://kazuhitot.github.io/wlce/.
 
 ## Description
-version 0.8.8
+version 0.9.0
 
 ## Author
 
