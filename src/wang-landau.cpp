@@ -70,7 +70,7 @@ int main(int argc, char* argv[]){
 	const ParseEcicar ecicar("./ecicar");
 	const ParseClusterOut cluster("./cluster.out", ecicar.getIndex());
 
-	WLconf::WLconf PoscarSpin("./poscar.spin", in, cluster.getLabel(), cluster.getCluster(), ecicar.getEci(), nullptr, nullptr);
+	WLconf::WLconf PoscarSpin("./poscar.spin", in, cluster.getLabel(), cluster.getCluster(), ecicar.getEci());
 
 	const int N = PoscarSpin.getSpins().size();
 
@@ -121,7 +121,7 @@ int main(int argc, char* argv[]){
 		std::cout.setf(std::ios_base::fixed, std::ios_base::floatfield);
 		std::cout << std::setprecision(10) << "--- fstep " << fstep << " --  log(factor) = " << logfactor << std::endl;
 		for(int i=1; ; ++i, ++mc_time){
-			for(int j=0; j<N ; ++j){  // スピン数だけステップ回す これで1MCSweep
+			for(int j=0; j<N ; ++j){  // start a MC sweep
 
 				int before_index = PoscarSpin.getIndex();
 
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]){
 				dos.at(index) += logfactor;
 				histogram.at(index) += 1;
 
-			}  /*  end MC sweep */
+			}  /*  end a MC sweep */
 
 			if((i % mcstep) == 0){
 				WLconf::outputHistogram(dos,  histogram, emin, edelta, fstep);

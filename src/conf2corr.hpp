@@ -36,14 +36,16 @@ class Conf2corr {
 		std::shared_ptr<basisfunc> pbasis_functions;
 		/* vec[num_in_cluster][index][combinations][order] */
 		std::shared_ptr<indexorders> pindex_orders;
+		/*  allclusters index->site->multiplicity->clusters */
+		std::shared_ptr<allclusters> pall_clusters;
 
 		const std::shared_ptr<ParsePoscar> pposcar_spin;
 
 		/* --------- Input parameter for Conf2corr --------- */
 		std::vector<double> spinposcar;
 		std::vector<double> spince;  // if 24 8 in poscar at line t, [0]-> -1 for 24 atoms and [1] -> 1 for 8 atoms
-		/*  allclusters index->site->multiplicity->clusters */
-		std::shared_ptr<allclusters> pall_clusters;
+		std::vector<int> index_for_check_inside;
+		double spin_for_check_inside;
 		/* ------------------------------------------------- */
 
 		std::mt19937 mt;
@@ -102,6 +104,8 @@ class Conf2corr {
 			this->correlation_functions = this->correlation_functions_before;
 			this->compositions = this->compositions_before;
 		};
+
+		bool isInNthNearestNeighborPair(int lattice_point);
 
 		void dispCorr();
 		void outputPoscar(std::string prefix="out");

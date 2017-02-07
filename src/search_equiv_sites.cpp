@@ -34,20 +34,25 @@ void setSiteReferencesAndPairIndex(
 	){
 
 	std::vector<double> vec_pair_distance;  /*  hash function cannot correctly handle float value, so we should cast a specific float value  */
+	Eigen::Vector3d unit;
+	unit << precision,precision,precision;
 
 	for(const auto lattice : vec_lattices){
 		for(const auto base_site : lattice->getSites()){
 			const auto lattice_basis = lattice->getLatticeBasis();
+			double distance_precision	= (lattice_basis * unit).norm();
 			for( const auto site : vec_sites ){
 
 				const Eigen::Vector3d relative_coord = validCoordinate(site->getCoordinate(), base_site->getCoordinate());
 
 				double distance = (lattice_basis * relative_coord).norm();
-				if ( precision < distance and distance <= (pair_truncation+precision) ) {
+				if ( distance_precision < distance and distance <= (pair_truncation+distance_precision) ) {
 
-					auto itr_distance = std::find_if( vec_pair_distance.begin(), vec_pair_distance.end(), [precision, distance](const double x){
-						return std::fabs(x-distance) < precision;
+					auto itr_distance = std::find_if( vec_pair_distance.begin(), vec_pair_distance.end(), [distance_precision, distance](const double x){
+						return std::fabs(x-distance) < distance_precision;
 					});
+
+					// cast distance
 					if( itr_distance != vec_pair_distance.end() ) distance = (*itr_distance);
 					else vec_pair_distance.push_back(distance);
 
