@@ -1,7 +1,6 @@
 #include <unordered_map>
 #include <memory>
 #include <iterator>
-#include <regex>
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include "./parser.hpp"
@@ -62,6 +61,12 @@ void showResult(int is_corrdump, const std::shared_ptr<Input>& in){
 		Metroconf PoscarSpin("./poscar.spin", in, parse_cluster_out.getLabel(), pall_clusters_dummy, ecicar.getEci(), nullptr, nullptr);
 		PoscarSpin.setTotalEnergy();
 		auto compositions = PoscarSpin.getCompositions();
+
+		for(int i=0; i<PoscarSpin.getSpins().size(); ++i ){
+			bool isin = PoscarSpin.isInNthNearestNeighborPair(i);
+			if( isin ) return;
+		}
+
 		for(const auto c : compositions) std::cout << c << " ";
 		std::cout << PoscarSpin.getTotalEnergy() << std::endl;
 	}

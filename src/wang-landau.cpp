@@ -47,6 +47,7 @@ int main(int argc, char* argv[]){
 	int mcstep, bin, flatcheck_step, minstep=0;
 	double logfactor, logflimit, emin, emax, edelta, flat_criterion;
 	double low_cutoff = 1.0;
+	int is_restart = 0;
 	std::string filename_spin_input;
 
 	in->setData("BIN",  bin, true);
@@ -66,6 +67,8 @@ int main(int argc, char* argv[]){
 	in->setData("MINSTEP",   minstep);
 	in->setData("LOWCUTOFF", low_cutoff);
 
+	in->setData("RESTART", is_restart);
+
 
 	const ParseEcicar ecicar("./ecicar");
 	const ParseClusterOut cluster("./cluster.out", ecicar.getIndex());
@@ -82,7 +85,7 @@ int main(int argc, char* argv[]){
 	std::cout << std::endl;
 
 	std::cout << "----------  Information about [wang-landau.ini]" << std::endl;
-	dispInput(in);
+	in->disp();
 
 	if( index_neglect_bin.size() and  filename_spin_input.size() ){
 		std::cout << "NEGLECT BIN INDEX :" << std::endl;
@@ -114,6 +117,10 @@ int main(int argc, char* argv[]){
 
 	auto f_start = std::chrono::system_clock::now();
 	auto f_end   = std::chrono::system_clock::now();
+
+	if( is_restart>0 ){
+		WLconf::restart(fstep, logfactor, dos, index_neglect_bin);
+	}
 
  	int final_mcsweep = 0;
  	while(logflimit < logfactor){
