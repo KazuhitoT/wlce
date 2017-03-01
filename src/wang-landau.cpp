@@ -120,15 +120,29 @@ int main(int argc, char* argv[]){
 	auto f_start = std::chrono::system_clock::now();
 	auto f_end   = std::chrono::system_clock::now();
 
-	if( is_restart>0 ){
-		WLconf::restart(fstep, logfactor, dos, index_neglect_bin);
-	}
 
 	auto tunneling_time_start = std::chrono::system_clock::now();
 	auto tunneling_time_end   = std::chrono::system_clock::now();
 
-	int index_lowest  = std::numeric_limits<int>::max();
-	int index_highest = std::numeric_limits<int>::min();
+	/*  set lowest/highest index for tunneling-time calculation  */
+	int index_lowest, index_highest;
+	if( is_restart>0 ){
+		WLconf::restart(fstep, logfactor, dos, index_neglect_bin);
+
+		for(int i=0; i<bin; ++i){
+			if( i != index_neglect_bin[i] ){
+				index_lowest = i;
+				break;
+			}
+		}
+
+		for(int i=bin; i>=0; --i){
+			if( i != index_neglect_bin[i] ){
+				index_highest = i;
+				break;
+			}
+		}
+	}
 
 	enum class TunnelingTimeStartPoint
 	{
