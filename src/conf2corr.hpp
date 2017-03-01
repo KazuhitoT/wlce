@@ -13,6 +13,7 @@
 #include <boost/algorithm/string.hpp>
 #include <Eigen/Core>
 #include <Eigen/LU>
+#include <unordered_map>
 #include <memory>
 #include <cfloat>
 
@@ -27,14 +28,20 @@ class Conf2corr {
 	private:
 		std::vector<double> compositions;
 		std::vector<double> compositions_before;
-		std::vector<double> spins;
+		/* spins consists of index of spince */
+		std::vector<int> spins;
 		std::vector<std::vector<double>> correlation_functions;
 		/*  tuple[spin_index, spin_before, spin_after] */
-		std::vector<std::tuple<int, double, double>> vec_changed_spins;
+		std::vector<std::tuple<int, int, int>> vec_changed_spins;
+		/* all_calculated_basis_functions[order][spin -> basisfunc] */
+		std::vector<std::vector<double>> all_calculated_basis_functions;
 
 		/* vec[basis][degree] vec[basis]->polynomials */
 		std::shared_ptr<basisfunc> pbasis_functions;
-		/* vec[num_in_cluster][index][combinations][order] */
+		/*
+		 * vec[num_in_cluster][index][combinations][order]
+		 * 1 <= order <= compositions.size()-1
+		*/
 		std::shared_ptr<indexorders> pindex_orders;
 		/*  allclusters index->site->multiplicity->clusters */
 		std::shared_ptr<allclusters> pall_clusters;
@@ -45,11 +52,12 @@ class Conf2corr {
 		std::vector<double> spinposcar;
 		std::vector<double> spince;  // if 24 8 in poscar at line t, [0]-> -1 for 24 atoms and [1] -> 1 for 8 atoms
 		std::vector<int> index_for_check_inside;
-		double spin_for_check_inside;
+		double spin_for_check_inside = -10000;
 		/* ------------------------------------------------- */
 
 		std::mt19937 mt;
 		std::function<int ()> rnd_int_N;
+		std::function<int ()> rnd_int_spince_index;
 		std::function<double ()> rnd_real;
 
 	public:
@@ -71,7 +79,7 @@ class Conf2corr {
 		~Conf2corr(){};
 
 		void setSpins(std::shared_ptr<labels> plabels);
-		void setSpins(std::vector<double> _spins){ this->spins = _spins; }
+		void setSpins(std::vector<int> _spins){ this->spins = _spins; }
 		void setSpins(int i, double spin){ this->spins.at(i) = spin; }
 		void setSpinsRandom(){
 			std::shuffle(this->spins.begin(), this->spins.end(), mt);
@@ -81,10 +89,10 @@ class Conf2corr {
 
 		void setBasisCoefficient();
 		void setIndexOrders();
-		double getBasisFunction(int, int);
+		void setBasisFunction();
 
 		void setInitialCorrelationFunction();
-		void setCorrelationFunction_flip(int lattice_point = -1, double after_spin = -1);
+		void setCorrelationFunction_flip(int lattice_point = -1, int after_spin = -1);
 		void setCorrelationFunction_exchange();
 
 		double calcCorrelationFunctionNorm(double p);
@@ -108,23 +116,25 @@ class Conf2corr {
 		int RandN(){return rnd_int_N();};
 		double RandReal(){ return rnd_real();};
 
-		std::vector<double> getSpins(){ return spins; };
-		std::vector<double> getCompositions(){ return compositions; };
-		double getCompositions(int i){ return compositions[i]; };
-		std::vector<double> getSpinCE(){ return spince; };
-		std::vector<double> getSpinPoscar(){ return spinposcar; };
-		std::vector<std::vector<double>> getCorrelationFunctions() const { return correlation_functions; };
-		double getCorrelationFunctions(int i, int j){ return correlation_functions[i][j]; };
+		std::vector<int> const& getSpins() const { return spins; };
+		std::vector<double> const& getCompositions() const{ return compositions; };
+		double const& getCompositions(int i) const{ return compositions[i]; };
+		std::vector<double> const& getSpinCE() const{ return spince; };
+		std::vector<double> const& getSpinPoscar() const{ return spinposcar; };
+		std::vector<std::vector<double>> const& getCorrelationFunctions() const { return correlation_functions; };
+		double const& getCorrelationFunctions(int i, int j) const{ return correlation_functions[i][j]; };
 
-		std::vector<double> getBeforeCompositions(){ return compositions_before; };
+		double getBasisFunction(int order, int _spin) {return all_calculated_basis_functions[order][_spin];};
+
+		std::vector<double> const& getBeforeCompositions() const{ return compositions_before; };
 		// std::vector<double> getBeforeSpins(){ return spins_before; };
-		std::vector<std::vector<double>> getBeforeCorrelationFunctions(){ return correlation_functions; };
-		std::shared_ptr<basisfunc> getBasisFunc(){ return pbasis_functions;}
-		std::shared_ptr<indexorders> getIndexOrders(){ return pindex_orders;}
-		std::shared_ptr<allclusters> getAllClusters(){ return pall_clusters;}
-		std::mt19937 getMt(){ return mt;}
-		std::function<int ()> getRndIntN(){ return rnd_int_N;}
-		std::function<double ()> getRndReal(){ return rnd_real;}
+		std::vector<std::vector<double>> const& getBeforeCorrelationFunctions() const{ return correlation_functions; };
+		std::shared_ptr<basisfunc> const& getBasisFunc() const{ return pbasis_functions;}
+		std::shared_ptr<indexorders> const& getIndexOrders() const{ return pindex_orders;}
+		std::shared_ptr<allclusters> const& getAllClusters() const{ return pall_clusters;}
+		std::mt19937 const& getMt() const{ return mt;}
+		std::function<int ()> const& getRndIntN() const{ return rnd_int_N;}
+		std::function<double ()> const& getRndReal() const{ return rnd_real;}
 
 };
 

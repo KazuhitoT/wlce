@@ -23,11 +23,13 @@ Conf2corr::Conf2corr(char* filename,
 
 	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
 	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
+	rnd_int_spince_index  = std::bind( std::uniform_real_distribution<double>(0, this->spince.size()), mt);
 
 	if( _pindex_orders == nullptr )	setIndexOrders();
 	else this->pindex_orders = _pindex_orders;
 	if( _pbasis_functions == nullptr ) setBasisCoefficient();
 	else this->pbasis_functions = _pbasis_functions;
+	this->setBasisFunction();
 
 	setInitialCorrelationFunction();
 }
@@ -42,6 +44,17 @@ Conf2corr::Conf2corr(char* filename,
 	_in->setData("SPINCE", spince, true);
 	_in->setData("SPINPOSCAR", spinposcar, true);
 	_in->setData("CHECKINSIDESPIN", spin_for_check_inside);
+
+	if( spin_for_check_inside != -10000 ){
+		auto it = std::find(spince.begin(), spince.end(), spin_for_check_inside);
+		if( it != spince.end() ){
+			spin_for_check_inside = *it;
+		} else {
+			std::cerr << " ERROR : spin in CHECKINSIDESPIN does not exist.";
+			exit(1);
+		}
+	}
+
 	_in->setData("CHECKINSIDEINDEX", index_for_check_inside);
 	pall_clusters = _pall_clusters;
 
@@ -55,11 +68,13 @@ Conf2corr::Conf2corr(char* filename,
 
 	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
 	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
+	rnd_int_spince_index  = std::bind( std::uniform_real_distribution<double>(0, this->spince.size()), mt);
 
 	if( _pindex_orders == nullptr )	setIndexOrders();
 	else this->pindex_orders = _pindex_orders;
 	if( _pbasis_functions == nullptr ) setBasisCoefficient();
 	else this->pbasis_functions = _pbasis_functions;
+	this->setBasisFunction();
 
 	this->setInitialCorrelationFunction();
 };
@@ -78,7 +93,7 @@ void Conf2corr::setSpins(std::shared_ptr<labels> plabels){
 		for(int index=i; index>=0; index-=atom_types[count]){
 			count++;
 		}
-		this->spins[it->first] = spinposcar[count];
+		this->spins[it->first] = count;
 	}
 
 	if( atoms_spin.size() != spins.size() ){
@@ -90,8 +105,8 @@ void Conf2corr::setSpins(std::shared_ptr<labels> plabels){
 }
 
 void Conf2corr::setCompositions(){
-	for(const auto& spin : this->spince ){
-		 double composition = std::count(spins.begin(), spins.end(), spin) / double(spins.size());
+	for(int i=0; i<spince.size(); ++i ){
+		 double composition = std::count(spins.begin(), spins.end(), spince[i]) / double(spins.size());
 		 compositions.push_back(composition);
 	}
 	compositions_before = compositions;
@@ -162,6 +177,27 @@ void Conf2corr::setIndexOrders(){
 	}
 }
 
+void Conf2corr::setBasisFunction(){
+
+	all_calculated_basis_functions.push_back(std::vector<double>());
+
+	for(int order=1; order<this->compositions.size(); ++order){
+		std::vector<double> vec_basis_functions; /* this index corresponds to the index of spince*/
+
+		for(const auto& spin_spince : spince){
+			double result = 0;
+			/* vec[basis][degree] vec[basis]->polynomials */
+			for(int i=0; i<(*pbasis_functions)[order].size(); ++i){
+				result += (*pbasis_functions)[order][i] * pow(spin_spince, i);
+			}
+			vec_basis_functions.push_back(result);
+		}
+
+		this->all_calculated_basis_functions.push_back(vec_basis_functions);
+	}
+}
+
+
 void Conf2corr::setInitialCorrelationFunction(){
 	std::vector<std::vector<double>> corr;
 	corr.push_back(std::vector<double>{1});	/* for empty cluster */
@@ -216,7 +252,7 @@ void Conf2corr::setInitialCorrelationFunction(){
 
 
 //  !! note : point cluster is troublesome
-void Conf2corr::setCorrelationFunction_flip(int lattice_point, double after_spin){
+void Conf2corr::setCorrelationFunction_flip(int lattice_point, int after_spin){
 
 	int before_spin;
 
@@ -228,11 +264,8 @@ void Conf2corr::setCorrelationFunction_flip(int lattice_point, double after_spin
 			lattice_point = this->rnd_int_N();
 			before_spin = this->spins[lattice_point];
 			after_spin  = before_spin;
-			auto tmp_spins = this->spince;
-			std::shuffle(tmp_spins.begin(), tmp_spins.end(), mt);
 			while( before_spin == after_spin ){
-				after_spin = tmp_spins[0];
-				tmp_spins.erase(tmp_spins.begin());
+				after_spin = this->rnd_int_spince_index();
 			}
 			this->spins[lattice_point] = after_spin;
 		}
@@ -245,15 +278,10 @@ void Conf2corr::setCorrelationFunction_flip(int lattice_point, double after_spin
 		}
 	}
 
-	int index_before_spin = 0;
-	int index_after_spin = 0;
-	while( spince[index_before_spin] != before_spin ) ++index_before_spin;
-	while( spince[index_after_spin]  != after_spin  ) ++index_after_spin;
+	this->compositions[before_spin] -= 1/(double)this->spins.size();
+	this->compositions[after_spin]  += 1/(double)this->spins.size();
 
-	this->compositions[index_before_spin] -= 1/(double)this->spins.size();
-	this->compositions[index_after_spin]  += 1/(double)this->spins.size();
-
-	this->vec_changed_spins = std::vector<std::tuple<int, double, double>> {std::make_tuple(lattice_point, before_spin, after_spin)};
+	this->vec_changed_spins = std::vector<std::tuple<int, int, int>> {std::make_tuple(lattice_point, before_spin, after_spin)};
 
 	for(int i=0, imax=(*pall_clusters).size(); i<imax; ++i){  // i == cluster index
 		int num_of_cluster = 1;
@@ -340,16 +368,6 @@ double Conf2corr::calcCorrelationFunctionNorm(double p){
 	}
 	return std::pow(result, 1.0/p);
 }
-
-
-/* vec[basis][degree] vec[basis]->polynomials */
-double Conf2corr::getBasisFunction(/* order */  int order, /* spince_num */ int spin){
-	double result = 0;
-	for(int i=0; i<(*pbasis_functions)[order].size(); ++i){
-		result += (*pbasis_functions)[order][i] * pow(spin, i);
-	}
-	return result;
-};
 
 /**
  * setBasisCoefficient through gramm-schmitt
