@@ -87,7 +87,6 @@ void Conf2corr::setSpins(std::shared_ptr<labels> plabels){
 		exit(1);
 	}
 
-	this->spins_before = this->spins;
 }
 
 void Conf2corr::setCompositions(){
@@ -213,7 +212,6 @@ void Conf2corr::setInitialCorrelationFunction(){
 		corr.push_back(tmp_corr);
 	}
 	this->correlation_functions = corr;
-	this->correlation_functions_before = corr;
 }
 
 
@@ -254,6 +252,8 @@ void Conf2corr::setCorrelationFunction_flip(int lattice_point, double after_spin
 
 	this->compositions[index_before_spin] -= 1/(double)this->spins.size();
 	this->compositions[index_after_spin]  += 1/(double)this->spins.size();
+
+	this->vec_changed_spins = std::vector<std::tuple<int, double, double>> {std::make_tuple(lattice_point, before_spin, after_spin)};
 
 	for(int i=0, imax=(*pall_clusters).size(); i<imax; ++i){  // i == cluster index
 		int num_of_cluster = 1;

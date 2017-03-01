@@ -122,7 +122,6 @@ namespace WLconf{
 			exit(1);
 		}
 
-		this->setSpinsBefore(this->getSpins());
 		return true;
 	}
 

@@ -28,9 +28,9 @@ class Conf2corr {
 		std::vector<double> compositions;
 		std::vector<double> compositions_before;
 		std::vector<double> spins;
-		std::vector<double> spins_before;
 		std::vector<std::vector<double>> correlation_functions;
-		std::vector<std::vector<double>> correlation_functions_before;
+		/*  tuple[spin_index, spin_before, spin_after] */
+		std::vector<std::tuple<int, double, double>> vec_changed_spins;
 
 		/* vec[basis][degree] vec[basis]->polynomials */
 		std::shared_ptr<basisfunc> pbasis_functions;
@@ -73,10 +73,8 @@ class Conf2corr {
 		void setSpins(std::shared_ptr<labels> plabels);
 		void setSpins(std::vector<double> _spins){ this->spins = _spins; }
 		void setSpins(int i, double spin){ this->spins.at(i) = spin; }
-		void setSpinsBefore(std::vector<double> _spins){ this->spins_before = _spins;}
 		void setSpinsRandom(){
 			std::shuffle(this->spins.begin(), this->spins.end(), mt);
-			this->spins_before = this->spins;
 			this->setInitialCorrelationFunction();
 		}
 		void setCompositions();
@@ -93,16 +91,13 @@ class Conf2corr {
 
 		virtual void setMemento()
 		{
-			this->spins_before = this->spins;
-			this->correlation_functions_before = this->correlation_functions;
-			this->compositions_before = this->compositions;
 		};
 
 		virtual void Memento()
 		{
-			this->spins = this->spins_before;
-			this->correlation_functions = this->correlation_functions_before;
-			this->compositions = this->compositions_before;
+			for(const auto& changed_spin : this->vec_changed_spins){
+				this->setCorrelationFunction_flip(std::get<0>(changed_spin), std::get<1>(changed_spin));
+			}
 		};
 
 		bool isInNthNearestNeighborPair(int lattice_point);
@@ -122,7 +117,7 @@ class Conf2corr {
 		double getCorrelationFunctions(int i, int j){ return correlation_functions[i][j]; };
 
 		std::vector<double> getBeforeCompositions(){ return compositions_before; };
-		std::vector<double> getBeforeSpins(){ return spins_before; };
+		// std::vector<double> getBeforeSpins(){ return spins_before; };
 		std::vector<std::vector<double>> getBeforeCorrelationFunctions(){ return correlation_functions; };
 		std::shared_ptr<basisfunc> getBasisFunc(){ return pbasis_functions;}
 		std::shared_ptr<indexorders> getIndexOrders(){ return pindex_orders;}
