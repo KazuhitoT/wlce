@@ -1,3 +1,7 @@
+#include <regex>
+#include <cstdlib>
+#include <dirent.h>
+
 #include "./wlconf.hpp"
 
 namespace WLconf{
@@ -27,6 +31,68 @@ namespace WLconf{
 			}
 			ofs.close();
 	}
+
+	//  NOTE available format : out-wl*.dat
+	void restart(unsigned int& num_fstep, double& logfactor, std::vector<double>& dos, std::vector<int>& index_neglect_bin){
+
+		DIR *dp;
+		dirent* entry;
+
+		dp = opendir("./");
+		if (dp==NULL) exit(1);
+
+		entry = readdir(dp);
+		std::string filename;
+
+		while( entry != NULL ){
+
+			std::string tmp_filename_restart = entry->d_name;
+
+			std::regex re( R"(out\-wl(\d+)\.dat)" );
+			std::smatch m ;
+
+			if( std::regex_match( tmp_filename_restart, m, re ) ){
+
+				auto result = std::regex_replace( tmp_filename_restart, re, "$1" ) ;
+
+				int n = std::atoi(result.c_str());
+				if( n >= num_fstep ){
+					num_fstep = n;
+					filename = tmp_filename_restart;
+				}
+
+			}
+
+			entry = readdir(dp);
+
+		}
+
+		std::cout << "restart from " << filename << std::endl;
+		std::cout << std::endl;
+
+		logfactor *= std::pow(0.5, num_fstep);
+
+		std::ifstream ifs(filename);
+		std::string tmp_str;
+
+		for (int i=0; i<dos.size(); ++i){
+			int index;
+			double emin_bin, emax_bin, entropy, histogram;
+			ifs >> index >> emin_bin >> emax_bin >> entropy >> histogram;
+			dos[index] = entropy;
+
+			if( entropy > 0 ){
+				auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , index);
+				if( it != index_neglect_bin.end() ){
+					index_neglect_bin.erase(it);
+				}
+			}
+
+			std::getline(ifs, tmp_str);
+		}
+
+	}
+
 
 	WLconf::WLconf(char* filename,
 		std::shared_ptr<Input> _in,

@@ -25,7 +25,7 @@ public:
 	template<typename T> void setData(std::string data_key, T &data, bool is_required=false, std::string label="INPUT");
 	template<typename T> void setData(std::string data_key, std::vector<T> &data, bool is_required=false, std::string label="INPUT");
 	std::string getDataByString(std::string data_key, std::string label="INPUT");
-	void disp(void);
+	void disp(std::string label="INPUT");
 };
 
 template<typename T> void Input::setData(std::string data_key, T &data, bool is_required, std::string label){
