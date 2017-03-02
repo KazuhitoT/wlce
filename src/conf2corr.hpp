@@ -100,7 +100,7 @@ class Conf2corr {
 
 		double calcCorrelationFunctionNorm(double p);
 
-		virtual void setMemento(){};
+		virtual void setMemento();
 		virtual void Memento();
 
 		bool isInNthNearestNeighborPair(int lattice_point);

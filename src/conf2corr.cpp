@@ -442,11 +442,15 @@ bool Conf2corr::isInNthNearestNeighborPair(int lattice_point){
 	return false;
 }
 
+
+void Conf2corr::setMemento(){
+	this->vec_changed_spins.clear();
+}
+
 void Conf2corr::Memento(){
 	for(const auto& changed_spin : this->vec_changed_spins){
 		this->setCorrelationFunction_flip(changed_spin[0], changed_spin[1]);
 	}
-	this->vec_changed_spins.clear();
 };
 
 void Conf2corr::dispCorr(){

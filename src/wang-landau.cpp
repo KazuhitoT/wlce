@@ -124,23 +124,28 @@ int main(int argc, char* argv[]){
 	auto f_end   = std::chrono::system_clock::now();
 
 	/*  set lowest/highest index for tunneling-time calculation  */
-	int index_lowest, index_highest;
+	int index_lowest = 0, index_highest = bin-1;
 	if( is_restart>0 ){
 		WLconf::restart(fstep, logfactor, dos, index_neglect_bin);
 
-		for(int i=0; i<bin; ++i){
-			if( i != index_neglect_bin[i] ){
-				index_lowest = i;
-				break;
+		if( index_neglect_bin.size()>0 ){
+
+			for(int i=0; i<bin; ++i){
+				if( i != index_neglect_bin[i] ){
+					index_lowest = i;
+					break;
+				}
 			}
+
+			for(int i=bin; i>=0; --i){
+				if( i != index_neglect_bin[i] ){
+					index_highest = i;
+					break;
+				}
+			}
+
 		}
 
-		for(int i=bin; i>=0; --i){
-			if( i != index_neglect_bin[i] ){
-				index_highest = i;
-				break;
-			}
-		}
 	}
 
 	enum class TunnelingTimeStartPoint
