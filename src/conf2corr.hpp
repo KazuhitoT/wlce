@@ -26,13 +26,11 @@ using basisfunc   = std::vector<std::vector<double>>;
 
 class Conf2corr {
 	private:
-		std::vector<double> compositions;
 		std::vector<double> compositions_before;
 		/* spins consists of index of spince */
 		std::vector<int> spins;
-		std::vector<std::vector<double>> correlation_functions;
 		/*  tuple[spin_index, spin_before, spin_after] */
-		std::vector<std::tuple<int, int, int>> vec_changed_spins;
+		std::vector<std::array<int, 3>> vec_changed_spins;
 		/* all_calculated_basis_functions[order][spin -> basisfunc] */
 		std::vector<std::vector<double>> all_calculated_basis_functions;
 
@@ -56,9 +54,14 @@ class Conf2corr {
 		/* ------------------------------------------------- */
 
 		std::mt19937 mt;
-		std::function<int ()> rnd_int_N;
-		std::function<int ()> rnd_int_spince_index;
-		std::function<double ()> rnd_real;
+		std::uniform_int_distribution<int> rnd_int_N;
+		std::uniform_int_distribution<int> rnd_int_spince_index;
+		std::uniform_real_distribution<double> rnd_real;
+
+	/* for efficiency */
+	protected:
+		std::vector<double> compositions;
+		std::vector<std::vector<double>> correlation_functions;
 
 	public:
 		Conf2corr(char* filename,
@@ -104,7 +107,7 @@ class Conf2corr {
 		virtual void Memento()
 		{
 			for(const auto& changed_spin : this->vec_changed_spins){
-				this->setCorrelationFunction_flip(std::get<0>(changed_spin), std::get<1>(changed_spin));
+				this->setCorrelationFunction_flip(changed_spin[0], changed_spin[1]);
 			}
 		};
 
@@ -113,8 +116,8 @@ class Conf2corr {
 		void dispCorr();
 		void outputPoscar(std::string prefix="out");
 
-		int RandN(){return rnd_int_N();};
-		double RandReal(){ return rnd_real();};
+		int RandN(){return rnd_int_N(mt);};
+		double RandReal(){ return rnd_real(mt);};
 
 		std::vector<int> const& getSpins() const { return spins; };
 		std::vector<double> const& getCompositions() const{ return compositions; };
@@ -124,17 +127,12 @@ class Conf2corr {
 		std::vector<std::vector<double>> const& getCorrelationFunctions() const { return correlation_functions; };
 		double const& getCorrelationFunctions(int i, int j) const{ return correlation_functions[i][j]; };
 
-		double getBasisFunction(int order, int _spin) {return all_calculated_basis_functions[order][_spin];};
-
 		std::vector<double> const& getBeforeCompositions() const{ return compositions_before; };
-		// std::vector<double> getBeforeSpins(){ return spins_before; };
 		std::vector<std::vector<double>> const& getBeforeCorrelationFunctions() const{ return correlation_functions; };
 		std::shared_ptr<basisfunc> const& getBasisFunc() const{ return pbasis_functions;}
 		std::shared_ptr<indexorders> const& getIndexOrders() const{ return pindex_orders;}
 		std::shared_ptr<allclusters> const& getAllClusters() const{ return pall_clusters;}
 		std::mt19937 const& getMt() const{ return mt;}
-		std::function<int ()> const& getRndIntN() const{ return rnd_int_N;}
-		std::function<double ()> const& getRndReal() const{ return rnd_real;}
 
 };
 

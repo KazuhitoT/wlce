@@ -21,9 +21,9 @@ Conf2corr::Conf2corr(char* filename,
 	mt.seed(rnd());
 	#endif
 
-	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
-	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
-	rnd_int_spince_index  = std::bind( std::uniform_real_distribution<double>(0, this->spince.size()), mt);
+	rnd_real  = std::uniform_real_distribution<double>(0.0, 1.0);
+	rnd_int_N = std::uniform_int_distribution<int>(0,255);
+	rnd_int_spince_index = std::uniform_int_distribution<int>(0,1);
 
 	if( _pindex_orders == nullptr )	setIndexOrders();
 	else this->pindex_orders = _pindex_orders;
@@ -66,9 +66,9 @@ Conf2corr::Conf2corr(char* filename,
 	mt.seed(rnd());
 	#endif
 
-	rnd_int_N = std::bind( std::uniform_int_distribution<int>(0, this->spins.size()-1), mt);
-	rnd_real  = std::bind( std::uniform_real_distribution<double>(0.0, 1.0), mt);
-	rnd_int_spince_index  = std::bind( std::uniform_real_distribution<double>(0, this->spince.size()), mt);
+	rnd_real  = std::uniform_real_distribution<double>(0.0, 1.0);
+	rnd_int_N = std::uniform_int_distribution<int>(0,255);
+	rnd_int_spince_index = std::uniform_int_distribution<int>(0,1);
 
 	if( _pindex_orders == nullptr )	setIndexOrders();
 	else this->pindex_orders = _pindex_orders;
@@ -228,12 +228,12 @@ void Conf2corr::setInitialCorrelationFunction(){
 				double average_spin_prod = 0;
 				for(int site=0; site<(*pall_clusters)[i].size(); ++site) {
 					if( (*pall_clusters)[i][site].size() == 0 ) { /*  point cluster */
-						average_spin_prod += getBasisFunction(orders[0], spins[site]);
+						average_spin_prod += all_calculated_basis_functions[orders[0]][spins[site]];
 					} else {
 						for(const auto& site_clusters : (*pall_clusters)[i][site] ) {
-							double spin_prod = getBasisFunction(orders[0], spins[site]);
+							double spin_prod = all_calculated_basis_functions[orders[0]][spins[site]];
 							for(int k=0; k<site_clusters.size(); ++k){
-								spin_prod *= getBasisFunction(orders[k+1], spins[site_clusters[k]]);
+								spin_prod *= all_calculated_basis_functions[orders[k+1]][spins[site_clusters[k]]];
 								// std::cout << orders[k+1] <<" " << spins[site_clusters[k]] << std::endl;
 							}
 							average_spin_prod += spin_prod;
@@ -261,11 +261,11 @@ void Conf2corr::setCorrelationFunction_flip(int lattice_point, int after_spin){
 			before_spin = this->spins[lattice_point];
 			this->spins[lattice_point] = after_spin;
 		} else {
-			lattice_point = this->rnd_int_N();
+			lattice_point = this->rnd_int_N(mt);
 			before_spin = this->spins[lattice_point];
 			after_spin  = before_spin;
 			while( before_spin == after_spin ){
-				after_spin = this->rnd_int_spince_index();
+				after_spin = this->rnd_int_spince_index(mt);
 			}
 			this->spins[lattice_point] = after_spin;
 		}
@@ -281,7 +281,7 @@ void Conf2corr::setCorrelationFunction_flip(int lattice_point, int after_spin){
 	this->compositions[before_spin] -= 1/(double)this->spins.size();
 	this->compositions[after_spin]  += 1/(double)this->spins.size();
 
-	this->vec_changed_spins = std::vector<std::tuple<int, int, int>> {std::make_tuple(lattice_point, before_spin, after_spin)};
+	this->vec_changed_spins = std::vector<std::array<int, 3>>(1, std::array<int, 3>{lattice_point, before_spin, after_spin});
 
 	for(int i=0, imax=(*pall_clusters).size(); i<imax; ++i){  // i == cluster index
 		int num_of_cluster = 1;
@@ -309,21 +309,21 @@ void Conf2corr::setCorrelationFunction_flip(int lattice_point, int after_spin){
 			for(const auto& orders : index_order ){
 				double delta_average_spin_prod = 0;
 				if( (*pall_clusters)[i][lattice_point].size() == 0 ) { /*  point cluster */
-					delta_average_spin_prod += getBasisFunction(orders[0], after_spin) - getBasisFunction(orders[0], before_spin);
+					delta_average_spin_prod += this->all_calculated_basis_functions[orders[0]][after_spin] - this->all_calculated_basis_functions[orders[0]][ before_spin];
 				} else {
 					for(const auto& site_clusters : (*pall_clusters)[i][lattice_point] ) {
 						// std::cout << (*pall_clusters)[i][lattice_point].size() << " " << num_of_cluster << std::endl;
 						// assert( (*pall_clusters)[i][lattice_point].size() == num_of_cluster );
-						double delta_spin_after  = getBasisFunction(orders[0], after_spin);
-						double delta_spin_before = getBasisFunction(orders[0], before_spin);
+						double delta_spin_after  = this->all_calculated_basis_functions[orders[0]][after_spin];
+						double delta_spin_before = this->all_calculated_basis_functions[orders[0]][before_spin];
 						double num_equiv_site = 1;
 						for(int k=0; k<site_clusters.size(); ++k){
 							// std::cout << site_clusters[k] << " " ;
-							double delta_spin_prod = getBasisFunction(orders[k+1], spins[site_clusters[k]]);
+							double delta_spin_prod = this->all_calculated_basis_functions[orders[k+1]][spins[site_clusters[k]]];
 							delta_spin_after *= delta_spin_prod;
 							// std::cout << lattice_point << " : " <<  site_clusters[k] << std::endl;
 							if( lattice_point == site_clusters[k] ){
-								delta_spin_before *= getBasisFunction(orders[k+1], before_spin);
+								delta_spin_before *= this->all_calculated_basis_functions[orders[k+1]][before_spin];
 								++num_equiv_site;
 							}
 							else delta_spin_before *= delta_spin_prod;
@@ -349,10 +349,14 @@ void Conf2corr::setCorrelationFunction_flip(int lattice_point, int after_spin){
 void Conf2corr::setCorrelationFunction_exchange(){
 	int exchanged_spins[2];
 
-	exchanged_spins[0] = rnd_int_N();
-	exchanged_spins[1] = rnd_int_N();
+	exchanged_spins[0] = rnd_int_N(mt);
+	exchanged_spins[1] = rnd_int_N(mt);
 	while( spins[exchanged_spins[0]] == spins[exchanged_spins[1]] )
-		exchanged_spins[1] = rnd_int_N();
+		exchanged_spins[1] = rnd_int_N(mt);
+
+	this->vec_changed_spins = std::vector<std::array<int, 3>>(2);
+	this->vec_changed_spins[0] = std::array<int, 3>{exchanged_spins[0], spins[exchanged_spins[0]], spins[exchanged_spins[1]]};
+	this->vec_changed_spins[1] = std::array<int, 3>{exchanged_spins[0], spins[exchanged_spins[1]], spins[exchanged_spins[0]]};
 
 	double tmp_spin =  spins[exchanged_spins[0]];
 	this->setCorrelationFunction_flip(exchanged_spins[0], spins[exchanged_spins[1]]);
