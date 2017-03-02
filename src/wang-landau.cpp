@@ -110,15 +110,15 @@ int main(int argc, char* argv[]){
 	unsigned int fstep = 0;
 	unsigned int tstep = 0;
 	unsigned int mc_time = 0;
+	unsigned int tunneling_time_start = 0;
+	unsigned int tunneling_time_end   = 0;
+
 	bool isConverged = false;
 
 	start = std::chrono::system_clock::now();
 
 	auto f_start = std::chrono::system_clock::now();
 	auto f_end   = std::chrono::system_clock::now();
-
-	auto tunneling_time_start = std::chrono::system_clock::now();
-	auto tunneling_time_end   = std::chrono::system_clock::now();
 
 	int index_lowest  = std::numeric_limits<int>::max();
 	int index_highest = std::numeric_limits<int>::min();
@@ -161,15 +161,13 @@ int main(int argc, char* argv[]){
 				}
 
 				if( index == index_lowest and randomwalk_start_point == TunnelingTimeStartPoint::Highest ){
-					tunneling_time_end   = std::chrono::system_clock::now();
-					auto sec = std::chrono::duration_cast<std::chrono::seconds>(tunneling_time_end-tunneling_time_start).count();
-					ofs_tunneling_time << fstep << " " << index << " " << sec << std::endl;
+					tunneling_time_end   = mc_time;
+					ofs_tunneling_time << fstep << " " << index << " " << tunneling_time_end - tunneling_time_start << std::endl;
 					tunneling_time_start = tunneling_time_end;
 					randomwalk_start_point =  TunnelingTimeStartPoint::Lowest;
 				} else if ( index == index_highest and randomwalk_start_point == TunnelingTimeStartPoint::Lowest ){
-					tunneling_time_end   = std::chrono::system_clock::now();
-					auto sec = std::chrono::duration_cast<std::chrono::seconds>(tunneling_time_end-tunneling_time_start).count();
-					ofs_tunneling_time << fstep << " " << index << " " << sec << std::endl;
+					tunneling_time_end   = mc_time;
+					ofs_tunneling_time << fstep << " " << index << " " << tunneling_time_end - tunneling_time_start << std::endl;
 					tunneling_time_start = tunneling_time_end;
 					randomwalk_start_point =  TunnelingTimeStartPoint::Highest;
 				}
