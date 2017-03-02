@@ -47,6 +47,7 @@ int main(int argc, char* argv[]){
 	int mcstep, bin, flatcheck_step, minstep=0;
 	double logfactor, logflimit, emin, emax, edelta, flat_criterion;
 	double low_cutoff = 1.0;
+	int is_output_tunnelingtime = 0 ;
 	std::string filename_spin_input;
 
 	in->setData("BIN",  bin, true);
@@ -65,6 +66,7 @@ int main(int argc, char* argv[]){
 
 	in->setData("MINSTEP",   minstep);
 	in->setData("LOWCUTOFF", low_cutoff);
+	in->setData("OUTTUNNELINGTIME", is_output_tunnelingtime);
 
 
 	const ParseEcicar ecicar("./ecicar");
@@ -108,12 +110,27 @@ int main(int argc, char* argv[]){
 	unsigned int fstep = 0;
 	unsigned int tstep = 0;
 	unsigned int mc_time = 0;
+	unsigned int tunneling_time_start = 0;
+	unsigned int tunneling_time_end   = 0;
+
 	bool isConverged = false;
 
 	start = std::chrono::system_clock::now();
 
 	auto f_start = std::chrono::system_clock::now();
 	auto f_end   = std::chrono::system_clock::now();
+
+	int index_lowest  = std::numeric_limits<int>::max();
+	int index_highest = std::numeric_limits<int>::min();
+
+	enum class TunnelingTimeStartPoint
+	{
+		Lowest,
+		Highest,
+	};
+	TunnelingTimeStartPoint randomwalk_start_point = TunnelingTimeStartPoint::Lowest;
+	std::ofstream ofs_tunneling_time("tunneling_time.out");
+	ofs_tunneling_time.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
  	int final_mcsweep = 0;
  	while(logflimit < logfactor){
@@ -136,7 +153,23 @@ int main(int argc, char* argv[]){
 						histogram[index] = histogram[PoscarSpin.getBeforeIndex()];
 						index_neglect_bin.erase(it);
 						PoscarSpin.outputEnergySpin(index, filename_rep_macrostate);
+
+						if( index < index_lowest  ) index_lowest  = index;
+						if( index > index_highest ) index_highest = index;
+
 					}
+				}
+
+				if( index == index_lowest and randomwalk_start_point == TunnelingTimeStartPoint::Highest ){
+					tunneling_time_end   = mc_time;
+					ofs_tunneling_time << fstep << " " << index << " " << tunneling_time_end - tunneling_time_start << std::endl;
+					tunneling_time_start = tunneling_time_end;
+					randomwalk_start_point =  TunnelingTimeStartPoint::Lowest;
+				} else if ( index == index_highest and randomwalk_start_point == TunnelingTimeStartPoint::Lowest ){
+					tunneling_time_end   = mc_time;
+					ofs_tunneling_time << fstep << " " << index << " " << tunneling_time_end - tunneling_time_start << std::endl;
+					tunneling_time_start = tunneling_time_end;
+					randomwalk_start_point =  TunnelingTimeStartPoint::Highest;
 				}
 
 				dos.at(index) += logfactor;
@@ -163,6 +196,7 @@ int main(int argc, char* argv[]){
 		++fstep;
 	}
 
+	ofs_tunneling_time.close();
 	auto end = std::chrono::system_clock::now();
 	auto sec = std::chrono::duration_cast<std::chrono::seconds>(end-start).count();
 	std::cout << "Time for calculating the DOS is " << sec << " seconds. "<< std::endl;
