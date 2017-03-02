@@ -38,12 +38,12 @@ void Metroconf::setTotalEnergy(){
 	totalEnergy = 0;
 	for(int i=0, imax=eci.size(); i<imax; ++i){
 		for(int j=0, jmax=eci[i].second.size(); j<jmax; ++j){
-			totalEnergy += this->getCorrelationFunctions(i,j) * eci[i].second[j];
+			totalEnergy += this->correlation_functions[i][j] * eci[i].second[j];
 		}
 	}
 	if( chemical_potential.size()>0 ){
-		for(int i=0; i<this->getCompositions().size(); ++i){
-			totalEnergy -= chemical_potential[i] * this->getCompositions(i);
+		for(int i=0; i<this->compositions.size(); ++i){
+			totalEnergy -= chemical_potential[i] * this->compositions[i];
 		}
 	}
 }
