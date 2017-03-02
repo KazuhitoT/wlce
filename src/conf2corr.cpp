@@ -281,7 +281,7 @@ void Conf2corr::setCorrelationFunction_flip(int lattice_point, int after_spin){
 	this->compositions[before_spin] -= 1/(double)this->spins.size();
 	this->compositions[after_spin]  += 1/(double)this->spins.size();
 
-	this->vec_changed_spins = std::vector<std::array<int, 3>>(1, std::array<int, 3>{lattice_point, before_spin, after_spin});
+	this->vec_changed_spins.emplace_back(std::array<int,3>{lattice_point, before_spin, after_spin});
 
 	for(int i=0, imax=(*pall_clusters).size(); i<imax; ++i){  // i == cluster index
 		int num_of_cluster = 1;
@@ -354,9 +354,8 @@ void Conf2corr::setCorrelationFunction_exchange(){
 	while( spins[exchanged_spins[0]] == spins[exchanged_spins[1]] )
 		exchanged_spins[1] = rnd_int_N(mt);
 
-	this->vec_changed_spins = std::vector<std::array<int, 3>>(2);
-	this->vec_changed_spins[0] = std::array<int, 3>{exchanged_spins[0], spins[exchanged_spins[0]], spins[exchanged_spins[1]]};
-	this->vec_changed_spins[1] = std::array<int, 3>{exchanged_spins[0], spins[exchanged_spins[1]], spins[exchanged_spins[0]]};
+	this->vec_changed_spins.emplace_back(std::array<int,3>{exchanged_spins[0], spins[exchanged_spins[0]], spins[exchanged_spins[1]]});
+	this->vec_changed_spins.emplace_back(std::array<int,3>{exchanged_spins[1], spins[exchanged_spins[1]], spins[exchanged_spins[0]]});
 
 	double tmp_spin =  spins[exchanged_spins[0]];
 	this->setCorrelationFunction_flip(exchanged_spins[0], spins[exchanged_spins[1]]);
@@ -442,6 +441,13 @@ bool Conf2corr::isInNthNearestNeighborPair(int lattice_point){
 	}
 	return false;
 }
+
+void Conf2corr::Memento(){
+	for(const auto& changed_spin : this->vec_changed_spins){
+		this->setCorrelationFunction_flip(changed_spin[0], changed_spin[1]);
+	}
+	this->vec_changed_spins.clear();
+};
 
 void Conf2corr::dispCorr(){
 	for(int i=0, imax=correlation_functions.size(); i<imax; ++i){

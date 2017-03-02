@@ -100,16 +100,8 @@ class Conf2corr {
 
 		double calcCorrelationFunctionNorm(double p);
 
-		virtual void setMemento()
-		{
-		};
-
-		virtual void Memento()
-		{
-			for(const auto& changed_spin : this->vec_changed_spins){
-				this->setCorrelationFunction_flip(changed_spin[0], changed_spin[1]);
-			}
-		};
+		virtual void setMemento(){};
+		virtual void Memento();
 
 		bool isInNthNearestNeighborPair(int lattice_point);
 
