@@ -37,7 +37,7 @@ void showResult(int is_corrdump, const std::shared_ptr<Input>& in){
 
 		for(int i=0; i<PoscarSpin.getSpins().size(); ++i ){
 			bool isin = PoscarSpin.isInNthNearestNeighborPair(i);
-			if( isin ) return;
+			if( isin ) {std::cout << std::endl; return;}
 		}
 
 		for(const auto& corrs : PoscarSpin.getCorrelationFunctions() ) {
@@ -64,7 +64,7 @@ void showResult(int is_corrdump, const std::shared_ptr<Input>& in){
 
 		for(int i=0; i<PoscarSpin.getSpins().size(); ++i ){
 			bool isin = PoscarSpin.isInNthNearestNeighborPair(i);
-			if( isin ) return;
+			if( isin ) {std::cout << std::endl; return;}
 		}
 
 		for(const auto c : compositions) std::cout << c << " ";

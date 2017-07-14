@@ -435,7 +435,7 @@ bool Conf2corr::isInNthNearestNeighborPair(int lattice_point){
 		--index; // for empty cluster
 		for(const auto& site_clusters : (*(this->pall_clusters))[index][lattice_point] ) {
 			for(int k=0; k<site_clusters.size(); ++k){
-				if( this->spins[site_clusters[k]] == spin_for_check_inside ) return true;
+				if( this->spince[this->spins[site_clusters[k]]] == spin_for_check_inside ) return true;
 			}
 		}
 	}
