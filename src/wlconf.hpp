@@ -7,6 +7,7 @@ namespace WLconf{
 
 	bool checkHistogramFlat(const std::vector<double>& histogram, const std::vector<int>& index_neglect_bin, double lflat, int minstep, double low_cutoff=1);
 	void outputHistogram(const std::vector<double>& dos, const std::vector<double>& histogram, double emin, double delta, int fstep, std::string prefix = "");
+	void restart(unsigned int& num_fstep, double& logfactor, std::vector<double>& dos, std::vector<int>& index_neglect_bin);
 
 	class WLconf : public Metroconf{
 		private:

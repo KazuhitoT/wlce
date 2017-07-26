@@ -44,9 +44,11 @@ double wl_step(WLconf::WLconf& conf, const std::vector<double>& dos){
 int main(int argc, char* argv[]){
 	std::shared_ptr<Input> in(new Input("wang-landau.ini"));
 
-	int mcstep, bin, flatcheck_step, minstep=0;
+	int mcstep, bin, flatcheck_step, num_ignore_edge_index=0, minstep=0;
 	double logfactor, logflimit, emin, emax, edelta, flat_criterion;
 	double low_cutoff = 1.0;
+	int is_restart=0, is_output_tunnelingtime=0;
+
 	std::string filename_spin_input;
 
 	in->setData("BIN",  bin, true);
@@ -64,7 +66,13 @@ int main(int argc, char* argv[]){
 	in->setData("SPININPUT", filename_spin_input);
 
 	in->setData("MINSTEP",   minstep);
+	in->setData("NUMIGNOREEDGEINDEX",   num_ignore_edge_index);
 	in->setData("LOWCUTOFF", low_cutoff);
+	in->setData("OUTTUNNELINGTIME", is_output_tunnelingtime);
+
+	in->setData("RESTART", is_restart);
+
+  std::cout << num_ignore_edge_index << std::endl;
 
 
 	const ParseEcicar ecicar("./ecicar");
@@ -82,7 +90,7 @@ int main(int argc, char* argv[]){
 	std::cout << std::endl;
 
 	std::cout << "----------  Information about [wang-landau.ini]" << std::endl;
-	dispInput(in);
+	in->disp();
 
 	if( index_neglect_bin.size() and  filename_spin_input.size() ){
 		std::cout << "NEGLECT BIN INDEX :" << std::endl;
@@ -108,12 +116,53 @@ int main(int argc, char* argv[]){
 	unsigned int fstep = 0;
 	unsigned int tstep = 0;
 	unsigned int mc_time = 0;
+	unsigned int tunneling_time_start = 0;
+	unsigned int tunneling_time_end   = 0;
+
 	bool isConverged = false;
 
 	start = std::chrono::system_clock::now();
 
 	auto f_start = std::chrono::system_clock::now();
 	auto f_end   = std::chrono::system_clock::now();
+
+	/*  set lowest/highest index for tunneling-time calculation  */
+	int index_lowest = bin-1, index_highest = 0;
+	if( is_restart>0 ){
+		WLconf::restart(fstep, logfactor, dos, index_neglect_bin);
+
+		if( index_neglect_bin.size()>0 ){
+
+			for(int i=0; i<bin ; ++i){
+				if( i != index_neglect_bin[i] or i == index_neglect_bin.size() ){
+					index_lowest = i;
+					break;
+				}
+			}
+
+			for(int i=bin-1, j=index_neglect_bin.size()-1; i>=0; --i, --j){
+				if( i != index_neglect_bin[j] or j<0 ){
+					index_highest = i;
+					break;
+				}
+			}
+
+		} else {
+			index_lowest  = 0;
+			index_highest = bin-1;
+		}
+
+	}
+
+	enum class TunnelingTimeStartPoint
+	{
+		Lowest,
+		Highest,
+	};
+	TunnelingTimeStartPoint randomwalk_start_point = TunnelingTimeStartPoint::Lowest;
+	std::ofstream ofs_tunneling_time("tunneling_time.out");
+	ofs_tunneling_time.setf(std::ios_base::fixed, std::ios_base::floatfield);
+
 
  	int final_mcsweep = 0;
  	while(logflimit < logfactor){
@@ -136,11 +185,27 @@ int main(int argc, char* argv[]){
 						histogram[index] = histogram[PoscarSpin.getBeforeIndex()];
 						index_neglect_bin.erase(it);
 						PoscarSpin.outputEnergySpin(index, filename_rep_macrostate);
+
+						if( index < index_lowest  ) index_lowest  = index;
+						if( index > index_highest ) index_highest = index;
+
 					}
 				}
 
-				dos.at(index) += logfactor;
-				histogram.at(index) += 1;
+				if( index <= (index_lowest+num_ignore_edge_index) and randomwalk_start_point == TunnelingTimeStartPoint::Highest ){
+					tunneling_time_end   = mc_time;
+					ofs_tunneling_time << fstep << " " << index << " " << tunneling_time_end - tunneling_time_start << std::endl;
+					tunneling_time_start = tunneling_time_end;
+					randomwalk_start_point =  TunnelingTimeStartPoint::Lowest;
+				} else if ( index >= (index_highest-num_ignore_edge_index) and randomwalk_start_point == TunnelingTimeStartPoint::Lowest ){
+					tunneling_time_end   = mc_time;
+					ofs_tunneling_time << fstep << " " << index << " " << tunneling_time_end - tunneling_time_start << std::endl;
+					tunneling_time_start = tunneling_time_end;
+					randomwalk_start_point =  TunnelingTimeStartPoint::Highest;
+				}
+
+				dos[index] += logfactor;
+				histogram[index] += 1;
 
 			}  /*  end a MC sweep */
 
@@ -163,6 +228,7 @@ int main(int argc, char* argv[]){
 		++fstep;
 	}
 
+	ofs_tunneling_time.close();
 	auto end = std::chrono::system_clock::now();
 	auto sec = std::chrono::duration_cast<std::chrono::seconds>(end-start).count();
 	std::cout << "Time for calculating the DOS is " << sec << " seconds. "<< std::endl;

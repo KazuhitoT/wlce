@@ -21,11 +21,19 @@ private:
 	boost::property_tree::ptree pt;
 
 public:
-	Input(char* _filename){ read_ini(_filename, pt); filename = _filename;};
+	Input(char* _filename){
+		try{
+			read_ini(_filename, pt);
+			filename = _filename;
+		}catch(boost::property_tree::ptree_error &e){
+			std::cerr << "ptree_error##" << e.what() << std::endl;
+			exit(1);
+		}
+	}
 	template<typename T> void setData(std::string data_key, T &data, bool is_required=false, std::string label="INPUT");
 	template<typename T> void setData(std::string data_key, std::vector<T> &data, bool is_required=false, std::string label="INPUT");
 	std::string getDataByString(std::string data_key, std::string label="INPUT");
-	void disp(void);
+	void disp(std::string label="INPUT");
 };
 
 template<typename T> void Input::setData(std::string data_key, T &data, bool is_required, std::string label){

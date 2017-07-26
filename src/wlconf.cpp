@@ -1,3 +1,7 @@
+#include <regex>
+#include <cstdlib>
+#include <dirent.h>
+
 #include "./wlconf.hpp"
 
 namespace WLconf{
@@ -27,6 +31,68 @@ namespace WLconf{
 			}
 			ofs.close();
 	}
+
+	//  NOTE available format : out-wl*.dat
+	void restart(unsigned int& num_fstep, double& logfactor, std::vector<double>& dos, std::vector<int>& index_neglect_bin){
+
+		DIR *dp;
+		dirent* entry;
+
+		dp = opendir("./");
+		if (dp==NULL) exit(1);
+
+		entry = readdir(dp);
+		std::string filename;
+
+		while( entry != NULL ){
+
+			std::string tmp_filename_restart = entry->d_name;
+
+			if( tmp_filename_restart.size()>6 and tmp_filename_restart.substr(0,6) == std::string("out-wl") ){
+
+				tmp_filename_restart.erase(0, 6);
+				tmp_filename_restart.pop_back();
+				tmp_filename_restart.pop_back();
+				tmp_filename_restart.pop_back();
+				tmp_filename_restart.pop_back();
+
+				int n = std::atoi(tmp_filename_restart.c_str());
+				if( n >= num_fstep ){
+					num_fstep = n;
+					filename = entry->d_name;
+				}
+			}
+
+			entry = readdir(dp);
+
+		}
+
+		std::cout << "restart from " << filename << std::endl;
+		std::cout << std::endl;
+
+		logfactor *= std::pow(0.5, num_fstep);
+
+		std::ifstream ifs(filename);
+		std::string tmp_str;
+
+		for (int i=0; i<dos.size(); ++i){
+			int index;
+			double emin_bin, emax_bin, entropy, histogram;
+			ifs >> index >> emin_bin >> emax_bin >> entropy >> histogram;
+			dos[index] = entropy;
+
+			if( entropy > 0 ){
+				auto it = find( index_neglect_bin.begin(), index_neglect_bin.end() , index);
+				if( it != index_neglect_bin.end() ){
+					index_neglect_bin.erase(it);
+				}
+			}
+
+			std::getline(ifs, tmp_str);
+		}
+
+	}
+
 
 	WLconf::WLconf(char* filename,
 		std::shared_ptr<Input> _in,
@@ -122,7 +188,6 @@ namespace WLconf{
 			exit(1);
 		}
 
-		this->setSpinsBefore(this->getSpins());
 		return true;
 	}
 
