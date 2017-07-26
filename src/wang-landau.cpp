@@ -44,7 +44,7 @@ double wl_step(WLconf::WLconf& conf, const std::vector<double>& dos){
 int main(int argc, char* argv[]){
 	std::shared_ptr<Input> in(new Input("wang-landau.ini"));
 
-	int mcstep, bin, flatcheck_step, minstep=0;
+	int mcstep, bin, flatcheck_step, num_ignore_edge_index=0, minstep=0;
 	double logfactor, logflimit, emin, emax, edelta, flat_criterion;
 	double low_cutoff = 1.0;
 	int is_restart=0, is_output_tunnelingtime=0;
@@ -66,10 +66,13 @@ int main(int argc, char* argv[]){
 	in->setData("SPININPUT", filename_spin_input);
 
 	in->setData("MINSTEP",   minstep);
+	in->setData("NUMIGNOREEDGEINDEX",   num_ignore_edge_index);
 	in->setData("LOWCUTOFF", low_cutoff);
 	in->setData("OUTTUNNELINGTIME", is_output_tunnelingtime);
 
 	in->setData("RESTART", is_restart);
+
+  std::cout << num_ignore_edge_index << std::endl;
 
 
 	const ParseEcicar ecicar("./ecicar");
@@ -124,26 +127,29 @@ int main(int argc, char* argv[]){
 	auto f_end   = std::chrono::system_clock::now();
 
 	/*  set lowest/highest index for tunneling-time calculation  */
-	int index_lowest = 0, index_highest = bin-1;
+	int index_lowest = bin-1, index_highest = 0;
 	if( is_restart>0 ){
 		WLconf::restart(fstep, logfactor, dos, index_neglect_bin);
 
 		if( index_neglect_bin.size()>0 ){
 
-			for(int i=0; i<bin; ++i){
-				if( i != index_neglect_bin[i] ){
+			for(int i=0; i<bin ; ++i){
+				if( i != index_neglect_bin[i] or i == index_neglect_bin.size() ){
 					index_lowest = i;
 					break;
 				}
 			}
 
-			for(int i=bin; i>=0; --i){
-				if( i != index_neglect_bin[i] ){
+			for(int i=bin-1, j=index_neglect_bin.size()-1; i>=0; --i, --j){
+				if( i != index_neglect_bin[j] or j<0 ){
 					index_highest = i;
 					break;
 				}
 			}
 
+		} else {
+			index_lowest  = 0;
+			index_highest = bin-1;
 		}
 
 	}
@@ -186,20 +192,20 @@ int main(int argc, char* argv[]){
 					}
 				}
 
-				if( index == index_lowest and randomwalk_start_point == TunnelingTimeStartPoint::Highest ){
+				if( index <= (index_lowest+num_ignore_edge_index) and randomwalk_start_point == TunnelingTimeStartPoint::Highest ){
 					tunneling_time_end   = mc_time;
 					ofs_tunneling_time << fstep << " " << index << " " << tunneling_time_end - tunneling_time_start << std::endl;
 					tunneling_time_start = tunneling_time_end;
 					randomwalk_start_point =  TunnelingTimeStartPoint::Lowest;
-				} else if ( index == index_highest and randomwalk_start_point == TunnelingTimeStartPoint::Lowest ){
+				} else if ( index >= (index_highest-num_ignore_edge_index) and randomwalk_start_point == TunnelingTimeStartPoint::Lowest ){
 					tunneling_time_end   = mc_time;
 					ofs_tunneling_time << fstep << " " << index << " " << tunneling_time_end - tunneling_time_start << std::endl;
 					tunneling_time_start = tunneling_time_end;
 					randomwalk_start_point =  TunnelingTimeStartPoint::Highest;
 				}
 
-				dos.at(index) += logfactor;
-				histogram.at(index) += 1;
+				dos[index] += logfactor;
+				histogram[index] += 1;
 
 			}  /*  end a MC sweep */
 

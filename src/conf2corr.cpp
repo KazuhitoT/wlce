@@ -21,8 +21,9 @@ Conf2corr::Conf2corr(char* filename,
 	mt.seed(rnd());
 	#endif
 
+
 	rnd_real  = std::uniform_real_distribution<double>(0.0, 1.0);
-	rnd_int_N = std::uniform_int_distribution<int>(0,255);
+	rnd_int_N = std::uniform_int_distribution<int>(0,this->getSpins().size()-1);
 	rnd_int_spince_index = std::uniform_int_distribution<int>(0,1);
 
 	if( _pindex_orders == nullptr )	setIndexOrders();
@@ -67,7 +68,7 @@ Conf2corr::Conf2corr(char* filename,
 	#endif
 
 	rnd_real  = std::uniform_real_distribution<double>(0.0, 1.0);
-	rnd_int_N = std::uniform_int_distribution<int>(0,255);
+	rnd_int_N = std::uniform_int_distribution<int>(0,this->getSpins().size()-1);
 	rnd_int_spince_index = std::uniform_int_distribution<int>(0,1);
 
 	if( _pindex_orders == nullptr )	setIndexOrders();
