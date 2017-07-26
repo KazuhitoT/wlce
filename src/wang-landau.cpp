@@ -66,11 +66,13 @@ int main(int argc, char* argv[]){
 	in->setData("SPININPUT", filename_spin_input);
 
 	in->setData("MINSTEP",   minstep);
-	in->setData("NUMIGNOREEDGEINDEX",   minstep);
+	in->setData("NUMIGNOREEDGEINDEX",   num_ignore_edge_index);
 	in->setData("LOWCUTOFF", low_cutoff);
 	in->setData("OUTTUNNELINGTIME", is_output_tunnelingtime);
 
 	in->setData("RESTART", is_restart);
+
+  std::cout << num_ignore_edge_index << std::endl;
 
 
 	const ParseEcicar ecicar("./ecicar");
@@ -131,20 +133,23 @@ int main(int argc, char* argv[]){
 
 		if( index_neglect_bin.size()>0 ){
 
-			for(int i=0; i<bin; ++i){
-				if( i != index_neglect_bin[i] ){
+			for(int i=0; i<bin ; ++i){
+				if( i != index_neglect_bin[i] or i == index_neglect_bin.size() ){
 					index_lowest = i;
 					break;
 				}
 			}
 
-			for(int i=bin; i>=0; --i){
-				if( i != index_neglect_bin[i] ){
+			for(int i=bin-1, j=index_neglect_bin.size()-1; i>=0; --i, --j){
+				if( i != index_neglect_bin[j] or j<0 ){
 					index_highest = i;
 					break;
 				}
 			}
 
+		} else {
+			index_lowest  = 0;
+			index_highest = bin-1;
 		}
 
 	}

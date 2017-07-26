@@ -48,19 +48,19 @@ namespace WLconf{
 
 			std::string tmp_filename_restart = entry->d_name;
 
-			std::regex re( R"(out\-wl(\d+)\.dat)" );
-			std::smatch m ;
+			if( tmp_filename_restart.size()>6 and tmp_filename_restart.substr(0,6) == std::string("out-wl") ){
 
-			if( std::regex_match( tmp_filename_restart, m, re ) ){
+				tmp_filename_restart.erase(0, 6);
+				tmp_filename_restart.pop_back();
+				tmp_filename_restart.pop_back();
+				tmp_filename_restart.pop_back();
+				tmp_filename_restart.pop_back();
 
-				auto result = std::regex_replace( tmp_filename_restart, re, "$1" ) ;
-
-				int n = std::atoi(result.c_str());
+				int n = std::atoi(tmp_filename_restart.c_str());
 				if( n >= num_fstep ){
 					num_fstep = n;
-					filename = tmp_filename_restart;
+					filename = entry->d_name;
 				}
-
 			}
 
 			entry = readdir(dp);
